@@ -87,6 +87,11 @@ export default function IPBuilderPage() {
   const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[] | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -178,7 +183,6 @@ export default function IPBuilderPage() {
           keywords: data.keywords,
           contentType: typeValue, 
           additionalInstructions: data.additionalInstructions || "",
-          // Pass companyName and productDescription to the AI flow for wireframe generation
           companyName: data.companyName,
           productDescription: data.productDescription,
         };
@@ -208,8 +212,6 @@ export default function IPBuilderPage() {
     }
   };
   
-  const currentYear = new Date().getFullYear();
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
@@ -439,9 +441,11 @@ export default function IPBuilderPage() {
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground text-sm font-body">
-        <p>&copy; {currentYear} IPbuilderAI. All rights reserved.</p>
+        <p>&copy; {currentYear !== null ? currentYear : '...'} IPbuilderAI. All rights reserved.</p>
       </footer>
     </div>
   );
 }
+    
+
     
