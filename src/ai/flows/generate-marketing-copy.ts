@@ -67,6 +67,9 @@ const prompt = ai.definePrompt({
   {{#if isBillboard}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
   {{/if}}
+  {{#if isBlogPost}}
+  The blog post should be approximately 200 to 360 words in length.
+  {{/if}}
   {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
   For each page, outline the key sections and elements (e.g., Navbar, Hero Section, Feature List, Call to Action, Footer).
@@ -138,6 +141,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
     const isTvScript = input.contentType === "tv script";
     const isBillboard = input.contentType === "billboard";
     const isWebsiteWireframe = input.contentType === "website wireframe";
+    const isBlogPost = input.contentType === "blog post";
 
     const promptData = {
       ...input,
@@ -146,6 +150,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isTvScript,
       isBillboard,
       isWebsiteWireframe,
+      isBlogPost,
     };
     
     const {output} = await prompt(promptData);
