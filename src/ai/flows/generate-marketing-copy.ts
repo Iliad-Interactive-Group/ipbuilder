@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -18,7 +19,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   contentType: z
     .string()
     .describe(
-      'The type of content to generate (e.g., website copy, social media post, blog post).'
+      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard).'
     ),
   additionalInstructions: z
     .string()
@@ -53,6 +54,16 @@ const prompt = ai.definePrompt({
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
 
+  {{#if (eq contentType "radio script")}}
+  The radio script should be approximately 30 seconds in length.
+  {{/if}}
+  {{#if (eq contentType "tv script")}}
+  The TV script should be approximately 30 seconds in length.
+  {{/if}}
+  {{#if (eq contentType "billboard")}}
+  The billboard ad should be highly creative and concise, using no more than 8 words.
+  {{/if}}
+
   {{#if additionalInstructions}}
   Additional instructions: {{additionalInstructions}}
   {{/if}}
@@ -70,3 +81,4 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output!;
   }
 );
+
