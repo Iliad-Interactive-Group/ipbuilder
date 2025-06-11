@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,9 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, AlertTriangle } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, AlertTriangle, LinkIcon } from 'lucide-react';
 
-import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
+import { summarizeDocument, type SummarizeDocumentOutput as SummarizeOutput } from '@/ai/flows/summarize-document';
+import { summarizeWebsite } from '@/ai/flows/summarize-website-flow';
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
@@ -67,6 +69,7 @@ export default function IPBuilderPage() {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const [websiteUrl, setWebsiteUrl] = useState<string>("");
   const [generatedCopy, setGeneratedCopy] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -87,30 +90,66 @@ export default function IPBuilderPage() {
     if (selectedFile) {
       setFile(selectedFile);
       setFileName(selectedFile.name);
+      setWebsiteUrl(""); // Clear website URL if file is selected
+      // Reset file input if needed, event.target.value = ''
     } else {
       setFile(null);
       setFileName("");
     }
   };
 
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const url = event.target.value;
+    setWebsiteUrl(url);
+    if (url) {
+      setFile(null); // Clear file if URL is entered
+      setFileName("");
+      // Clear file input visually if possible
+      const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    }
+  };
+
   const handleSummarize = async () => {
-    if (!file) {
-      toast({ title: "No file selected", description: "Please select a document to summarize.", variant: "destructive" });
+    if (!file && !websiteUrl.trim()) {
+      toast({ title: "No Input", description: "Please upload a document or enter a website URL.", variant: "destructive" });
       return;
     }
+    // This case should ideally be prevented by UI disabling logic
+    if (file && websiteUrl.trim()) {
+        toast({ title: "Multiple Inputs", description: "Please provide either a file OR a URL, not both.", variant: "destructive" });
+        return;
+    }
+
     setIsSummarizing(true);
+    setGeneratedCopy(null); 
+
     try {
-      const dataUri = await fileToDataUri(file);
-      const summaryOutput: SummarizeDocumentOutput = await summarizeDocument({ documentDataUri: dataUri });
+      let summaryOutput: SummarizeOutput; 
+
+      if (file) {
+        const dataUri = await fileToDataUri(file);
+        summaryOutput = await summarizeDocument({ documentDataUri: dataUri });
+      } else { // websiteUrl.trim() must be true if file is null
+        summaryOutput = await summarizeWebsite({ websiteUrl: websiteUrl.trim() });
+      }
       
-      form.setValue("companyName", summaryOutput.companyName);
-      form.setValue("productDescription", summaryOutput.productDescription);
-      form.setValue("keywords", summaryOutput.keywords.join(', '));
+      form.setValue("companyName", summaryOutput.companyName || "");
+      form.setValue("productDescription", summaryOutput.productDescription || "");
+      form.setValue("keywords", (summaryOutput.keywords || []).join(', '));
       
-      toast({ title: "Document Summarized", description: "Form fields have been populated with extracted information." });
-    } catch (error) {
-      console.error("Error summarizing document:", error);
-      toast({ title: "Summarization Error", description: "Could not summarize the document. Please try again.", variant: "destructive" });
+      toast({ title: "Input Summarized", description: "Form fields have been populated with extracted information." });
+    } catch (error: any) {
+      console.error("Error summarizing input:", error);
+      let errorMessage = "Could not summarize the input. Please try again.";
+      if (error.message && error.message.toLowerCase().includes("invalid url")) {
+          errorMessage = "Invalid URL format. Please ensure it starts with http:// or https:// and is a valid URL.";
+      } else if (error.message) {
+          errorMessage = error.message;
+      }
+      toast({ title: "Summarization Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsSummarizing(false);
     }
@@ -144,9 +183,11 @@ export default function IPBuilderPage() {
       toast({ title: "Copy Exported", description: `Copied exported as ${filename}`});
     }
   };
+  
+  const currentYear = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
         <header className="mb-10 text-center">
           <AppLogo />
@@ -156,12 +197,12 @@ export default function IPBuilderPage() {
         </header>
 
         <div className="space-y-8">
-          <Card className="shadow-lg rounded-xl">
+          <Card className="shadow-lg rounded-xl overflow-hidden">
             <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center">
-                <UploadCloud className="w-6 h-6 mr-3 text-primary" /> Document Import (Optional)
+                <UploadCloud className="w-6 h-6 mr-3 text-primary" /> Data Input
               </CardTitle>
-              <CardDescription>Upload a PDF or Word document describing your company or product to auto-fill the form below.</CardDescription>
+              <CardDescription>Upload a document (PDF/Word) OR enter a website URL to auto-fill the form below.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -172,19 +213,47 @@ export default function IPBuilderPage() {
                   onChange={handleFileChange} 
                   className="mt-1"
                   accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf" 
+                  disabled={isSummarizing || !!websiteUrl.trim()}
                 />
                 {fileName && <p className="mt-2 text-sm text-muted-foreground">Selected file: {fileName}</p>}
               </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="website-url" className="font-medium">Enter Website URL</Label>
+                <div className="flex items-center space-x-2 mt-1">
+                    <LinkIcon className="h-5 w-5 text-muted-foreground" />
+                    <Input
+                        id="website-url"
+                        type="url"
+                        placeholder="https://example.com"
+                        value={websiteUrl}
+                        onChange={handleUrlChange}
+                        className="flex-grow"
+                        disabled={isSummarizing || !!file}
+                    />
+                </div>
+              </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={handleSummarize} disabled={!file || isSummarizing} className="w-full sm:w-auto">
+              <Button onClick={handleSummarize} disabled={(!file && !websiteUrl.trim()) || isSummarizing || isGenerating} className="w-full sm:w-auto">
                 {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                Summarize Document
+                Summarize & Autofill Form
               </Button>
             </CardFooter>
           </Card>
 
-          <Card className="shadow-lg rounded-xl">
+          <Card className="shadow-lg rounded-xl overflow-hidden">
             <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center">
                 <FileText className="w-6 h-6 mr-3 text-primary" /> Marketing Brief
@@ -282,14 +351,24 @@ export default function IPBuilderPage() {
             </CardContent>
           </Card>
 
+          {(isGenerating || isSummarizing) && !generatedCopy && (
+             <Card className="shadow-lg rounded-xl overflow-hidden">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
+                <p className="text-muted-foreground">Please wait a moment.</p>
+              </CardContent>
+            </Card>
+          )}
+
           {generatedCopy && (
-            <Card className="shadow-lg rounded-xl">
+            <Card className="shadow-lg rounded-xl overflow-hidden">
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">Generated Marketing Copy</CardTitle>
                 <CardDescription>Review your AI-generated marketing copy below.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Textarea value={generatedCopy} readOnly rows={10} className="bg-muted/30 p-4 rounded-md font-mono text-sm leading-relaxed"/>
+                <Textarea value={generatedCopy} readOnly rows={10} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
               </CardContent>
               <CardFooter>
                 <Button onClick={handleExport} className="w-full sm:w-auto">
@@ -299,20 +378,13 @@ export default function IPBuilderPage() {
               </CardFooter>
             </Card>
           )}
-          {(isGenerating || isSummarizing) && !generatedCopy && (
-             <Card className="shadow-lg rounded-xl">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
-                <p className="text-muted-foreground">Please wait a moment.</p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground text-sm font-body">
-        <p>&copy; {new Date().getFullYear()} IPbuilderAI. All rights reserved.</p>
+        <p>&copy; {currentYear} IPbuilderAI. All rights reserved.</p>
       </footer>
     </div>
   );
 }
+
+    

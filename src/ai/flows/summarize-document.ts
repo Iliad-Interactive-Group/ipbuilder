@@ -1,3 +1,4 @@
+
 // Summarize the uploaded document and prepopulate the form fields with key information.
 'use server';
 
@@ -23,9 +24,9 @@ export type SummarizeDocumentInput = z.infer<typeof SummarizeDocumentInputSchema
 
 const SummarizeDocumentOutputSchema = z.object({
   summary: z.string().describe('A concise summary of the document.'),
-  companyName: z.string().describe('The name of the company described in the document.'),
-  productDescription: z.string().describe('A brief description of the product or service.'),
-  keywords: z.array(z.string()).describe('A list of keywords relevant to the document.'),
+  companyName: z.string().optional().describe('The name of the company described in the document.'),
+  productDescription: z.string().optional().describe('A brief description of the product or service.'),
+  keywords: z.array(z.string()).optional().describe('A list of keywords relevant to the document.'),
 });
 export type SummarizeDocumentOutput = z.infer<typeof SummarizeDocumentOutputSchema>;
 
@@ -39,7 +40,7 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeDocumentOutputSchema},
   prompt: `You are an expert summarizer and data extractor.
 
-  You will be provided a document, and your job is to create a concise summary of the document, extract the company name, provide a brief description of the product or service offered, and list keywords relevant to the document.  The output should be formatted as a JSON object.
+  You will be provided a document, and your job is to create a concise summary of the document, extract the company name, provide a brief description of the product or service offered, and list keywords relevant to the document. Ensure all fields in the output schema are populated. If information for a field is not found, use an empty string or empty array as appropriate. The output should be formatted as a JSON object.
 
   Document: {{media url=documentDataUri}}`,
 });
@@ -52,6 +53,11 @@ const summarizeDocumentFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('The AI model did not return the expected output format for document summarization.');
+    }
+    return output;
   }
 );
+
+    
