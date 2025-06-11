@@ -19,12 +19,14 @@ const GenerateMarketingCopyInputSchema = z.object({
   contentType: z
     .string()
     .describe(
-      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard).'
+      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe).'
     ),
   additionalInstructions: z
     .string()
     .optional()
     .describe('Any additional instructions for copy generation.'),
+  companyName: z.string().optional().describe('The company name, useful for wireframe generation.'),
+  productDescription: z.string().optional().describe('The product description, useful for wireframe generation.')
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -53,6 +55,8 @@ const prompt = ai.definePrompt({
 
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
+  Company Name (if provided): {{companyName}}
+  Product Description (if provided): {{productDescription}}
 
   {{#if (eq contentType "radio script")}}
   The radio script should be approximately 30 seconds in length.
@@ -62,6 +66,58 @@ const prompt = ai.definePrompt({
   {{/if}}
   {{#if (eq contentType "billboard")}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
+  {{/if}}
+  {{#if (eq contentType "website wireframe")}}
+  Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
+  For each page, outline the key sections and elements (e.g., Navbar, Hero Section, Feature List, Call to Action, Footer).
+  Use the provided Company Name, Product Description, and Keywords to suggest relevant placeholder content for headlines, navigation links, service names, etc.
+  The output should be a structured textual description of the wireframe. For example:
+
+  **Homepage**
+  *   **Navbar:** Logo ({{companyName}}), Home, About Us, Services, Contact Us
+  *   **Hero Section:**
+      *   Headline: [Compelling headline based on {{productDescription}} and {{keywords}}]
+      *   Sub-headline: [Brief explanation or benefit]
+      *   CTA Button: "Learn More" or "Get Started"
+      *   Background Image: Placeholder for a relevant image
+  *   **Services Overview (using {{keywords}}):**
+      *   Section Title: Our Core Offerings
+      *   Service 1: [Name based on keyword 1] - [Short description]
+      *   Service 2: [Name based on keyword 2] - [Short description]
+      *   Service 3: [Name based on keyword 3] - [Short description]
+  *   **About Us Snippet:**
+      *   Text: Brief introduction to {{companyName}} and its mission.
+      *   Link: "Read More About Us" (to About Us page)
+  *   **Call to Action:**
+      *   Headline: Ready to experience [key benefit from {{productDescription}}]?
+      *   Button: "Contact Us Today"
+  *   **Footer:** Copyright {{companyName}} {{currentYear}}, Social Media Links, Privacy Policy
+
+  **About Us Page**
+  *   **Navbar:** (Same as Homepage)
+  *   **Page Title:** About {{companyName}}
+  *   **Our Mission:** [Detailed text about company mission, values, related to {{productDescription}}]
+  *   **Our Story:** [Brief history or founding story of {{companyName}}]
+  *   **Team Section (Optional):** Placeholder for "Meet Our Team"
+  *   **Footer:** (Same as Homepage)
+
+  **Services/Product Page**
+  *   **Navbar:** (Same as Homepage)
+  *   **Page Title:** Our Services/Products (tailor based on {{productDescription}})
+  *   **Service/Product 1 (based on {{keywords}}):**
+      *   Headline: [Detailed name of Service/Product 1]
+      *   Image/Icon Placeholder
+      *   Description: [Detailed description of features and benefits]
+      *   CTA: "Request a Demo" or "View Pricing"
+  *   **Service/Product 2 (if applicable, based on {{keywords}}):**
+      *   Headline: [Detailed name of Service/Product 2]
+      *   Image/Icon Placeholder
+      *   Description: [Detailed description of features and benefits]
+      *   CTA: "Explore Feature"
+  *   **Testimonial Section (Optional):** Placeholder for client quotes
+  *   **Footer:** (Same as Homepage)
+
+  Ensure the wireframe is described clearly and provides a good foundation for design and development.
   {{/if}}
 
   {{#if additionalInstructions}}
@@ -77,7 +133,8 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const currentYear = new Date().getFullYear();
+    const {output} = await prompt({...input, currentYear: currentYear.toString()});
     return output!;
   }
 );

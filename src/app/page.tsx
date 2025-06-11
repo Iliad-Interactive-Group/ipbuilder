@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard } from 'lucide-react';
 
 import { summarizeDocument, type SummarizeDocumentOutput as SummarizeOutput } from '@/ai/flows/summarize-document';
 import { summarizeWebsite } from '@/ai/flows/summarize-website-flow';
@@ -47,6 +47,7 @@ const CONTENT_TYPES = [
   { value: "tv script", label: "TV Script", icon: <Tv className="w-4 h-4" /> },
   { value: "podcast outline", label: "Podcast Outline", icon: <Podcast className="w-4 h-4" /> },
   { value: "billboard", label: "Billboard Ad", icon: <Presentation className="w-4 h-4" /> },
+  { value: "website wireframe", label: "Website Wireframe", icon: <LayoutDashboard className="w-4 h-4" /> },
 ];
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -175,8 +176,11 @@ export default function IPBuilderPage() {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const marketingInput = {
           keywords: data.keywords,
-          contentType: typeValue, // Send the specific content type value
+          contentType: typeValue, 
           additionalInstructions: data.additionalInstructions || "",
+          // Pass companyName and productDescription to the AI flow for wireframe generation
+          companyName: data.companyName,
+          productDescription: data.productDescription,
         };
         const result = await generateMarketingCopy(marketingInput);
         allGeneratedCopies.push({
@@ -198,7 +202,7 @@ export default function IPBuilderPage() {
   const handleExport = () => {
     if (generatedCopy && generatedCopy.length > 0) {
       const firstContentTypeLabel = generatedCopy[0].label || "marketing";
-      const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`; // Keep filename shorter
+      const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`; 
       exportTextFile(filenameBase, generatedCopy);
       toast({ title: "Copies Exported", description: `All generated copies exported as ${filenameBase}_marketing_copies.txt`});
     }
@@ -419,7 +423,7 @@ export default function IPBuilderPage() {
                                 {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
                                 {item.label}
                             </h3>
-                            <Textarea value={item.marketingCopy} readOnly rows={8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         </div>
                     ))}
                 </CardContent>
@@ -440,5 +444,4 @@ export default function IPBuilderPage() {
     </div>
   );
 }
-
     
