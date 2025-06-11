@@ -49,7 +49,7 @@ export async function generateMarketingCopy(
 
 const prompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
-  input: {schema: GenerateMarketingCopyInputSchema},
+  input: {schema: GenerateMarketingCopyInputSchema}, // Schema for documentation/LLM, actual prompt() call can have more for Handlebars
   output: {schema: GenerateMarketingCopyOutputSchema},
   prompt: `You are a marketing expert specializing in creating engaging content.
 
@@ -58,16 +58,16 @@ const prompt = ai.definePrompt({
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
 
-  {{#if (eq contentType "radio script")}}
+  {{#if isRadioScript}}
   The radio script should be approximately 30 seconds in length.
   {{/if}}
-  {{#if (eq contentType "tv script")}}
+  {{#if isTvScript}}
   The TV script should be approximately 30 seconds in length.
   {{/if}}
-  {{#if (eq contentType "billboard")}}
+  {{#if isBillboard}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
   {{/if}}
-  {{#if (eq contentType "website wireframe")}}
+  {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
   For each page, outline the key sections and elements (e.g., Navbar, Hero Section, Feature List, Call to Action, Footer).
   Use the provided Company Name, Product Description, and Keywords to suggest relevant placeholder content for headlines, navigation links, service names, etc.
@@ -132,9 +132,23 @@ const generateMarketingCopyFlow = ai.defineFlow(
     inputSchema: GenerateMarketingCopyInputSchema,
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
-  async input => {
-    const currentYear = new Date().getFullYear();
-    const {output} = await prompt({...input, currentYear: currentYear.toString()});
+  async (input: GenerateMarketingCopyInput) => {
+    const currentYear = new Date().getFullYear().toString();
+    const isRadioScript = input.contentType === "radio script";
+    const isTvScript = input.contentType === "tv script";
+    const isBillboard = input.contentType === "billboard";
+    const isWebsiteWireframe = input.contentType === "website wireframe";
+
+    const promptData = {
+      ...input,
+      currentYear,
+      isRadioScript,
+      isTvScript,
+      isBillboard,
+      isWebsiteWireframe,
+    };
+    
+    const {output} = await prompt(promptData);
     return output!;
   }
 );
