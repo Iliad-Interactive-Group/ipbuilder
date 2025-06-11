@@ -17,8 +17,11 @@ import { useToast } from "@/hooks/use-toast";
 
 import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard } from 'lucide-react';
 
-import { summarizeDocument, type SummarizeDocumentOutput as SummarizeOutput } from '@/ai/flows/summarize-document';
+import { summarizeDocument } from '@/ai/flows/summarize-document';
+import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { summarizeWebsite } from '@/ai/flows/summarize-website-flow';
+import type { SummarizeWebsiteOutput } from '@/ai/flows/summarize-website-flow';
+
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
@@ -143,7 +146,7 @@ export default function IPBuilderPage() {
     setGeneratedCopy(null); 
 
     try {
-      let summaryOutput: SummarizeOutput; 
+      let summaryOutput: SummarizeDocumentOutput | SummarizeWebsiteOutput; 
 
       if (file) {
         const dataUri = await fileToDataUri(file);
@@ -419,8 +422,8 @@ export default function IPBuilderPage() {
                     <CardDescription>Review your AI-generated marketing copies below. One for each content type you selected.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {generatedCopy.map((item, index) => (
-                        <div key={index} className="space-y-2">
+                    {generatedCopy.map((item) => (
+                        <div key={item.value} className="space-y-2">
                             <h3 className="text-lg font-semibold text-primary flex items-center">
                                 {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
                                 {item.label}
@@ -446,6 +449,4 @@ export default function IPBuilderPage() {
     </div>
   );
 }
-    
-
     
