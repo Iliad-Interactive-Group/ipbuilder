@@ -11,11 +11,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, AlertTriangle, LinkIcon } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon } from 'lucide-react';
 
 import { summarizeDocument, type SummarizeDocumentOutput as SummarizeOutput } from '@/ai/flows/summarize-document';
 import { summarizeWebsite } from '@/ai/flows/summarize-website-flow';
@@ -27,11 +27,17 @@ const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   productDescription: z.string().min(1, "Product description is required"),
   keywords: z.string().min(1, "Keywords are required (comma-separated)"),
-  contentType: z.string().min(1, "Content type is required"),
+  contentType: z.array(z.string()).min(1, "Please select at least one content type."),
   additionalInstructions: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+interface GeneratedCopyItem {
+  value: string;
+  label: string;
+  marketingCopy: string;
+}
 
 const CONTENT_TYPES = [
   { value: "website copy", label: "Website Copy", icon: <Monitor className="w-4 h-4" /> },
@@ -54,11 +60,18 @@ const fileToDataUri = (file: File): Promise<string> => {
   });
 };
 
-const exportTextFile = (filename: string, text: string) => {
+const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) => {
+  let textContent = "";
+  copies.forEach(copy => {
+    textContent += `Content Type: ${copy.label}\n`;
+    textContent += `------------------------------------------\n`;
+    textContent += `${copy.marketingCopy}\n\n\n`;
+  });
+
   const element = document.createElement("a");
-  const file = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const file = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
   element.href = URL.createObjectURL(file);
-  element.download = filename;
+  element.download = `${filenameBase}_marketing_copies.txt`;
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
@@ -70,7 +83,7 @@ export default function IPBuilderPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [websiteUrl, setWebsiteUrl] = useState<string>("");
-  const [generatedCopy, setGeneratedCopy] = useState<string | null>(null);
+  const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[] | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -80,7 +93,7 @@ export default function IPBuilderPage() {
       companyName: "",
       productDescription: "",
       keywords: "",
-      contentType: "",
+      contentType: [],
       additionalInstructions: "",
     },
   });
@@ -90,8 +103,7 @@ export default function IPBuilderPage() {
     if (selectedFile) {
       setFile(selectedFile);
       setFileName(selectedFile.name);
-      setWebsiteUrl(""); // Clear website URL if file is selected
-      // Reset file input if needed, event.target.value = ''
+      setWebsiteUrl(""); 
     } else {
       setFile(null);
       setFileName("");
@@ -102,9 +114,8 @@ export default function IPBuilderPage() {
     const url = event.target.value;
     setWebsiteUrl(url);
     if (url) {
-      setFile(null); // Clear file if URL is entered
+      setFile(null); 
       setFileName("");
-      // Clear file input visually if possible
       const fileInput = document.getElementById('document-upload') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = "";
@@ -117,7 +128,6 @@ export default function IPBuilderPage() {
       toast({ title: "No Input", description: "Please upload a document or enter a website URL.", variant: "destructive" });
       return;
     }
-    // This case should ideally be prevented by UI disabling logic
     if (file && websiteUrl.trim()) {
         toast({ title: "Multiple Inputs", description: "Please provide either a file OR a URL, not both.", variant: "destructive" });
         return;
@@ -132,7 +142,7 @@ export default function IPBuilderPage() {
       if (file) {
         const dataUri = await fileToDataUri(file);
         summaryOutput = await summarizeDocument({ documentDataUri: dataUri });
-      } else { // websiteUrl.trim() must be true if file is null
+      } else { 
         summaryOutput = await summarizeWebsite({ websiteUrl: websiteUrl.trim() });
       }
       
@@ -158,15 +168,25 @@ export default function IPBuilderPage() {
   const onSubmit = async (data: FormData) => {
     setIsGenerating(true);
     setGeneratedCopy(null);
+    const allGeneratedCopies: GeneratedCopyItem[] = [];
+
     try {
-      const marketingInput = {
-        keywords: data.keywords,
-        contentType: data.contentType,
-        additionalInstructions: data.additionalInstructions || "",
-      };
-      const result = await generateMarketingCopy(marketingInput);
-      setGeneratedCopy(result.marketingCopy);
-      toast({ title: "Marketing Copy Generated!", description: "Your new marketing copy is ready." });
+      for (const typeValue of data.contentType) {
+        const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
+        const marketingInput = {
+          keywords: data.keywords,
+          contentType: typeValue, // Send the specific content type value
+          additionalInstructions: data.additionalInstructions || "",
+        };
+        const result = await generateMarketingCopy(marketingInput);
+        allGeneratedCopies.push({
+          value: typeValue,
+          label: contentTypeDefinition ? contentTypeDefinition.label : typeValue,
+          marketingCopy: result.marketingCopy,
+        });
+      }
+      setGeneratedCopy(allGeneratedCopies);
+      toast({ title: "Marketing Copy Generated!", description: `Generated copy for ${allGeneratedCopies.length} content type(s).` });
     } catch (error) {
       console.error("Error generating copy:", error);
       toast({ title: "Generation Error", description: "Could not generate marketing copy. Please try again.", variant: "destructive" });
@@ -176,11 +196,11 @@ export default function IPBuilderPage() {
   };
 
   const handleExport = () => {
-    if (generatedCopy) {
-      const selectedContentType = CONTENT_TYPES.find(ct => ct.value === form.getValues("contentType"))?.label || "marketing";
-      const filename = `${selectedContentType.toLowerCase().replace(/\s+/g, '_')}_copy.txt`;
-      exportTextFile(filename, generatedCopy);
-      toast({ title: "Copy Exported", description: `Copied exported as ${filename}`});
+    if (generatedCopy && generatedCopy.length > 0) {
+      const firstContentTypeLabel = generatedCopy[0].label || "marketing";
+      const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`; // Keep filename shorter
+      exportTextFile(filenameBase, generatedCopy);
+      toast({ title: "Copies Exported", description: `All generated copies exported as ${filenameBase}_marketing_copies.txt`});
     }
   };
   
@@ -305,26 +325,50 @@ export default function IPBuilderPage() {
                   <FormField
                     control={form.control}
                     name="contentType"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
-                        <FormLabel>Content Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a content type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {CONTENT_TYPES.map(ct => (
-                              <SelectItem key={ct.value} value={ct.value}>
-                                <div className="flex items-center">
-                                  {React.cloneElement(ct.icon, { className: "w-4 h-4 mr-2 text-muted-foreground"})}
-                                  {ct.label}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="mb-2">
+                          <FormLabel className="text-base">Content Types</FormLabel>
+                          <FormDescription>
+                            Select all content types you want to generate copy for.
+                          </FormDescription>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                          {CONTENT_TYPES.map((item) => (
+                            <FormField
+                              key={item.value}
+                              control={form.control}
+                              name="contentType"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.value}
+                                    className="flex flex-row items-center space-x-2 space-y-0 bg-background p-3 rounded-md border hover:bg-muted/50 transition-colors"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.value)}
+                                        onCheckedChange={(checked) => {
+                                          const currentValues = field.value || [];
+                                          if (checked) {
+                                            field.onChange([...currentValues, item.value]);
+                                          } else {
+                                            field.onChange(currentValues.filter((value: string) => value !== item.value));
+                                          }
+                                        }}
+                                        className="h-5 w-5"
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal flex items-center cursor-pointer w-full">
+                                      {React.cloneElement(item.icon, { className: "w-4 h-4 mr-2 text-muted-foreground"})}
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -351,7 +395,7 @@ export default function IPBuilderPage() {
             </CardContent>
           </Card>
 
-          {(isGenerating || isSummarizing) && !generatedCopy && (
+          {(isGenerating || isSummarizing) && (!generatedCopy || generatedCopy.length === 0) && (
              <Card className="shadow-lg rounded-xl overflow-hidden">
               <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
                 <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
@@ -361,22 +405,32 @@ export default function IPBuilderPage() {
             </Card>
           )}
 
-          {generatedCopy && (
-            <Card className="shadow-lg rounded-xl overflow-hidden">
-              <CardHeader>
-                <CardTitle className="font-headline text-2xl">Generated Marketing Copy</CardTitle>
-                <CardDescription>Review your AI-generated marketing copy below.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea value={generatedCopy} readOnly rows={10} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleExport} className="w-full sm:w-auto">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Copy (TXT)
-                </Button>
-              </CardFooter>
-            </Card>
+          {generatedCopy && generatedCopy.length > 0 && (
+            <div className="space-y-8">
+              <Card className="shadow-lg rounded-xl overflow-hidden">
+                <CardHeader>
+                    <CardTitle className="font-headline text-2xl">Generated Marketing Copies</CardTitle>
+                    <CardDescription>Review your AI-generated marketing copies below. One for each content type you selected.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {generatedCopy.map((item, index) => (
+                        <div key={index} className="space-y-2">
+                            <h3 className="text-lg font-semibold text-primary flex items-center">
+                                {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
+                                {item.label}
+                            </h3>
+                            <Textarea value={item.marketingCopy} readOnly rows={8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                        </div>
+                    ))}
+                </CardContent>
+                <CardFooter>
+                    <Button onClick={handleExport} className="w-full sm:w-auto">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export All Copies (TXT)
+                    </Button>
+                </CardFooter>
+              </Card>
+            </div>
           )}
         </div>
       </main>
