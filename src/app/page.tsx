@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -212,6 +212,16 @@ export default function IPBuilderPage() {
       const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`; 
       exportTextFile(filenameBase, generatedCopy);
       toast({ title: "Copies Exported", description: `All generated copies exported as ${filenameBase}_marketing_copies.txt`});
+    }
+  };
+
+  const handleCopy = async (textToCopy: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast({ title: "Copied to Clipboard", description: `${label} copy has been copied.` });
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      toast({ title: "Copy Failed", description: `Could not copy ${label}.`, variant: "destructive" });
     }
   };
   
@@ -424,10 +434,16 @@ export default function IPBuilderPage() {
                 <CardContent className="space-y-6">
                     {generatedCopy.map((item) => (
                         <div key={item.value} className="space-y-2">
-                            <h3 className="text-lg font-semibold text-primary flex items-center">
-                                {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
-                                {item.label}
-                            </h3>
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-primary flex items-center">
+                                    {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
+                                    {item.label}
+                                </h3>
+                                <Button variant="outline" size="sm" onClick={() => handleCopy(item.marketingCopy, item.label)}>
+                                    <Copy className="w-3 h-3 mr-2" />
+                                    Copy
+                                </Button>
+                            </div>
                             <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         </div>
                     ))}
@@ -449,4 +465,6 @@ export default function IPBuilderPage() {
     </div>
   );
 }
+    
+
     
