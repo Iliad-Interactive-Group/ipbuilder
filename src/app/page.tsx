@@ -14,9 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIcon, RotateCcw, Palette } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -27,11 +28,24 @@ import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 
+const TONES = [
+  { value: "professional", label: "Professional" },
+  { value: "casual", label: "Casual" },
+  { value: "friendly", label: "Friendly" },
+  { value: "formal", label: "Formal" },
+  { value: "humorous", label: "Humorous" },
+  { value: "urgent", label: "Urgent" },
+  { value: "persuasive", label: "Persuasive" },
+  { value: "informative", label: "Informative" },
+  { value: "inspirational", label: "Inspirational" },
+];
+
 const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   productDescription: z.string().min(1, "Product description is required"),
   keywords: z.string().min(1, "Keywords are required (comma-separated)"),
   contentType: z.array(z.string()).min(1, "Please select at least one content type."),
+  tone: z.string().optional(),
   additionalInstructions: z.string().optional(),
 });
 
@@ -105,6 +119,7 @@ export default function IPBuilderPage() {
       productDescription: "",
       keywords: "",
       contentType: [],
+      tone: "",
       additionalInstructions: "",
     },
   });
@@ -187,6 +202,7 @@ export default function IPBuilderPage() {
         const marketingInput = {
           keywords: data.keywords,
           contentType: typeValue, 
+          tone: data.tone || "",
           additionalInstructions: data.additionalInstructions || "",
           companyName: data.companyName,
           productDescription: data.productDescription,
@@ -362,6 +378,20 @@ export default function IPBuilderPage() {
       toast({ title: "Copy Failed", description: `Could not copy ${label}.`, variant: "destructive" });
     }
   };
+
+  const handleClearForm = () => {
+    form.reset(); // Resets react-hook-form fields to defaultValues
+    setFile(null);
+    setFileName("");
+    setWebsiteUrl("");
+    setGeneratedCopy(null);
+    // Reset file input visually
+    const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = ""; 
+    }
+    toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -422,10 +452,14 @@ export default function IPBuilderPage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleSummarize} disabled={(!file && !websiteUrl.trim()) || isSummarizing || isGenerating} className="w-full sm:w-auto">
                 {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                Summarize & Autofill Form
+                Summarize & Autofill
+              </Button>
+              <Button variant="outline" onClick={handleClearForm} className="w-full sm:w-auto">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Clear Form & Inputs
               </Button>
             </CardFooter>
           </Card>
@@ -475,6 +509,34 @@ export default function IPBuilderPage() {
                         <FormControl>
                           <Input placeholder="e.g., AI, SaaS, innovation, marketing (comma-separated)" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="tone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center"><Palette className="w-4 h-4 mr-2 text-muted-foreground"/>Desired Tone (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a tone for the copy" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">None (Default)</SelectItem>
+                            {TONES.map((tone) => (
+                              <SelectItem key={tone.value} value={tone.value}>
+                                {tone.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Select a tone to influence the style of the generated copy.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -537,7 +599,7 @@ export default function IPBuilderPage() {
                       <FormItem>
                         <FormLabel>Additional Instructions (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g., Target audience is young professionals, tone should be humorous." {...field} rows={3}/>
+                          <Textarea placeholder="e.g., Target audience is young professionals, specific phrases to include/avoid." {...field} rows={3}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -21,6 +21,7 @@ const GenerateMarketingCopyInputSchema = z.object({
     .describe(
       'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline, display ad copy).'
     ),
+  tone: z.string().optional().describe('The desired tone for the generated copy (e.g., professional, casual, humorous).'),
   additionalInstructions: z
     .string()
     .optional()
@@ -52,6 +53,10 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateMarketingCopyInputSchema}, // Schema for documentation/LLM, actual prompt() call can have more for Handlebars
   output: {schema: GenerateMarketingCopyOutputSchema},
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
+
+  {{#if tone}}
+  Adapt all generated copy to have a {{tone}} tone.
+  {{/if}}
 
   {{#if isSocialMediaPost}}
   Generate 5 distinct variations of a social media post. Each variation should be clearly numbered (e.g., 1. ..., 2. ..., etc.).
