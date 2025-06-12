@@ -56,6 +56,26 @@ const prompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
   input: {schema: GenerateMarketingCopyInputSchema}, // Schema for documentation/LLM, actual prompt() call can have more for Handlebars
   output: {schema: GenerateMarketingCopyOutputSchema},
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+    ],
+  },
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
 
   {{#if tone}}
