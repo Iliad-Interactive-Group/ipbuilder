@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History, KeyRound } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -84,6 +84,7 @@ const CONTENT_TYPES = [
   { value: "billboard", label: "Billboard Ad", icon: <Presentation className="w-4 h-4" /> },
   { value: "website wireframe", label: "Website Wireframe", icon: <LayoutDashboard className="w-4 h-4" /> },
   { value: "display ad copy", label: "Display Ad Copy", icon: <ImageIconLucide className="w-4 h-4" /> },
+  { value: "google keywords", label: "Google Keywords (SEO)", icon: <KeyRound className="w-4 h-4" /> },
 ];
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -514,6 +515,20 @@ export default function IPBuilderPage() {
     }
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
+
+  const getRowsForContentType = (contentTypeValue: string) => {
+    switch (contentTypeValue) {
+      case 'website wireframe':
+      case 'display ad copy':
+      case 'podcast outline':
+      case 'radio script':
+      case 'blog post':
+      case 'google keywords':
+        return 15;
+      default:
+        return 8;
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
@@ -816,7 +831,7 @@ export default function IPBuilderPage() {
                                     Copy
                                 </Button>
                             </div>
-                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' || item.value === 'display ad copy' || item.value === 'podcast outline' || item.value === 'radio script' || item.value === 'blog post' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                            <Textarea value={item.marketingCopy} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         </div>
                     ))}
                 </CardContent>

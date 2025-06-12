@@ -19,7 +19,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   contentType: z
     .string()
     .describe(
-      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline, display ad copy).'
+      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline, display ad copy, google keywords).'
     ),
   tone: z.string().optional().describe('The desired tone for the generated copy (e.g., professional, casual, humorous).'),
   additionalInstructions: z
@@ -40,7 +40,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type. If "social media post", 5 numbered variations, considering platform. If "display ad copy", 3 common ad sizes. If "radio script", 10, 15, 30, 60 sec versions. If "podcast outline", a human-readable text outline.'),
+    .describe('The generated marketing copy tailored to the specified content type. If "social media post", 5 numbered variations, considering platform. If "display ad copy", 3 common ad sizes. If "radio script", 10, 15, 30, 60 sec versions. If "podcast outline", a human-readable text outline. If "google keywords", a list of SEO-optimized keywords for website structure based on user intent.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -173,6 +173,44 @@ const prompt = ai.definePrompt({
   *   [Ideas for show notes: "Include link to {{companyName}}'s latest blog on {{productDescription}}."]
 
   Ensure the output is plain text, well-formatted, and directly usable as a script outline.
+  {{else if isGoogleKeywords}}
+  You are an expert SEO strategist and content architect specializing in keyword research for website development and optimization.
+  Based on the provided Company Name ("{{companyName}}"), Product Description ("{{productDescription}}"), and initial Keywords ("{{keywords}}"), generate a comprehensive list of keywords specifically for building out a website.
+
+  Consider the following critical aspects for effective website keyword strategy:
+
+  1.  **User Intent:**
+      *   Generate keywords that cover different stages of user intent:
+          *   **Informational:** Users looking for information (e.g., "how to improve local SEO", "what is radio advertising").
+          *   **Navigational:** Users looking for a specific website or brand (e.g., "{{companyName}} website", "{{companyName}} services").
+          *   **Commercial Investigation:** Users comparing products/services (e.g., "best marketing agencies in [City if inferable from product description/keywords]", "{{keywords}} reviews").
+          *   **Transactional:** Users ready to buy or take action (e.g., "hire {{keywords}} specialist", "get quote for {{productDescription}}").
+      *   For each category of intent, provide a few relevant keyword examples.
+
+  2.  **Content Strategy:**
+      *   Suggest keywords that can inform the structure of the website (e.g., for homepage, service pages, blog categories, FAQ sections).
+      *   Include a mix of:
+          *   **Head terms:** Broad, high-volume keywords (e.g., "digital marketing", "advertising").
+          *   **Long-tail keywords:** More specific, multi-word phrases that often have higher conversion rates (e.g., "affordable radio advertising for small businesses in [City]", "local SEO services for [industry mentioned in product description]").
+
+  3.  **Driving Traffic:**
+      *   Focus on keywords that will attract relevant organic traffic from users actively searching for the products or services described.
+      *   If applicable, include location-based keywords if the product/service seems geographically specific (e.g., based on {{productDescription}} or {{keywords}}).
+
+  **Output Format:**
+  Please provide the keywords in a clearly structured list. You can use headings for intent categories or keyword types if it helps clarity. For example:
+
+  **Informational Keywords:**
+  *   [keyword1]
+  *   [keyword2]
+
+  **Long-Tail Keywords for Service Pages:**
+  *   [keyword3]
+  *   [keyword4]
+
+  ... and so on.
+
+  Ensure the keywords are directly usable for website SEO, content planning, and page optimization.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -279,6 +317,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
     const isPodcastOutline = input.contentType === "podcast outline";
     const isSocialMediaPost = input.contentType === "social media post";
     const isDisplayAdCopy = input.contentType === "display ad copy";
+    const isGoogleKeywords = input.contentType === "google keywords";
 
     const promptData = {
       ...input,
@@ -291,6 +330,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isPodcastOutline,
       isSocialMediaPost,
       isDisplayAdCopy,
+      isGoogleKeywords,
     };
     
     const {output} = await prompt(promptData);
