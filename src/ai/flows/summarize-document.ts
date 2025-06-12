@@ -43,6 +43,14 @@ const prompt = ai.definePrompt({
   You will be provided a document, and your job is to create a concise summary of the document, extract the company name, provide a brief description of the product or service offered, and list keywords relevant to the document. Ensure all fields in the output schema are populated. If information for a field is not found, use an empty string or empty array as appropriate. The output should be formatted as a JSON object.
 
   Document: {{media url=documentDataUri}}`,
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+    ],
+  },
 });
 
 const summarizeDocumentFlow = ai.defineFlow(
