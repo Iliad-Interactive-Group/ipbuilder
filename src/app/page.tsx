@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIcon, RotateCcw, Palette } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -40,7 +40,7 @@ const TONES = [
   { value: "inspirational", label: "Inspirational" },
 ];
 
-const NO_TONE_SELECTED_VALUE = "_no_tone_selected_"; // Unique value for the "None" option
+const NO_TONE_SELECTED_VALUE = "_no_tone_selected_"; 
 
 const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -68,7 +68,7 @@ const CONTENT_TYPES = [
   { value: "podcast outline", label: "Podcast Outline", icon: <Podcast className="w-4 h-4" /> },
   { value: "billboard", label: "Billboard Ad", icon: <Presentation className="w-4 h-4" /> },
   { value: "website wireframe", label: "Website Wireframe", icon: <LayoutDashboard className="w-4 h-4" /> },
-  { value: "display ad copy", label: "Display Ad Copy", icon: <ImageIcon className="w-4 h-4" /> },
+  { value: "display ad copy", label: "Display Ad Copy", icon: <ImageIconLucide className="w-4 h-4" /> },
 ];
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -324,12 +324,12 @@ export default function IPBuilderPage() {
               background-color: #f8f8f8; 
               border: 1px solid #ddd; 
               padding: 15px; 
-              white-space: pre-wrap; /* Preserves line breaks and spacing */
-              word-wrap: break-word; /* Ensures long lines wrap */
-              font-family: Consolas, 'Courier New', monospace; /* Monospace font for copy */
+              white-space: pre-wrap; 
+              word-wrap: break-word; 
+              font-family: Consolas, 'Courier New', monospace; 
               font-size: 0.95em;
               border-radius: 4px;
-              overflow-x: auto; /* Add scroll for very long unbreakable lines if any */
+              overflow-x: auto; 
             }
             div { margin-bottom: 20px; }
           </style>
@@ -410,7 +410,7 @@ export default function IPBuilderPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
-        <header className="mb-10 text-center">
+        <header className="mb-6 text-center">
           <AppLogo />
         </header>
 
