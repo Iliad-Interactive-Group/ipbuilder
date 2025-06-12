@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import jsPDF from 'jspdf';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -207,7 +208,7 @@ export default function IPBuilderPage() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportTxt = () => {
     if (generatedCopy && generatedCopy.length > 0) {
       const firstContentTypeLabel = generatedCopy[0].label || "marketing";
       const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`; 
@@ -215,6 +216,72 @@ export default function IPBuilderPage() {
       toast({ title: "Copies Exported", description: `All generated copies exported as ${filenameBase}_marketing_copies.txt`});
     }
   };
+  
+  const handleExportPdf = () => {
+    if (!generatedCopy || generatedCopy.length === 0) {
+      toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      let yPosition = 15; 
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 15;
+      const maxLineWidth = pageWidth - margin * 2;
+      const lineHeightFactor = 1.15;
+
+      doc.setFontSize(18);
+      const mainTitle = "Generated Marketing Copies";
+      const mainTitleWidth = doc.getTextWidth(mainTitle);
+      doc.text(mainTitle, (pageWidth - mainTitleWidth) / 2, yPosition);
+      yPosition += 10;
+
+      generatedCopy.forEach((copy) => {
+        const ensureSpace = (neededHeight: number) => {
+          if (yPosition + neededHeight > pageHeight - margin) {
+            doc.addPage();
+            yPosition = margin;
+          }
+        };
+
+        // Content Type Label
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        const labelLineHeight = 14 * lineHeightFactor;
+        const contentTypeLabel = `Content Type: ${copy.label}`;
+        const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
+        ensureSpace(labelLines.length * labelLineHeight);
+        doc.text(labelLines, margin, yPosition);
+        yPosition += (labelLines.length * labelLineHeight) + 5; 
+
+        // Marketing Copy Text
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const textLineHeight = 10 * lineHeightFactor;
+        const marketingText = copy.marketingCopy;
+        const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
+        
+        textLines.forEach((line: string) => {
+          ensureSpace(textLineHeight); 
+          doc.text(line, margin, yPosition);
+          yPosition += textLineHeight;
+        });
+
+        yPosition += 10; 
+      });
+
+      const filenameBase = generatedCopy[0]?.label.toLowerCase().replace(/\s+/g, '_').substring(0,20) || "marketing";
+      doc.save(`${filenameBase}_marketing_copies.pdf`);
+      toast({ title: "Copies Exported", description: `All generated copies exported as ${filenameBase}_marketing_copies.pdf` });
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({ title: "PDF Export Error", description: "Could not generate PDF. Please try again.", variant: "destructive" });
+    }
+  };
+
 
   const handleCopy = async (textToCopy: string, label: string) => {
     try {
@@ -449,10 +516,14 @@ export default function IPBuilderPage() {
                         </div>
                     ))}
                 </CardContent>
-                <CardFooter>
-                    <Button onClick={handleExport} className="w-full sm:w-auto">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export All Copies (TXT)
+                <CardFooter className="flex flex-wrap gap-2">
+                    <Button onClick={handleExportTxt} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
+                        <Download className="mr-2 h-4 w-4" />
+                        Export All Copies (TXT)
+                    </Button>
+                    <Button onClick={handleExportPdf} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
+                        <Download className="mr-2 h-4 w-4" />
+                        Export All Copies (PDF)
                     </Button>
                 </CardFooter>
               </Card>
