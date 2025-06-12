@@ -40,7 +40,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type. If "social media post", 5 numbered variations, considering platform. If "display ad copy", 3 common ad sizes. If "radio script", 10, 15, 30, 60 sec versions. If "podcast outline", a human-readable text outline.'),
+    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", 10, 15, 30, 60 sec versions. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -54,28 +54,8 @@ export async function generateMarketingCopy(
 
 const prompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
-  input: {schema: GenerateMarketingCopyInputSchema}, // Schema for documentation/LLM, actual prompt() call can have more for Handlebars
+  input: {schema: GenerateMarketingCopyInputSchema}, 
   output: {schema: GenerateMarketingCopyOutputSchema},
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-    ],
-  },
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
 
   {{#if tone}}
