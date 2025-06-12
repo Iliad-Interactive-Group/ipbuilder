@@ -51,7 +51,7 @@ const prompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
   input: {schema: GenerateMarketingCopyInputSchema}, // Schema for documentation/LLM, actual prompt() call can have more for Handlebars
   output: {schema: GenerateMarketingCopyOutputSchema},
-  prompt: `You are a marketing expert specializing in creating engaging content.
+  prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
 
   {{#if isSocialMediaPost}}
   Generate 5 distinct variations of a social media post. Each variation should be clearly numbered (e.g., 1. ..., 2. ..., etc.).
@@ -85,55 +85,63 @@ const prompt = ai.definePrompt({
   {{/if}}
   {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
+  When designing this wireframe, consider best practices for website structure and user experience. Also, draw upon general knowledge of common and effective website layouts for businesses in a similar category to the one described by '{{companyName}}' and '{{productDescription}}'.
+
   For each page, outline the key sections and elements (e.g., Navbar, Hero Section, Feature List, Call to Action, Footer).
   Use the provided Company Name, Product Description, and Keywords to suggest relevant placeholder content for headlines, navigation links, service names, etc.
   The output should be a structured textual description of the wireframe. For example:
 
   **Homepage**
-  *   **Navbar:** Logo ({{companyName}}), Home, About Us, Services, Contact Us
+  *   **Navbar:** Logo ({{companyName}}), Home, About Us, Services, Contact Us (Consider clear, standard navigation)
   *   **Hero Section:**
-      *   Headline: [Compelling headline based on {{productDescription}} and {{keywords}}]
-      *   Sub-headline: [Brief explanation or benefit]
-      *   CTA Button: "Learn More" or "Get Started"
-      *   Background Image: Placeholder for a relevant image
-  *   **Services Overview (using {{keywords}}):**
-      *   Section Title: Our Core Offerings
-      *   Service 1: [Name based on keyword 1] - [Short description]
-      *   Service 2: [Name based on keyword 2] - [Short description]
-      *   Service 3: [Name based on keyword 3] - [Short description]
+      *   Headline: [Compelling headline based on {{productDescription}} and {{keywords}}, conveying core value proposition]
+      *   Sub-headline: [Brief explanation or benefit, supporting the main headline]
+      *   CTA Button: "Learn More" or "Get Started" (Clear and action-oriented)
+      *   Background Image: Placeholder for a relevant, high-quality image
+  *   **Services/Products Overview (using {{keywords}}):**
+      *   Section Title: Our Core Offerings / Key Solutions
+      *   Service 1: [Name based on keyword 1] - [Short, benefit-driven description]
+      *   Service 2: [Name based on keyword 2] - [Short, benefit-driven description]
+      *   Service 3: [Name based on keyword 3] - [Short, benefit-driven description]
+      *   (Consider visual placeholders if applicable, e.g., icons or small images per service)
   *   **About Us Snippet:**
-      *   Text: Brief introduction to {{companyName}} and its mission.
+      *   Text: Brief introduction to {{companyName}}, its mission, and unique selling points.
       *   Link: "Read More About Us" (to About Us page)
-  *   **Call to Action:**
+  *   **Key Differentiators/Trust Signals (Optional, but good practice):**
+      *   Section for client logos, testimonials, or key statistics.
+  *   **Call to Action (Main):**
       *   Headline: Ready to experience [key benefit from {{productDescription}}]?
-      *   Button: "Contact Us Today"
-  *   **Footer:** Copyright {{companyName}} {{currentYear}}, Social Media Links, Privacy Policy
+      *   Button: "Contact Us Today" or "Request a Quote"
+  *   **Footer:** Copyright {{companyName}} {{currentYear}}, Social Media Links, Privacy Policy, Terms of Service, Contact Info (Standard footer elements)
 
   **About Us Page**
-  *   **Navbar:** (Same as Homepage)
+  *   **Navbar:** (Consistent with Homepage)
   *   **Page Title:** About {{companyName}}
-  *   **Our Mission:** [Detailed text about company mission, values, related to {{productDescription}}]
-  *   **Our Story:** [Brief history or founding story of {{companyName}}]
-  *   **Team Section (Optional):** Placeholder for "Meet Our Team"
-  *   **Footer:** (Same as Homepage)
+  *   **Our Mission/Vision:** [Detailed text about company mission, values, goals, related to {{productDescription}}]
+  *   **Our Story/History:** [Brief history, founding story, or evolution of {{companyName}}]
+  *   **Our Team (Optional, good for building trust):** Placeholder for "Meet Our Team" with brief bios/photos.
+  *   **Company Values/Culture (Optional):** Highlight what makes {{companyName}} unique.
+  *   **Footer:** (Consistent with Homepage)
 
-  **Services/Product Page**
-  *   **Navbar:** (Same as Homepage)
-  *   **Page Title:** Our Services/Products (tailor based on {{productDescription}})
+  **Services/Product Page (can be one page or multiple, depending on complexity)**
+  *   **Navbar:** (Consistent with Homepage)
+  *   **Page Title:** Our Services / Our Products (tailor based on {{productDescription}})
   *   **Service/Product 1 (based on {{keywords}}):**
       *   Headline: [Detailed name of Service/Product 1]
       *   Image/Icon Placeholder
-      *   Description: [Detailed description of features and benefits]
-      *   CTA: "Request a Demo" or "View Pricing"
+      *   Detailed Description: [Comprehensive description of features, benefits, use cases, and problems solved]
+      *   Specific CTA: "Request a Demo," "View Pricing," "Add to Cart," or "Learn More about [Service 1]"
   *   **Service/Product 2 (if applicable, based on {{keywords}}):**
       *   Headline: [Detailed name of Service/Product 2]
       *   Image/Icon Placeholder
-      *   Description: [Detailed description of features and benefits]
-      *   CTA: "Explore Feature"
-  *   **Testimonial Section (Optional):** Placeholder for client quotes
-  *   **Footer:** (Same as Homepage)
+      *   Detailed Description: [Comprehensive description]
+      *   Specific CTA
+  *   **(Repeat for other key services/products)**
+  *   **Testimonial Section (Optional, highly recommended for service/product pages):** Placeholder for client quotes relevant to these offerings.
+  *   **FAQ Section (Optional):** Address common questions about these services/products.
+  *   **Footer:** (Consistent with Homepage)
 
-  Ensure the wireframe is described clearly and provides a good foundation for design and development.
+  Ensure the wireframe is described clearly, promotes good usability, and provides a solid foundation for design and development, reflecting typical user expectations for such a business.
   {{/if}}
   {{#if isPodcastOutline}}
   Use the following template to generate the podcast outline. Fill in the bracketed placeholders with relevant content based on the provided keywords, company name, and product description.
@@ -235,4 +243,3 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output!;
   }
 );
-
