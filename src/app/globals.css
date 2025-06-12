@@ -2,92 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 94.1%; /* #F0F0F0 */
-    --foreground: 0 0% 10%; /* Dark Grey */
+    --background: 0 0% 96%; /* Light Gray (matches #F4F4F4 from site) */
+    --foreground: 210 25% 15%; /* Dark Blue/Black for text */
 
     --card: 0 0% 100%; /* White cards */
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 210 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 210 25% 15%;
 
-    /* Primary is Orange for buttons as per user request */
-    --primary: 17 100% 73.7%; /* #FFA07A */
-    --primary-foreground: 17 70% 20%; /* Dark orange/brown text for contrast */
+    /* Primary is Iliad Blue */
+    --primary: 203 95% 41%; /* Iliad Main Blue #077CC6 */
+    --primary-foreground: 0 0% 100%; /* White for contrast on blue */
 
-    --secondary: 0 0% 90%; 
-    --secondary-foreground: 0 0% 9%;
+    /* Secondary is Iliad Darker Blue */
+    --secondary: 208 100% 28%; /* Iliad Darker Blue #004A8F */
+    --secondary-foreground: 0 0% 100%; /* White */
 
-    --muted: 0 0% 85%; 
-    --muted-foreground: 0 0% 40%;
+    --muted: 210 20% 92%; /* Very light blue-gray */
+    --muted-foreground: 210 15% 45%; /* Mid cool gray */
 
-    /* Accent is Purple for branding elements */
-    --accent: 276 47.1% 75.5%; /* #B19CD9 */
-    --accent-foreground: 276 50% 20%; /* Dark purple text for contrast */
+    /* Accent is Iliad Gold */
+    --accent: 44 98% 53%; /* Iliad Gold #FDB913 */
+    --accent-foreground: 44 90% 10%; /* Very dark brown for contrast on gold */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 80%;
-    --input: 0 0% 98%; 
-    --ring: 17 100% 63.7%; /* Ring color based on Orange (primary) */
+    --border: 210 15% 88%; /* Light cool gray border */
+    --input: 0 0% 100%; /* White input background */
+    --ring: 203 95% 41%; /* Ring color based on Iliad Main Blue */
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar colors adjusted to be more neutral or align with new theme */
+    --sidebar-background: 210 20% 97%; /* Very light cool gray, similar to app background */
+    --sidebar-foreground: 210 20% 25%; /* Darker cool gray for text */
+    --sidebar-primary: 203 95% 41%; /* Iliad Blue for primary elements in sidebar */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 210 20% 90%; /* Lighter cool gray for accents */
+    --sidebar-accent-foreground: 210 20% 20%; /* Dark cool gray for text on accent */
+    --sidebar-border: 210 15% 85%;
+    --sidebar-ring: 203 95% 41%;
   }
   .dark {
-    /* Keeping existing dark theme, but it's not the focus of this request */
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --background: 210 20% 10%; /* Very dark blue */
+    --foreground: 210 15% 90%; /* Light cool gray/white */
+
+    --card: 210 20% 12%; /* Slightly lighter dark blue */
+    --card-foreground: 210 15% 90%;
+
+    --popover: 210 20% 10%;
+    --popover-foreground: 210 15% 90%;
     
-    --primary: 17 100% 73.7%; /* #FFA07A Orange */
-    --primary-foreground: 17 70% 20%; 
+    /* Primary is a brighter Iliad Blue for dark mode */
+    --primary: 203 95% 55%; 
+    --primary-foreground: 210 100% 15%; /* Very dark blue/black for contrast */
 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    /* Secondary is a brighter Iliad Darker Blue */
+    --secondary: 208 100% 40%;
+    --secondary-foreground: 210 100% 10%;
 
-    --accent: 276 47.1% 75.5%; /* #B19CD9 Purple */
-    --accent-foreground: 276 50% 20%;
+    --muted: 210 20% 20%; /* Darker cool gray */
+    --muted-foreground: 210 15% 65%; /* Lighter cool gray */
+
+    /* Accent is a brighter Iliad Gold for dark mode */
+    --accent: 44 98% 60%; 
+    --accent-foreground: 44 90% 10%; /* Dark brown for contrast */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 17 100% 63.7%; 
+    --border: 210 15% 25%;
+    --input: 210 20% 15%;
+    --ring: 203 95% 55%; 
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --chart-1: 203 80% 55%; /* Adjusted chart colors */
+    --chart-2: 44 85% 60%;
+    --chart-3: 208 70% 50%;
+    --chart-4: 180 65% 60%;
+    --chart-5: 30 75% 55%;
+
+    /* Dark Sidebar colors */
+    --sidebar-background: 210 20% 8%; /* Even darker blue for sidebar */
+    --sidebar-foreground: 210 15% 85%; /* Light cool gray for text */
+    --sidebar-primary: 203 95% 55%; /* Brighter Iliad Blue */
+    --sidebar-primary-foreground: 210 100% 15%; /* Dark blue/black */
+    --sidebar-accent: 210 20% 15%; /* Dark blue-gray accent */
+    --sidebar-accent-foreground: 210 15% 80%; /* Lighter gray for text on accent */
+    --sidebar-border: 210 15% 20%;
+    --sidebar-ring: 203 95% 55%;
   }
 }
 
