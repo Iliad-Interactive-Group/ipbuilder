@@ -36,7 +36,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations. If "display ad copy", it will contain copy for 3 common ad sizes. If "radio script", it will contain versions for 10, 15, 30, and 60 seconds.'),
+    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations. If "display ad copy", it will contain copy for 3 common ad sizes. If "radio script", it will contain versions for 10, 15, 30, and 60 seconds. If "podcast outline", it will be a human-readable text outline.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -83,6 +83,86 @@ const prompt = ai.definePrompt({
   Ensure the copy for each version is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
+  {{else if isPodcastOutline}}
+  You are an expert podcast producer. Generate a detailed, human-readable podcast episode outline based on the provided keywords: "{{keywords}}", company name: "{{companyName}}", and product description: "{{productDescription}}".
+  The outline should be well-structured and easy to follow as plain text. Use clear headings (e.g., **Section Title:**) and bullet points (e.g., * Key point) for key details.
+
+  Here is the structure to follow for the plain text podcast outline:
+
+  **Podcast Episode Outline**
+
+  **Episode Title:** [Generate a catchy, descriptive title reflecting the episode’s topic or theme related to the product/service and keywords]
+
+  **Episode Goal:** [One sentence summarizing the purpose, e.g., “To explore how the product/service helps X and share practical insights.”]
+
+  **Target Audience:** [Briefly describe the intended listeners, e.g., “Marketing professionals interested in Y.”]
+
+  **Total Length:** [Target duration, e.g., 20–30 minutes]
+
+  ---
+  **1. Introduction (Approx. 2–3 minutes)**
+  *   **Hook:** [Start with an engaging question, statistic, quote, or anecdote related to the keywords or product/service to grab attention.]
+  *   **Episode Overview:** [Briefly summarize what the episode covers and why it matters, referencing the company and product.]
+  *   **Host Intro:** (Optional) [E.g., “I’m [Host Name], and this is [Podcast Name].”]
+  *   **Guest Intro (if applicable):** [Name, credentials, and relevance.]
+  *   **Sponsor/Context (Optional):** [E.g., “This episode is brought to you by {{companyName}}.”]
+
+  ---
+  **2. Main Content (Approx. 15–20 minutes)**
+  *(Break into 2–3 segments for structure and pacing. Fill in based on keywords, company, and product.)*
+
+  *   **Segment 1: [Descriptive Title for Segment 1 - e.g., Understanding the Core of {{productDescription}}] (Approx. 5–7 minutes)**
+      *   **Key Points:**
+          *   [Main idea 1 related to product/keywords]
+          *   [Main idea 2 related to product/keywords]
+          *   [Main idea 3 related to product/keywords]
+      *   **Details/Talking Points/Questions:**
+          *   [Specific point or question to elaborate on main idea 1]
+          *   [Specific point or question to elaborate on main idea 2]
+      *   **Supporting Material (Examples/Stories/Data - can be hypothetical or based on product description):**
+          *   [Brief example or statistic related to {{companyName}} or {{productDescription}}]
+      *   **Transition to next segment:** [E.g., “Now that we've covered X, let’s look at Y…”]
+
+  *   **Segment 2: [Descriptive Title for Segment 2 - e.g., Real-World Applications & Benefits] (Approx. 5–7 minutes)**
+      *   **Key Points:**
+          *   [Practical application 1 of {{productDescription}} based on {{keywords}}]
+          *   [Benefit 1 for the target audience]
+      *   **Details/Talking Points/Questions:**
+          *   [How does application 1 solve a problem for the audience?]
+          *   [What are the tangible results of benefit 1?]
+      *   **Supporting Material (Examples/Stories/Data):**
+          *   [Scenario illustrating the application or benefit]
+      *   **Transition to next segment (if any):** [E.g., “So we’ve seen the benefits, but what about potential challenges?”]
+
+  *   **(Optional) Segment 3: [Descriptive Title for Segment 3 - e.g., Overcoming Challenges / Future Outlook] (Approx. 3–5 minutes)**
+      *   **Key Points:**
+          *   [Challenge 1 related to the product/service or industry]
+          *   [Future trend or innovation from {{companyName}}]
+      *   **Details/Talking Points/Questions:**
+          *   [How to address challenge 1?]
+          *   [What does this future trend mean for listeners?]
+      *   **Supporting Material (Examples/Stories/Data):**
+          *   [Insight or statistic about the future trend]
+
+  ---
+  **3. Listener Engagement (Approx. 1–2 minutes)**
+  *   **Call-to-Action:** [Encourage interaction, e.g., “Learn more about {{productDescription}} at {{companyName}}'s website or share your thoughts using #[RelevantHashtag].”]
+  *   **Feedback Prompt:** [E.g., “Send us your questions about X for a future Q&A episode at [email/website].”]
+  *   **Community Plug (Optional):** [E.g., “Join our newsletter for more insights.”]
+
+  ---
+  **4. Conclusion (Approx. 2–3 minutes)**
+  *   **Recap:** [Summarize the 2-3 main takeaways from the episode.]
+  *   **Teaser for Next Episode:** [Preview the topic of the next episode.]
+  *   **Thank You:** [Acknowledge listeners, guests, sponsors.]
+  *   **Sign-Off:** [Consistent closing, e.g., “Until next time, keep innovating with [Podcast Name/ {{companyName}}].”]
+
+  ---
+  **Notes for Production (Optional - For Host/Producer):**
+  *   [Key reminders for recording, e.g., "Emphasize {{keywords}} during Segment 1."]
+  *   [Ideas for show notes: "Include link to {{companyName}}'s latest blog on {{productDescription}}."]
+
+  Ensure the output is plain text, well-formatted, and directly usable as a script outline.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -165,68 +245,7 @@ const prompt = ai.definePrompt({
 
   Ensure the wireframe is described clearly, promotes good usability, and provides a solid foundation for design and development, reflecting typical user expectations for such a business.
   {{/if}}
-  {{#if isPodcastOutline}}
-  Use the following template to generate the podcast outline. Fill in the bracketed placeholders with relevant content based on the provided keywords, company name ({{companyName}}), and product description ({{productDescription}}).
 
-  **Podcast Episode Outline Template**
-
-  **Episode Title:** [Insert a catchy, descriptive title reflecting the episode’s topic or theme related to {{productDescription}} and {{keywords}}]
-
-  **Episode Goal:** [One sentence summarizing the purpose, e.g., “To explore how {{productDescription}} helps [target audience/solve problem] and share practical insights for listeners.”]
-
-  **Target Audience:** [Briefly describe the intended listeners, e.g., “Marketing professionals interested in [relevant keyword/topic related to productDescription]].”]
-
-  **Total Length:** [Target duration, e.g., 20–30 minutes]
-
-  **1. Introduction (2–3 minutes)**
-  *   **Hook:** [Start with an engaging question, statistic, quote, or anecdote related to {{keywords}} or {{productDescription}} to grab attention, e.g., “Did you know that [relevant statistic/fact related to keywords]?”]
-  *   **Episode Overview:** [Briefly summarize what the episode covers and why it matters, e.g., “Today, we’ll dive into how {{companyName}}'s {{productDescription}} can transform [benefit related to keywords].”]
-  *   **Host Intro:** [Optional: Introduce yourself or co-hosts, e.g., “I’m [Host Name], and this is IPbuilderAI Insights.”]
-  *   **Guest Intro (if applicable):** [Name, credentials, and relevance, e.g., “Joining us is [Guest Name], an expert in [field related to keywords].”]
-  *   **Optional:** [Mention sponsors, call-to-action, or podcast context, e.g., “This episode is brought to you by {{companyName}}.”]
-
-  **2. Main Content (15–20 minutes)**
-  *Break into 2–4 segments for structure and pacing. Adjust based on format (interview, solo, or narrative).*
-
-  *   **Segment 1: Understanding the Core - {{keywords}} and {{productDescription}} (5–7 minutes)**
-      *   **Key Points:** [List 2–3 main ideas, e.g., “What is {{productDescription}} at its core? Why are {{keywords}} critical in this context?”]
-      *   **Details/Questions:** [Specific talking points or questions, e.g., “Define {{productDescription}} in simple terms; How does it address [problem related to keywords]?”]
-      *   **Supporting Material:** [Reference data, client success stories (hypothetical if none provided), or quotes related to {{companyName}} or {{productDescription}}, e.g., “A recent study by [Source] shows that businesses using [type of product/service] see a X% increase in [benefit].”]
-      *   **Transition:** [How to move to the next segment, e.g., “Now that we have a clear understanding of {{productDescription}}, let’s explore its practical applications.”]
-
-  *   **Segment 2: Real-World Impact & Benefits (5–7 minutes)**
-      *   **Key Points:** [E.g., “Practical examples of {{productDescription}} in action; Demonstrating value through {{keywords}}.”]
-      *   **Details/Questions:** [E.g., “Describe a scenario where {{productDescription}} solved a major challenge; How can listeners leverage {{keywords}} to maximize the benefits of {{productDescription}}?”]
-      *   **Supporting Material:** [E.g., “Imagine a company like [Example Company Type] struggling with [Problem]. {{companyName}}'s solution helped them achieve [Result].”]
-      *   **Transition:** [E.g., “These applications are powerful, but what are some common misconceptions or challenges?”]
-
-  *   **Segment 3 (Optional): Addressing Challenges & Future Outlook (3–5 minutes)**
-      *   **Key Points:** [E.g., “Common obstacles when implementing solutions like {{productDescription}}; The future of [industry related to keywords] with {{companyName}}'s innovations.”]
-      *   **Details/Questions:** [E.g., “Discuss potential integration challenges; What’s next for {{productDescription}}?”]
-      *   **Supporting Material:** [E.g., “Quote from {{companyName}}'s leadership (if available/inferable) or industry expert on future trends.”]
-
-  **3. Listener Engagement (1–2 minutes)**
-  *   **Call-to-Action:** [Encourage interaction, e.g., “Learn more about {{productDescription}} at [{{companyName}} website/link] or share your thoughts on [social media platform] using #{{companyName}}!”]
-  *   **Feedback Prompt:** [E.g., “Send us your questions about {{productDescription}} or {{keywords}} for a future Q&A episode at [email/website].”]
-  *   **Community Plug:** [E.g., “Join our newsletter for more insights on {{keywords}} and {{companyName}}'s offerings.”]
-
-  **4. Conclusion (2–3 minutes)**
-  *   **Recap:** [Summarize key takeaways, e.g., “We learned how {{companyName}}'s {{productDescription}} effectively utilizes {{keywords}} to deliver [key benefit].”]
-  *   **Teaser:** [Preview next episode, e.g., “Next week, we’ll explore another facet of {{keywords}} or a new offering from {{companyName}}.”]
-  *   **Thank You:** [Acknowledge listeners, guests, or sponsors, e.g., “Big thanks to our listeners for tuning in.”]
-  *   **Sign-Off:** [Consistent closing, e.g., “Until next time, keep innovating with IPbuilderAI.”]
-
-  **5. Technical Notes (For internal use, AI does not need to fill this unless specifically asked)**
-  *   Recording Details: [E.g., “Record via Zoom; use Blue Yeti mic; check audio levels.”]
-  *   Post-Production: [E.g., “Edit in Audacity; add intro music; publish by Friday.”]
-  *   Show Notes: [E.g., “Include links to {{companyName}}'s website, resources mentioned, guest bio (if any), and timestamps.”]
-
-  Tips for Using This Outline
-  *   Customize: Tailor segments to your podcast’s format (e.g., add storytelling for narrative podcasts or Q&A for interviews).
-  *   Time Management: Stick to time estimates to maintain pacing; adjust during recording if needed.
-  *   Flexibility: Use bullet points as a guide, not a script, to keep the conversation natural.
-  *   Preparation: Fill in specific details (e.g., guest questions, stats) before recording to stay focused.
-  {{/if}}
 
   {{#if additionalInstructions}}
   Additional instructions: {{additionalInstructions}}
