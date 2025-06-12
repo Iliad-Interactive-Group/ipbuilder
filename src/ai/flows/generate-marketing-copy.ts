@@ -35,7 +35,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type.'),
+    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -53,10 +53,17 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateMarketingCopyOutputSchema},
   prompt: `You are a marketing expert specializing in creating engaging content.
 
+  {{#if isSocialMediaPost}}
+  Generate 5 distinct variations of a social media post. Each variation should be clearly numbered (e.g., 1. ..., 2. ..., etc.).
+  Incorporate these keywords: {{keywords}}.
+  Company Name (if provided): {{companyName}}
+  Product Description (if provided): {{productDescription}}
+  {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
+  {{/if}}
 
   {{#if isRadioScript}}
   The radio script should be approximately 30 seconds in length.
@@ -204,6 +211,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
     const isWebsiteWireframe = input.contentType === "website wireframe";
     const isBlogPost = input.contentType === "blog post";
     const isPodcastOutline = input.contentType === "podcast outline";
+    const isSocialMediaPost = input.contentType === "social media post";
 
     const promptData = {
       ...input,
@@ -214,6 +222,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isWebsiteWireframe,
       isBlogPost,
       isPodcastOutline,
+      isSocialMediaPost,
     };
     
     const {output} = await prompt(promptData);
