@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History, KeyRound } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -84,7 +84,6 @@ const CONTENT_TYPES = [
   { value: "billboard", label: "Billboard Ad", icon: <Presentation className="w-4 h-4" /> },
   { value: "website wireframe", label: "Website Wireframe", icon: <LayoutDashboard className="w-4 h-4" /> },
   { value: "display ad copy", label: "Display Ad Copy", icon: <ImageIconLucide className="w-4 h-4" /> },
-  { value: "google keywords", label: "Google Keywords (SEO)", icon: <KeyRound className="w-4 h-4" /> },
 ];
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -143,7 +142,7 @@ export default function IPBuilderPage() {
       productDescription: "",
       keywords: "",
       contentType: [],
-      tone: NO_TONE_SELECTED_VALUE, 
+      tone: NO_TONE_SELECTED_VALUE,
       socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
       additionalInstructions: "",
     },
@@ -157,7 +156,7 @@ export default function IPBuilderPage() {
     if (selectedFile) {
       setFile(selectedFile);
       setFileName(selectedFile.name);
-      setWebsiteUrl(""); 
+      setWebsiteUrl("");
     } else {
       setFile(null);
       setFileName("");
@@ -168,7 +167,7 @@ export default function IPBuilderPage() {
     const url = event.target.value;
     setWebsiteUrl(url);
     if (url) {
-      setFile(null); 
+      setFile(null);
       setFileName("");
       const fileInput = document.getElementById('document-upload') as HTMLInputElement;
       if (fileInput) {
@@ -188,15 +187,15 @@ export default function IPBuilderPage() {
     }
 
     setIsSummarizing(true);
-    setGeneratedCopy(null); 
+    setGeneratedCopy(null);
 
     try {
-      let summaryOutput: SummarizeDocumentOutput | SummarizeWebsiteOutput; 
+      let summaryOutput: SummarizeDocumentOutput | SummarizeWebsiteOutput;
 
       if (file) {
         const dataUri = await fileToDataUri(file);
         summaryOutput = await summarizeDocument({ documentDataUri: dataUri });
-      } else { 
+      } else {
         summaryOutput = await summarizeWebsite({ websiteUrl: websiteUrl.trim() });
       }
       
@@ -311,7 +310,7 @@ export default function IPBuilderPage() {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const marketingInput: any = { // Using 'any' temporarily for easier construction
           keywords: data.keywords,
-          contentType: typeValue, 
+          contentType: typeValue,
           tone: toneForAI || "",
           additionalInstructions: data.additionalInstructions || "",
           companyName: data.companyName,
@@ -331,9 +330,13 @@ export default function IPBuilderPage() {
       }
       setGeneratedCopy(allGeneratedCopies);
       toast({ title: "Marketing Copy Generated!", description: `Generated copy for ${allGeneratedCopies.length} content type(s).` });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating copy:", error);
-      toast({ title: "Generation Error", description: "Could not generate marketing copy. Please try again.", variant: "destructive" });
+      let errorMessage = "Could not generate marketing copy. Please try again or check your input.";
+       if (error.message) {
+        errorMessage = error.message;
+      }
+      toast({ title: "Generation Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -342,7 +345,7 @@ export default function IPBuilderPage() {
   const handleExportTxt = () => {
     if (generatedCopy && generatedCopy.length > 0) {
       const firstContentTypeLabel = generatedCopy[0].label || "marketing";
-      const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`; 
+      const filenameBase = `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`;
       exportTextFile(filenameBase, generatedCopy);
       toast({ title: "Copies Exported", description: `All generated copies exported as ${filenameBase}_marketing_copies.txt`});
     }
@@ -356,12 +359,12 @@ export default function IPBuilderPage() {
 
     try {
       const doc = new jsPDF();
-      let yPosition = 15; 
+      let yPosition = 15;
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
       const margin = 15;
       const maxLineWidth = pageWidth - margin * 2;
-      const lineHeightFactor = 1.15; 
+      const lineHeightFactor = 1.15;
 
       doc.setFontSize(18);
       const mainTitle = "Generated Marketing Copies";
@@ -379,26 +382,26 @@ export default function IPBuilderPage() {
 
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        const labelLineHeight = 14 * lineHeightFactor; 
+        const labelLineHeight = 14 * lineHeightFactor;
         const contentTypeLabel = `Content Type: ${copy.label}`;
         const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
-        ensureSpace(labelLines.length * labelLineHeight); 
+        ensureSpace(labelLines.length * labelLineHeight);
         doc.text(labelLines, margin, yPosition);
-        yPosition += (labelLines.length * labelLineHeight) + 5; 
+        yPosition += (labelLines.length * labelLineHeight) + 5;
 
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
-        const textLineHeight = 10 * lineHeightFactor; 
+        const textLineHeight = 10 * lineHeightFactor;
         const marketingText = copy.marketingCopy;
         const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
         
         textLines.forEach((line: string) => {
-          ensureSpace(textLineHeight); 
+          ensureSpace(textLineHeight);
           doc.text(line, margin, yPosition);
           yPosition += textLineHeight;
         });
 
-        yPosition += 10; 
+        yPosition += 10;
       });
 
       const filenameBase = generatedCopy[0]?.label.toLowerCase().replace(/\s+/g, '_').substring(0,20) || "marketing";
@@ -428,16 +431,16 @@ export default function IPBuilderPage() {
             body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
             h1 { font-size: 1.8em; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
             h2 { font-size: 1.4em; margin-top: 20px; margin-bottom: 8px; color: #555; }
-            pre { 
-              background-color: #f8f8f8; 
-              border: 1px solid #ddd; 
-              padding: 15px; 
-              white-space: pre-wrap; 
-              word-wrap: break-word; 
-              font-family: Consolas, 'Courier New', monospace; 
+            pre {
+              background-color: #f8f8f8;
+              border: 1px solid #ddd;
+              padding: 15px;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              font-family: Consolas, 'Courier New', monospace;
               font-size: 0.95em;
               border-radius: 4px;
-              overflow-x: auto; 
+              overflow-x: auto;
             }
             div { margin-bottom: 20px; }
           </style>
@@ -503,7 +506,7 @@ export default function IPBuilderPage() {
       tone: NO_TONE_SELECTED_VALUE,
       socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
       additionalInstructions: "",
-    }); 
+    });
     setFile(null);
     setFileName("");
     setWebsiteUrl("");
@@ -511,7 +514,7 @@ export default function IPBuilderPage() {
     
     const fileInput = document.getElementById('document-upload') as HTMLInputElement;
     if (fileInput) {
-      fileInput.value = ""; 
+      fileInput.value = "";
     }
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
@@ -523,7 +526,6 @@ export default function IPBuilderPage() {
       case 'podcast outline':
       case 'radio script':
       case 'blog post':
-      case 'google keywords':
         return 15;
       default:
         return 8;
@@ -548,12 +550,12 @@ export default function IPBuilderPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="document-upload" className="font-medium">Upload Document</Label>
-                <Input 
-                  id="document-upload" 
-                  type="file" 
-                  onChange={handleFileChange} 
+                <Input
+                  id="document-upload"
+                  type="file"
+                  onChange={handleFileChange}
                   className="mt-1"
-                  accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf" 
+                  accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf"
                   disabled={isSummarizing || !!websiteUrl.trim()}
                 />
                 {fileName && <p className="mt-2 text-sm text-muted-foreground">Selected file: {fileName}</p>}
@@ -644,10 +646,10 @@ export default function IPBuilderPage() {
                             <FormControl className="flex-grow">
                                 <Input placeholder="e.g., AI, SaaS, marketing (comma-separated)" {...field} />
                             </FormControl>
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={handleSuggestKeywords} 
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleSuggestKeywords}
                                 disabled={isSuggestingKeywords || !form.getValues("companyName") || !form.getValues("productDescription")}
                                 className="shrink-0"
                             >
