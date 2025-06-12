@@ -45,14 +45,6 @@ const prompt = ai.definePrompt({
   Ensure all fields in the output schema are populated. If information for a particular field cannot be found *on the specified URL*, or if you are unable to access or process the content of {{websiteUrl}}, use an empty string for text fields or an empty array for keyword fields. Do not infer information from external sources or similar-sounding websites. The output should be formatted as a JSON object.
 
   Website URL: {{websiteUrl}}`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-    ],
-  },
 });
 
 const summarizeWebsiteFlow = ai.defineFlow(
@@ -69,5 +61,3 @@ const summarizeWebsiteFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
