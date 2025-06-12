@@ -27,7 +27,11 @@ const GenerateMarketingCopyInputSchema = z.object({
     .optional()
     .describe('Any additional instructions for copy generation.'),
   companyName: z.string().optional().describe('The company name, useful for wireframe generation.'),
-  productDescription: z.string().optional().describe('The product description, useful for wireframe generation.')
+  productDescription: z.string().optional().describe('The product description, useful for wireframe generation.'),
+  socialMediaPlatform: z
+    .string()
+    .optional()
+    .describe('The specific social media platform (e.g., Twitter, Facebook, Instagram, LinkedIn, TikTok) if contentType is "social media post".')
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -36,7 +40,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations. If "display ad copy", it will contain copy for 3 common ad sizes. If "radio script", it will contain versions for 10, 15, 30, and 60 seconds. If "podcast outline", it will be a human-readable text outline.'),
+    .describe('The generated marketing copy tailored to the specified content type. If "social media post", 5 numbered variations, considering platform. If "display ad copy", 3 common ad sizes. If "radio script", 10, 15, 30, 60 sec versions. If "podcast outline", a human-readable text outline.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -59,7 +63,13 @@ const prompt = ai.definePrompt({
   {{/if}}
 
   {{#if isSocialMediaPost}}
-  Generate 5 distinct variations of a social media post. Each variation should be clearly numbered (e.g., 1. ..., 2. ..., etc.).
+  Generate 5 distinct variations of a social media post.
+  {{#if socialMediaPlatform}}
+  Tailor these posts specifically for the "{{socialMediaPlatform}}" platform. Consider platform-specific best practices such as optimal length, tone, use of hashtags, emojis, and any typical content formats for "{{socialMediaPlatform}}".
+  {{else}}
+  These posts should be general enough for use on multiple platforms.
+  {{/if}}
+  Each variation should be clearly numbered (e.g., 1. ..., 2. ..., etc.).
   Incorporate these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
@@ -177,7 +187,7 @@ const prompt = ai.definePrompt({
   The billboard ad should be highly creative and concise, using no more than 8 words.
   {{/if}}
   {{#if isBlogPost}}
-  The blog post should be approximately 200 to 360 words in length.
+  The blog post should be approximately 2450 words in length.
   When crafting the blog post, please incorporate relevant information and insights about the company's core products or services, primarily drawing from the '{{productDescription}}' and using '{{companyName}}' for context.
   This should involve:
   *   Elaborating on the key features and benefits mentioned in the product description.

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import jsPDF from 'jspdf';
@@ -17,12 +17,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { summarizeWebsite } from '@/ai/flows/summarize-website-flow';
 import type { SummarizeWebsiteOutput } from '@/ai/flows/summarize-website-flow';
+import { suggestKeywords } from '@/ai/flows/suggest-keywords-flow.ts';
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
@@ -40,7 +41,18 @@ const TONES = [
   { value: "inspirational", label: "Inspirational" },
 ];
 
-const NO_TONE_SELECTED_VALUE = "_no_tone_selected_"; 
+const SOCIAL_MEDIA_PLATFORMS = [
+  { value: "generic", label: "Generic / Not Specified" },
+  { value: "twitter", label: "Twitter / X" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "instagram", label: "Instagram" },
+  { value: "facebook", label: "Facebook" },
+  { value: "tiktok", label: "TikTok" },
+];
+
+const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
+const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
+const LOCAL_STORAGE_BRIEF_KEY = 'ipbuilder_saved_brief';
 
 const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -48,10 +60,13 @@ const formSchema = z.object({
   keywords: z.string().min(1, "Keywords are required (comma-separated)"),
   contentType: z.array(z.string()).min(1, "Please select at least one content type."),
   tone: z.string().optional(),
+  socialMediaPlatform: z.string().optional(),
   additionalInstructions: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+interface SavedBriefData extends Omit<FormData, 'contentType'> {}
 
 interface GeneratedCopyItem {
   value: string;
@@ -108,10 +123,16 @@ export default function IPBuilderPage() {
   const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[] | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSuggestingKeywords, setIsSuggestingKeywords] = useState(false);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [hasSavedBrief, setHasSavedBrief] = useState(false);
+
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
+    if (typeof window !== 'undefined') {
+      setHasSavedBrief(!!localStorage.getItem(LOCAL_STORAGE_BRIEF_KEY));
+    }
   }, []);
 
   const form = useForm<FormData>({
@@ -122,9 +143,13 @@ export default function IPBuilderPage() {
       keywords: "",
       contentType: [],
       tone: NO_TONE_SELECTED_VALUE, 
+      socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
       additionalInstructions: "",
     },
   });
+
+  const selectedContentTypes = form.watch('contentType');
+  const showSocialMediaPlatformSelector = selectedContentTypes?.includes('social media post');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -193,6 +218,78 @@ export default function IPBuilderPage() {
     }
   };
 
+  const handleSuggestKeywords = async () => {
+    const companyName = form.getValues("companyName");
+    const productDescription = form.getValues("productDescription");
+
+    if (!companyName || !productDescription) {
+      toast({ title: "Missing Information", description: "Please provide Company Name and Product Description to suggest keywords.", variant: "destructive"});
+      return;
+    }
+    setIsSuggestingKeywords(true);
+    try {
+      const result = await suggestKeywords({ companyName, productDescription });
+      if (result.suggestedKeywords && result.suggestedKeywords.length > 0) {
+        const currentKeywords = form.getValues("keywords").split(',').map(k => k.trim()).filter(k => k);
+        const newKeywords = result.suggestedKeywords.filter(sk => !currentKeywords.includes(sk));
+        const updatedKeywords = [...currentKeywords, ...newKeywords].join(', ');
+        form.setValue("keywords", updatedKeywords);
+        toast({ title: "Keywords Suggested", description: `${newKeywords.length} new keyword(s) added to your list.`});
+      } else {
+        toast({ title: "No New Keywords", description: "The AI couldn't suggest additional unique keywords at this time."});
+      }
+    } catch (error: any) {
+      console.error("Error suggesting keywords:", error);
+      toast({ title: "Keyword Suggestion Error", description: error.message || "Could not suggest keywords.", variant: "destructive"});
+    } finally {
+      setIsSuggestingKeywords(false);
+    }
+  };
+  
+  const handleSaveBrief = () => {
+    try {
+      const briefData: SavedBriefData = {
+        companyName: form.getValues("companyName"),
+        productDescription: form.getValues("productDescription"),
+        keywords: form.getValues("keywords"),
+        tone: form.getValues("tone") || NO_TONE_SELECTED_VALUE,
+        socialMediaPlatform: form.getValues("socialMediaPlatform") || NO_PLATFORM_SELECTED_VALUE,
+        additionalInstructions: form.getValues("additionalInstructions") || "",
+      };
+      localStorage.setItem(LOCAL_STORAGE_BRIEF_KEY, JSON.stringify(briefData));
+      setHasSavedBrief(true);
+      toast({ title: "Brief Saved", description: "Your marketing brief has been saved locally in your browser."});
+    } catch (error) {
+      console.error("Error saving brief to localStorage:", error);
+      toast({ title: "Save Error", description: "Could not save the brief. Your browser might be blocking localStorage or out of space.", variant: "destructive"});
+    }
+  };
+
+  const handleLoadBrief = () => {
+    try {
+      const savedBriefJson = localStorage.getItem(LOCAL_STORAGE_BRIEF_KEY);
+      if (savedBriefJson) {
+        const savedBrief: SavedBriefData = JSON.parse(savedBriefJson);
+        form.reset({
+            companyName: savedBrief.companyName || "",
+            productDescription: savedBrief.productDescription || "",
+            keywords: savedBrief.keywords || "",
+            contentType: form.getValues('contentType'), // Keep current content type selection
+            tone: savedBrief.tone || NO_TONE_SELECTED_VALUE,
+            socialMediaPlatform: savedBrief.socialMediaPlatform || NO_PLATFORM_SELECTED_VALUE,
+            additionalInstructions: savedBrief.additionalInstructions || "",
+        });
+        toast({ title: "Brief Loaded", description: "Your saved marketing brief has been loaded into the form."});
+      } else {
+        toast({ title: "No Saved Brief", description: "No marketing brief found in local storage.", variant: "default"});
+      }
+    } catch (error) {
+      console.error("Error loading brief from localStorage:", error);
+      toast({ title: "Load Error", description: "Could not load the brief from localStorage. The data might be corrupted.", variant: "destructive"});
+    }
+  };
+
+
   const onSubmit = async (data: FormData) => {
     setIsGenerating(true);
     setGeneratedCopy(null);
@@ -202,11 +299,16 @@ export default function IPBuilderPage() {
     if (toneForAI === NO_TONE_SELECTED_VALUE) {
       toneForAI = "";
     }
+    let platformForAI = data.socialMediaPlatform;
+    if (platformForAI === NO_PLATFORM_SELECTED_VALUE || platformForAI === "generic") {
+      platformForAI = "";
+    }
+
 
     try {
       for (const typeValue of data.contentType) {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
-        const marketingInput = {
+        const marketingInput: any = { // Using 'any' temporarily for easier construction
           keywords: data.keywords,
           contentType: typeValue, 
           tone: toneForAI || "",
@@ -214,6 +316,11 @@ export default function IPBuilderPage() {
           companyName: data.companyName,
           productDescription: data.productDescription,
         };
+
+        if (typeValue === "social media post" && platformForAI) {
+            marketingInput.socialMediaPlatform = platformForAI;
+        }
+
         const result = await generateMarketingCopy(marketingInput);
         allGeneratedCopies.push({
           value: typeValue,
@@ -393,6 +500,7 @@ export default function IPBuilderPage() {
       keywords: "",
       contentType: [],
       tone: NO_TONE_SELECTED_VALUE,
+      socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
       additionalInstructions: "",
     }); 
     setFile(null);
@@ -517,9 +625,21 @@ export default function IPBuilderPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Keywords</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., AI, SaaS, innovation, marketing (comma-separated)" {...field} />
-                        </FormControl>
+                        <div className="flex items-center gap-2">
+                            <FormControl className="flex-grow">
+                                <Input placeholder="e.g., AI, SaaS, marketing (comma-separated)" {...field} />
+                            </FormControl>
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={handleSuggestKeywords} 
+                                disabled={isSuggestingKeywords || !form.getValues("companyName") || !form.getValues("productDescription")}
+                                className="shrink-0"
+                            >
+                                {isSuggestingKeywords ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
+                                Suggest Keywords
+                            </Button>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -603,6 +723,37 @@ export default function IPBuilderPage() {
                       </FormItem>
                     )}
                   />
+
+                  {showSocialMediaPlatformSelector && (
+                     <FormField
+                        control={form.control}
+                        name="socialMediaPlatform"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Social Media Platform (Optional)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_PLATFORM_SELECTED_VALUE}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select platform (for Social Media Posts)" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
+                                <SelectItem key={platform.value} value={platform.value}>
+                                    {platform.label}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                            <FormDescription>
+                            Tailor social media posts for a specific platform.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                  )}
+
                   <FormField
                     control={form.control}
                     name="additionalInstructions"
@@ -616,16 +767,26 @@ export default function IPBuilderPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={isGenerating || isSummarizing} className="w-full sm:w-auto">
-                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    Generate Marketing Copy
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button type="submit" disabled={isGenerating || isSummarizing || isSuggestingKeywords} className="w-full sm:w-auto">
+                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                        Generate Marketing Copy
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleSaveBrief} className="w-full sm:w-auto">
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Brief
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleLoadBrief} disabled={!hasSavedBrief} className="w-full sm:w-auto">
+                        <History className="mr-2 h-4 w-4" />
+                        Load Brief
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
           </Card>
 
-          {(isGenerating || isSummarizing) && (!generatedCopy || generatedCopy.length === 0) && (
+          {(isGenerating || isSummarizing || isSuggestingKeywords) && (!generatedCopy || generatedCopy.length === 0) && (
              <Card className="shadow-lg rounded-xl overflow-hidden">
               <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
                 <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
@@ -655,7 +816,7 @@ export default function IPBuilderPage() {
                                     Copy
                                 </Button>
                             </div>
-                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' || item.value === 'display ad copy' || item.value === 'podcast outline' || item.value === 'radio script' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' || item.value === 'display ad copy' || item.value === 'podcast outline' || item.value === 'radio script' || item.value === 'blog post' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         </div>
                     ))}
                 </CardContent>
@@ -684,3 +845,4 @@ export default function IPBuilderPage() {
     </div>
   );
 }
+
