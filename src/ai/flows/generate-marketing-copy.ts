@@ -166,65 +166,66 @@ const prompt = ai.definePrompt({
   Ensure the wireframe is described clearly, promotes good usability, and provides a solid foundation for design and development, reflecting typical user expectations for such a business.
   {{/if}}
   {{#if isPodcastOutline}}
-  Use the following template to generate the podcast outline. Fill in the bracketed placeholders with relevant content based on the provided keywords, company name, and product description.
+  Use the following template to generate the podcast outline. Fill in the bracketed placeholders with relevant content based on the provided keywords, company name ({{companyName}}), and product description ({{productDescription}}).
 
-  Podcast Episode Outline Template
-  Episode Title: [Insert a catchy, descriptive title reflecting the episode’s topic or theme]
+  **Podcast Episode Outline Template**
 
-  Episode Goal: [One sentence summarizing the purpose, e.g., “Explore the impact of mindfulness on productivity with practical tips for listeners.”]
+  **Episode Title:** [Insert a catchy, descriptive title reflecting the episode’s topic or theme related to {{productDescription}} and {{keywords}}]
 
-  Target Audience: [Briefly describe the intended listeners, e.g., “Busy professionals interested in personal growth.”]
+  **Episode Goal:** [One sentence summarizing the purpose, e.g., “To explore how {{productDescription}} helps [target audience/solve problem] and share practical insights for listeners.”]
 
-  Total Length: [Target duration, e.g., 20–30 minutes]
+  **Target Audience:** [Briefly describe the intended listeners, e.g., “Marketing professionals interested in [relevant keyword/topic related to productDescription]].”]
 
-  1. Introduction (2–3 minutes)
-  Hook: [Start with an engaging question, statistic, quote, or anecdote to grab attention, e.g., “Did you know 80% of people feel overwhelmed daily?”]
-  Episode Overview: [Briefly summarize what the episode covers and why it matters, e.g., “Today, we’ll dive into mindfulness techniques to boost your focus.”]
-  Host Intro: [Optional: Introduce yourself or co-hosts, e.g., “I’m Jane, your guide to practical wellness.”]
-  Guest Intro (if applicable): [Name, credentials, and relevance, e.g., “Joining us is Dr. Lee, a mindfulness expert.”]
-  Optional: [Mention sponsors, call-to-action, or podcast context, e.g., “Part of our Wellness Series.”]
+  **Total Length:** [Target duration, e.g., 20–30 minutes]
 
-  2. Main Content (15–20 minutes)
-  Break into 2–4 segments for structure and pacing. Adjust based on format (interview, solo, or narrative).
+  **1. Introduction (2–3 minutes)**
+  *   **Hook:** [Start with an engaging question, statistic, quote, or anecdote related to {{keywords}} or {{productDescription}} to grab attention, e.g., “Did you know that [relevant statistic/fact related to keywords]?”]
+  *   **Episode Overview:** [Briefly summarize what the episode covers and why it matters, e.g., “Today, we’ll dive into how {{companyName}}'s {{productDescription}} can transform [benefit related to keywords].”]
+  *   **Host Intro:** [Optional: Introduce yourself or co-hosts, e.g., “I’m [Host Name], and this is IPbuilderAI Insights.”]
+  *   **Guest Intro (if applicable):** [Name, credentials, and relevance, e.g., “Joining us is [Guest Name], an expert in [field related to keywords].”]
+  *   **Optional:** [Mention sponsors, call-to-action, or podcast context, e.g., “This episode is brought to you by {{companyName}}.”]
 
-  Segment 1: [Topic or Theme] (5–7 minutes)
-  Key Points: [List 2–3 main ideas, e.g., “What is mindfulness? Why it’s critical for productivity.”]
-  Details/Questions: [Specific talking points or questions, e.g., “Define mindfulness in 1 minute; share a study showing its benefits.”]
-  Supporting Material: [Reference data, stories, or quotes, e.g., “Harvard study: 47% of people are distracted.”]
-  Transition: [How to move to the next segment, e.g., “Now that we know what mindfulness is, let’s talk about how to practice it.”]
+  **2. Main Content (15–20 minutes)**
+  *Break into 2–4 segments for structure and pacing. Adjust based on format (interview, solo, or narrative).*
 
-  Segment 2: [Topic or Theme] (5–7 minutes)
-  Key Points: [E.g., “Practical mindfulness exercises for daily life.”]
-  Details/Questions: [E.g., “Describe a 5-minute breathing exercise; ask guest for their favorite technique.”]
-  Supporting Material: [E.g., “Listener story: How Jane used mindfulness to reduce stress.”]
-  Transition: [E.g., “These exercises sound simple, but what challenges might we face?”]
+  *   **Segment 1: Understanding the Core - {{keywords}} and {{productDescription}} (5–7 minutes)**
+      *   **Key Points:** [List 2–3 main ideas, e.g., “What is {{productDescription}} at its core? Why are {{keywords}} critical in this context?”]
+      *   **Details/Questions:** [Specific talking points or questions, e.g., “Define {{productDescription}} in simple terms; How does it address [problem related to keywords]?”]
+      *   **Supporting Material:** [Reference data, client success stories (hypothetical if none provided), or quotes related to {{companyName}} or {{productDescription}}, e.g., “A recent study by [Source] shows that businesses using [type of product/service] see a X% increase in [benefit].”]
+      *   **Transition:** [How to move to the next segment, e.g., “Now that we have a clear understanding of {{productDescription}}, let’s explore its practical applications.”]
 
-  Segment 3 (Optional): [Topic or Theme] (3–5 minutes)
-  Key Points: [E.g., “Common obstacles and how to overcome them.”]
-  Details/Questions: [E.g., “Discuss time constraints; share a tip for consistency.”]
-  Supporting Material: [E.g., “Quote from a mindfulness coach.”]
+  *   **Segment 2: Real-World Impact & Benefits (5–7 minutes)**
+      *   **Key Points:** [E.g., “Practical examples of {{productDescription}} in action; Demonstrating value through {{keywords}}.”]
+      *   **Details/Questions:** [E.g., “Describe a scenario where {{productDescription}} solved a major challenge; How can listeners leverage {{keywords}} to maximize the benefits of {{productDescription}}?”]
+      *   **Supporting Material:** [E.g., “Imagine a company like [Example Company Type] struggling with [Problem]. {{companyName}}'s solution helped them achieve [Result].”]
+      *   **Transition:** [E.g., “These applications are powerful, but what are some common misconceptions or challenges?”]
 
-  3. Listener Engagement (1–2 minutes)
-  Call-to-Action: [Encourage interaction, e.g., “Try one mindfulness exercise this week and share your experience on X @OurPodcast!”]
-  Feedback Prompt: [E.g., “Send us your questions for a future Q&A episode at ourwebsite.com.”]
-  Community Plug: [E.g., “Join our newsletter for exclusive wellness tips.”]
+  *   **Segment 3 (Optional): Addressing Challenges & Future Outlook (3–5 minutes)**
+      *   **Key Points:** [E.g., “Common obstacles when implementing solutions like {{productDescription}}; The future of [industry related to keywords] with {{companyName}}'s innovations.”]
+      *   **Details/Questions:** [E.g., “Discuss potential integration challenges; What’s next for {{productDescription}}?”]
+      *   **Supporting Material:** [E.g., “Quote from {{companyName}}'s leadership (if available/inferable) or industry expert on future trends.”]
 
-  4. Conclusion (2–3 minutes)
-  Recap: [Summarize key takeaways, e.g., “We learned how mindfulness boosts focus and three easy ways to start.”]
-  Teaser: [Preview next episode, e.g., “Next week, we’ll explore nutrition hacks for energy.”]
-  Thank You: [Acknowledge listeners, guests, or sponsors, e.g., “Big thanks to Dr. Lee and you, our listeners!”]
-  Sign-Off: [Consistent closing, e.g., “Until next time, stay mindful!”]
+  **3. Listener Engagement (1–2 minutes)**
+  *   **Call-to-Action:** [Encourage interaction, e.g., “Learn more about {{productDescription}} at [{{companyName}} website/link] or share your thoughts on [social media platform] using #{{companyName}}!”]
+  *   **Feedback Prompt:** [E.g., “Send us your questions about {{productDescription}} or {{keywords}} for a future Q&A episode at [email/website].”]
+  *   **Community Plug:** [E.g., “Join our newsletter for more insights on {{keywords}} and {{companyName}}'s offerings.”]
 
-  5. Technical Notes
-  Recording Details: [E.g., “Record via Zoom; use Blue Yeti mic; check audio levels.”]
-  Post-Production: [E.g., “Edit in Audacity; add intro music; publish by Friday.”]
-  Show Notes: [E.g., “Include links to mindfulness resources, guest bio, and timestamps.”]
+  **4. Conclusion (2–3 minutes)**
+  *   **Recap:** [Summarize key takeaways, e.g., “We learned how {{companyName}}'s {{productDescription}} effectively utilizes {{keywords}} to deliver [key benefit].”]
+  *   **Teaser:** [Preview next episode, e.g., “Next week, we’ll explore another facet of {{keywords}} or a new offering from {{companyName}}.”]
+  *   **Thank You:** [Acknowledge listeners, guests, or sponsors, e.g., “Big thanks to our listeners for tuning in.”]
+  *   **Sign-Off:** [Consistent closing, e.g., “Until next time, keep innovating with IPbuilderAI.”]
+
+  **5. Technical Notes (For internal use, AI does not need to fill this unless specifically asked)**
+  *   Recording Details: [E.g., “Record via Zoom; use Blue Yeti mic; check audio levels.”]
+  *   Post-Production: [E.g., “Edit in Audacity; add intro music; publish by Friday.”]
+  *   Show Notes: [E.g., “Include links to {{companyName}}'s website, resources mentioned, guest bio (if any), and timestamps.”]
 
   Tips for Using This Outline
-  Customize: Tailor segments to your podcast’s format (e.g., add storytelling for narrative podcasts or Q&A for interviews).
-  Time Management: Stick to time estimates to maintain pacing; adjust during recording if needed.
-  Flexibility: Use bullet points as a guide, not a script, to keep the conversation natural.
-  Preparation: Fill in specific details (e.g., guest questions, stats) before recording to stay focused.
+  *   Customize: Tailor segments to your podcast’s format (e.g., add storytelling for narrative podcasts or Q&A for interviews).
+  *   Time Management: Stick to time estimates to maintain pacing; adjust during recording if needed.
+  *   Flexibility: Use bullet points as a guide, not a script, to keep the conversation natural.
+  *   Preparation: Fill in specific details (e.g., guest questions, stats) before recording to stay focused.
   {{/if}}
 
   {{#if additionalInstructions}}
