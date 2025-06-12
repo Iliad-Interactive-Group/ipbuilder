@@ -37,7 +37,12 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeWebsiteOutputSchema}, 
   prompt: `You are an expert summarizer and data extractor.
 
-  You will be provided a website URL. Your job is to analyze its content to create a concise summary, extract the company name, provide a brief description of the product or service offered, and list relevant keywords. Ensure all fields in the output schema are populated. If information for a field is not found or you cannot access the URL, use an empty string or empty array as appropriate for text and keyword fields respectively. The output should be formatted as a JSON object.
+  You will be provided a specific website URL. Your primary task is to analyze the content found *exclusively* at this exact URL: {{websiteUrl}}. 
+  Do not navigate to other subdomains or different websites unless the content on the provided URL directly and necessarily leads you there for context. Your focus should remain on the single URL given.
+
+  From the content of {{websiteUrl}}, create a concise summary, extract the company name (if clearly stated), provide a brief description of the product or service offered (if present), and list relevant keywords.
+
+  Ensure all fields in the output schema are populated. If information for a particular field cannot be found *on the specified URL*, or if you are unable to access or process the content of {{websiteUrl}}, use an empty string for text fields or an empty array for keyword fields. Do not infer information from external sources or similar-sounding websites. The output should be formatted as a JSON object.
 
   Website URL: {{websiteUrl}}`,
 });
