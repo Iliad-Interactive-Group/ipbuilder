@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import jsPDF from 'jspdf';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -17,7 +18,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, LogOut } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -27,6 +28,7 @@ import type { SummarizeWebsiteOutput } from '@/ai/flows/summarize-website-flow';
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TONES = [
   { value: "professional", label: "Professional" },
@@ -110,9 +112,18 @@ export default function IPBuilderPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
 
+  const { user, loading: authLoading, signOutUser } = useAuth();
+  const router = useRouter();
+
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -125,6 +136,14 @@ export default function IPBuilderPage() {
       additionalInstructions: "",
     },
   });
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -408,8 +427,19 @@ export default function IPBuilderPage() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
+        {user && (
+          <div className="flex justify-between items-center mb-4">
+             <div className="text-sm text-muted-foreground">
+              Signed in as: <span className="font-medium text-foreground">{user.email}</span>
+            </div>
+            <Button variant="outline" onClick={signOutUser} size="sm">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        )}
         <header className="mb-6 text-center">
           <AppLogo />
         </header>
@@ -684,6 +714,3 @@ export default function IPBuilderPage() {
     </div>
   );
 }
-    
-
-    
