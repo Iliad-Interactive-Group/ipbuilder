@@ -35,7 +35,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations. If "display ad copy", it will contain copy for 3 common ad sizes.'),
+    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations. If "display ad copy", it will contain copy for 3 common ad sizes. If "radio script", it will contain versions for 10, 15, 30, and 60 seconds.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -72,6 +72,12 @@ const prompt = ai.definePrompt({
 
   **3. Wide Skyscraper (160x600 pixels):**
   This is a tall, narrow banner. The message needs to be succinct and impactful, often using a vertical flow. Provide a headline, brief body text, and a call to action.
+  {{else if isRadioScript}}
+  Generate four distinct radio script versions of varying lengths: 10 seconds, 15 seconds, 30 seconds, and 60 seconds.
+  Each script version should be clearly labeled with its duration (e.g., "**10-Second Radio Script:**", "**15-Second Radio Script:**", etc.).
+  Ensure the copy for each version is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
+  Company Name (if provided): {{companyName}}
+  Product Description (if provided): {{productDescription}}
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -79,9 +85,6 @@ const prompt = ai.definePrompt({
   Product Description (if provided): {{productDescription}}
   {{/if}}
 
-  {{#if isRadioScript}}
-  The radio script should be approximately 30 seconds in length.
-  {{/if}}
   {{#if isTvScript}}
   The TV script should be approximately 30 seconds in length.
   {{/if}}
@@ -259,3 +262,4 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output!;
   }
 );
+
