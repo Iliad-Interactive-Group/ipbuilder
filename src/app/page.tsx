@@ -121,7 +121,7 @@ export default function IPBuilderPage() {
       productDescription: "",
       keywords: "",
       contentType: [],
-      tone: "", // react-hook-form can have "" as default. Select component will show placeholder.
+      tone: NO_TONE_SELECTED_VALUE, 
       additionalInstructions: "",
     },
   });
@@ -387,7 +387,14 @@ export default function IPBuilderPage() {
   };
 
   const handleClearForm = () => {
-    form.reset(); 
+    form.reset({
+      companyName: "",
+      productDescription: "",
+      keywords: "",
+      contentType: [],
+      tone: NO_TONE_SELECTED_VALUE,
+      additionalInstructions: "",
+    }); 
     setFile(null);
     setFileName("");
     setWebsiteUrl("");
@@ -405,9 +412,6 @@ export default function IPBuilderPage() {
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
         <header className="mb-10 text-center">
           <AppLogo />
-          <p className="mt-2 text-muted-foreground font-body">
-            Leverage AI to build compelling intellectual property narratives and marketing content.
-          </p>
         </header>
 
         <div className="space-y-8">
@@ -526,7 +530,7 @@ export default function IPBuilderPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center"><Palette className="w-4 h-4 mr-2 text-muted-foreground"/>Desired Tone (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value || NO_TONE_SELECTED_VALUE}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_TONE_SELECTED_VALUE}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a tone for the copy" />
@@ -675,7 +679,7 @@ export default function IPBuilderPage() {
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground text-sm font-body">
-        <p>&copy; {currentYear !== null ? currentYear : '...'} IPbuilderAI. All rights reserved.</p>
+        <p>&copy; {currentYear !== null ? currentYear : '...'} Iliad IPbuilder. All rights reserved.</p>
       </footer>
     </div>
   );
