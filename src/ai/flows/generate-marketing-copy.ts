@@ -76,6 +76,12 @@ const prompt = ai.definePrompt({
   {{/if}}
   {{#if isBlogPost}}
   The blog post should be approximately 200 to 360 words in length.
+  When crafting the blog post, please incorporate relevant information and insights about the company's core products or services, primarily drawing from the '{{productDescription}}' and using '{{companyName}}' for context.
+  This should involve:
+  *   Elaborating on the key features and benefits mentioned in the product description.
+  *   Discussing common problems the product/service solves for its target audience.
+  *   Potentially exploring related industry trends or use cases, if they can be logically inferred from the provided information and keywords ({{keywords}}).
+  The aim is to produce an informative and engaging piece that subtly showcases the value and expertise related to the company's offerings, without sounding like a direct advertisement.
   {{/if}}
   {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
