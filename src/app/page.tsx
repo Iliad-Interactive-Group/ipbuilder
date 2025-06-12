@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIcon } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -51,6 +51,7 @@ const CONTENT_TYPES = [
   { value: "podcast outline", label: "Podcast Outline", icon: <Podcast className="w-4 h-4" /> },
   { value: "billboard", label: "Billboard Ad", icon: <Presentation className="w-4 h-4" /> },
   { value: "website wireframe", label: "Website Wireframe", icon: <LayoutDashboard className="w-4 h-4" /> },
+  { value: "display ad copy", label: "Display Ad Copy", icon: <ImageIcon className="w-4 h-4" /> },
 ];
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -444,7 +445,7 @@ export default function IPBuilderPage() {
                                     Copy
                                 </Button>
                             </div>
-                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' || item.value === 'display ad copy' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         </div>
                     ))}
                 </CardContent>
@@ -465,6 +466,4 @@ export default function IPBuilderPage() {
     </div>
   );
 }
-    
-
     

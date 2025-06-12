@@ -19,7 +19,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   contentType: z
     .string()
     .describe(
-      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline).'
+      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline, display ad copy).'
     ),
   additionalInstructions: z
     .string()
@@ -35,7 +35,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations.'),
+    .describe('The generated marketing copy tailored to the specified content type. If the content type is "social media post", this will contain 5 numbered variations. If "display ad copy", it will contain copy for 3 common ad sizes.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -58,6 +58,20 @@ const prompt = ai.definePrompt({
   Incorporate these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
+  {{else if isDisplayAdCopy}}
+  Generate distinct ad copy variations for the three most common digital display ad sizes. For each ad size, ensure the copy is compelling and tailored to the limited space, incorporating these keywords: {{keywords}}.
+  Company Name: {{companyName}}
+  Product Description: {{productDescription}}
+  The output for 'display ad copy' should clearly label each size and its corresponding copy (headline, body, call to action).
+
+  **1. Medium Rectangle (300x250 pixels):**
+  This size allows for a bit more text. Provide a headline, a short body (1-2 sentences), and a call to action.
+
+  **2. Leaderboard (728x90 pixels):**
+  This is a wide, short banner. Focus on a concise headline and a strong call to action. Body text might be very limited or omitted.
+
+  **3. Wide Skyscraper (160x600 pixels):**
+  This is a tall, narrow banner. The message needs to be succinct and impactful, often using a vertical flow. Provide a headline, brief body text, and a call to action.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -226,6 +240,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
     const isBlogPost = input.contentType === "blog post";
     const isPodcastOutline = input.contentType === "podcast outline";
     const isSocialMediaPost = input.contentType === "social media post";
+    const isDisplayAdCopy = input.contentType === "display ad copy";
 
     const promptData = {
       ...input,
@@ -237,6 +252,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isBlogPost,
       isPodcastOutline,
       isSocialMediaPost,
+      isDisplayAdCopy,
     };
     
     const {output} = await prompt(promptData);
