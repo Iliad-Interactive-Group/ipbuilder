@@ -230,7 +230,7 @@ export default function IPBuilderPage() {
       const pageWidth = doc.internal.pageSize.width;
       const margin = 15;
       const maxLineWidth = pageWidth - margin * 2;
-      const lineHeightFactor = 1.15; // Standard line height factor
+      const lineHeightFactor = 1.15; 
 
       doc.setFontSize(18);
       const mainTitle = "Generated Marketing Copies";
@@ -246,30 +246,28 @@ export default function IPBuilderPage() {
           }
         };
 
-        // Content Type Label
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        const labelLineHeight = 14 * lineHeightFactor; // Approx height for label
+        const labelLineHeight = 14 * lineHeightFactor; 
         const contentTypeLabel = `Content Type: ${copy.label}`;
         const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
-        ensureSpace(labelLines.length * labelLineHeight); // Ensure space for all lines of the label
+        ensureSpace(labelLines.length * labelLineHeight); 
         doc.text(labelLines, margin, yPosition);
-        yPosition += (labelLines.length * labelLineHeight) + 5; // Add some space after label
+        yPosition += (labelLines.length * labelLineHeight) + 5; 
 
-        // Marketing Copy Text
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
-        const textLineHeight = 10 * lineHeightFactor; // Approx height for text line
+        const textLineHeight = 10 * lineHeightFactor; 
         const marketingText = copy.marketingCopy;
         const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
         
         textLines.forEach((line: string) => {
-          ensureSpace(textLineHeight); // Check space for each line
+          ensureSpace(textLineHeight); 
           doc.text(line, margin, yPosition);
           yPosition += textLineHeight;
         });
 
-        yPosition += 10; // Space between entries
+        yPosition += 10; 
       });
 
       const filenameBase = generatedCopy[0]?.label.toLowerCase().replace(/\s+/g, '_').substring(0,20) || "marketing";
@@ -282,7 +280,7 @@ export default function IPBuilderPage() {
     }
   };
 
-  const handleExportDocx = () => {
+  const handleExportHtmlForGoogleDocs = () => {
     if (!generatedCopy || generatedCopy.length === 0) {
       toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
       return;
@@ -290,15 +288,27 @@ export default function IPBuilderPage() {
     try {
       let htmlContent = `
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
           <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Generated Marketing Copies</title>
           <style>
-            body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-            h1 { font-size: 16pt; color: #1F4E79; margin-bottom: 10pt; }
-            h2 { font-size: 13pt; color: #2E74B5; margin-top: 15pt; margin-bottom: 5pt; }
-            p { margin-bottom: 10pt; line-height: 1.15; white-space: pre-wrap; } /* Preserve line breaks from textarea */
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            h1 { font-size: 1.8em; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+            h2 { font-size: 1.4em; margin-top: 20px; margin-bottom: 8px; color: #555; }
+            pre { 
+              background-color: #f8f8f8; 
+              border: 1px solid #ddd; 
+              padding: 15px; 
+              white-space: pre-wrap; /* Preserves line breaks and spacing */
+              word-wrap: break-word; /* Ensures long lines wrap */
+              font-family: Consolas, 'Courier New', monospace; /* Monospace font for copy */
+              font-size: 0.95em;
+              border-radius: 4px;
+              overflow-x: auto; /* Add scroll for very long unbreakable lines if any */
+            }
+            div { margin-bottom: 20px; }
           </style>
         </head>
         <body>
@@ -306,12 +316,10 @@ export default function IPBuilderPage() {
       `;
 
       generatedCopy.forEach(copy => {
-        // Basic sanitization for HTML: replace newlines with <br> for paragraphs
-        const marketingCopyHtml = copy.marketingCopy.replace(/\n/g, '<br>');
         htmlContent += `
           <div>
             <h2>Content Type: ${copy.label}</h2>
-            <p>${marketingCopyHtml}</p>
+            <pre>${copy.marketingCopy.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
           </div>
         `;
       });
@@ -322,10 +330,10 @@ export default function IPBuilderPage() {
       `;
       
       const filenameBase = generatedCopy[0]?.label.toLowerCase().replace(/\s+/g, '_').substring(0,20) || "marketing";
-      const filename = `${filenameBase}_marketing_copies.docx`;
+      const filename = `${filenameBase}_marketing_copies.html`;
 
-      const blob = new Blob(['\uFEFF', htmlContent], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document;charset=utf-8'
+      const blob = new Blob([htmlContent], {
+        type: 'text/html;charset=utf-8'
       });
 
       const link = document.createElement("a");
@@ -336,11 +344,11 @@ export default function IPBuilderPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      toast({ title: "Copies Exported", description: `All generated copies exported as ${filename}` });
+      toast({ title: "Copies Exported", description: `All generated copies exported as ${filename}. You can import this file into Google Docs.` });
 
     } catch (error) {
-      console.error("Error generating DOCX:", error);
-      toast({ title: "DOCX Export Error", description: "Could not generate Word document. Please try again.", variant: "destructive" });
+      console.error("Error generating HTML for Google Docs:", error);
+      toast({ title: "HTML Export Error", description: "Could not generate HTML file. Please try again.", variant: "destructive" });
     }
   };
 
@@ -587,9 +595,9 @@ export default function IPBuilderPage() {
                         <Download className="mr-2 h-4 w-4" />
                         Export All (PDF)
                     </Button>
-                    <Button onClick={handleExportDocx} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
+                    <Button onClick={handleExportHtmlForGoogleDocs} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
                         <Download className="mr-2 h-4 w-4" />
-                        Export All (Word DOCX)
+                        Export All (HTML for Google Docs)
                     </Button>
                 </CardFooter>
               </Card>
