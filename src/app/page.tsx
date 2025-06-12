@@ -40,6 +40,8 @@ const TONES = [
   { value: "inspirational", label: "Inspirational" },
 ];
 
+const NO_TONE_SELECTED_VALUE = "_no_tone_selected_"; // Unique value for the "None" option
+
 const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   productDescription: z.string().min(1, "Product description is required"),
@@ -119,7 +121,7 @@ export default function IPBuilderPage() {
       productDescription: "",
       keywords: "",
       contentType: [],
-      tone: "",
+      tone: "", // react-hook-form can have "" as default. Select component will show placeholder.
       additionalInstructions: "",
     },
   });
@@ -196,13 +198,18 @@ export default function IPBuilderPage() {
     setGeneratedCopy(null);
     const allGeneratedCopies: GeneratedCopyItem[] = [];
 
+    let toneForAI = data.tone;
+    if (toneForAI === NO_TONE_SELECTED_VALUE) {
+      toneForAI = "";
+    }
+
     try {
       for (const typeValue of data.contentType) {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const marketingInput = {
           keywords: data.keywords,
           contentType: typeValue, 
-          tone: data.tone || "",
+          tone: toneForAI || "",
           additionalInstructions: data.additionalInstructions || "",
           companyName: data.companyName,
           productDescription: data.productDescription,
@@ -380,12 +387,12 @@ export default function IPBuilderPage() {
   };
 
   const handleClearForm = () => {
-    form.reset(); // Resets react-hook-form fields to defaultValues
+    form.reset(); 
     setFile(null);
     setFileName("");
     setWebsiteUrl("");
     setGeneratedCopy(null);
-    // Reset file input visually
+    
     const fileInput = document.getElementById('document-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = ""; 
@@ -519,14 +526,14 @@ export default function IPBuilderPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center"><Palette className="w-4 h-4 mr-2 text-muted-foreground"/>Desired Tone (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value || NO_TONE_SELECTED_VALUE}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a tone for the copy" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">None (Default)</SelectItem>
+                            <SelectItem value={NO_TONE_SELECTED_VALUE}>None (Default)</SelectItem>
                             {TONES.map((tone) => (
                               <SelectItem key={tone.value} value={tone.value}>
                                 {tone.label}
@@ -644,7 +651,7 @@ export default function IPBuilderPage() {
                                     Copy
                                 </Button>
                             </div>
-                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' || item.value === 'display ad copy' || item.value === 'podcast outline' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                            <Textarea value={item.marketingCopy} readOnly rows={item.value === 'website wireframe' || item.value === 'display ad copy' || item.value === 'podcast outline' || item.value === 'radio script' ? 15 : 8} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         </div>
                     ))}
                 </CardContent>
