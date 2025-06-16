@@ -31,7 +31,15 @@ const GenerateMarketingCopyInputSchema = z.object({
   socialMediaPlatform: z
     .string()
     .optional()
-    .describe('The specific social media platform (e.g., Twitter, Facebook, Instagram, LinkedIn, TikTok) if contentType is "social media post".')
+    .describe('The specific social media platform (e.g., Twitter, Facebook, Instagram, LinkedIn, TikTok) if contentType is "social media post".'),
+  tvScriptLength: z
+    .string()
+    .optional()
+    .describe("The desired length for the TV script (e.g., '15s', '30s'). Defaults to 30s if not specified."),
+  radioScriptLength: z
+    .string()
+    .optional()
+    .describe("The desired length for the Radio script (e.g., '10s', '15s', '30s', '60s'). Defaults to all lengths if not specified.")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -40,7 +48,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", 10, 15, 30, 60 sec versions. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words.'),
+    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length or default 30s. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -88,9 +96,14 @@ const prompt = ai.definePrompt({
   **3. Wide Skyscraper (160x600 pixels):**
   This is a tall, narrow banner. The message needs to be succinct and impactful, often using a vertical flow. Provide a headline, brief body text, and a call to action.
   {{else if isRadioScript}}
+  {{#if radioScriptLength}}
+  Generate a radio script for the specified length: {{radioScriptLength}}.
+  The script should be clearly labeled with its duration (e.g., "**{{radioScriptLength}} Radio Script:**").
+  {{else}}
   Generate four distinct radio script versions of varying lengths: 10 seconds, 15 seconds, 30 seconds, and 60 seconds.
   Each script version should be clearly labeled with its duration (e.g., "**10-Second Radio Script:**", "**15-Second Radio Script:**", etc.).
-  Ensure the copy for each version is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
+  {{/if}}
+  Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
   {{else if isPodcastOutline}}
@@ -181,7 +194,7 @@ const prompt = ai.definePrompt({
   {{/if}}
 
   {{#if isTvScript}}
-  The TV script should be approximately 30 seconds in length.
+  The TV script should be {{#if tvScriptLength}}approximately {{tvScriptLength}}{{else}}approximately 30 seconds{{/if}} in length.
   {{/if}}
   {{#if isBillboard}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
@@ -297,3 +310,4 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output!;
   }
 );
+

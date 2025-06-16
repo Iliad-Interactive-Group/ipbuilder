@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History, Clock } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -50,6 +50,21 @@ const SOCIAL_MEDIA_PLATFORMS = [
   { value: "tiktok", label: "TikTok" },
 ];
 
+const TV_SCRIPT_LENGTHS = [
+  { value: "15s", label: "15 seconds" },
+  { value: "30s", label: "30 seconds" },
+];
+const NO_TV_LENGTH_SELECTED_VALUE = "_no_tv_length_";
+
+const RADIO_SCRIPT_LENGTHS = [
+  { value: "10s", label: "10 seconds" },
+  { value: "15s", label: "15 seconds" },
+  { value: "30s", label: "30 seconds" },
+  { value: "60s", label: "60 seconds" },
+];
+const NO_RADIO_LENGTH_SELECTED_VALUE = "_no_radio_length_";
+
+
 const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
 const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
 const LOCAL_STORAGE_BRIEF_KEY = 'ipbuilder_saved_brief';
@@ -61,6 +76,8 @@ const formSchema = z.object({
   contentType: z.array(z.string()).min(1, "Please select at least one content type."),
   tone: z.string().optional(),
   socialMediaPlatform: z.string().optional(),
+  tvScriptLength: z.string().optional(),
+  radioScriptLength: z.string().optional(),
   additionalInstructions: z.string().optional(),
 });
 
@@ -144,12 +161,16 @@ export default function IPBuilderPage() {
       contentType: [],
       tone: NO_TONE_SELECTED_VALUE,
       socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
+      tvScriptLength: NO_TV_LENGTH_SELECTED_VALUE,
+      radioScriptLength: NO_RADIO_LENGTH_SELECTED_VALUE,
       additionalInstructions: "",
     },
   });
 
   const selectedContentTypes = form.watch('contentType');
   const showSocialMediaPlatformSelector = selectedContentTypes?.includes('social media post');
+  const showTvScriptLengthSelector = selectedContentTypes?.includes('tv script');
+  const showRadioScriptLengthSelector = selectedContentTypes?.includes('radio script');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -254,6 +275,8 @@ export default function IPBuilderPage() {
         keywords: form.getValues("keywords"),
         tone: form.getValues("tone") || NO_TONE_SELECTED_VALUE,
         socialMediaPlatform: form.getValues("socialMediaPlatform") || NO_PLATFORM_SELECTED_VALUE,
+        tvScriptLength: form.getValues("tvScriptLength") || NO_TV_LENGTH_SELECTED_VALUE,
+        radioScriptLength: form.getValues("radioScriptLength") || NO_RADIO_LENGTH_SELECTED_VALUE,
         additionalInstructions: form.getValues("additionalInstructions") || "",
       };
       localStorage.setItem(LOCAL_STORAGE_BRIEF_KEY, JSON.stringify(briefData));
@@ -274,9 +297,11 @@ export default function IPBuilderPage() {
             companyName: savedBrief.companyName || "",
             productDescription: savedBrief.productDescription || "",
             keywords: savedBrief.keywords || "",
-            contentType: form.getValues('contentType'), // Keep current content type selection
+            contentType: form.getValues('contentType'), 
             tone: savedBrief.tone || NO_TONE_SELECTED_VALUE,
             socialMediaPlatform: savedBrief.socialMediaPlatform || NO_PLATFORM_SELECTED_VALUE,
+            tvScriptLength: savedBrief.tvScriptLength || NO_TV_LENGTH_SELECTED_VALUE,
+            radioScriptLength: savedBrief.radioScriptLength || NO_RADIO_LENGTH_SELECTED_VALUE,
             additionalInstructions: savedBrief.additionalInstructions || "",
         });
         toast({ title: "Brief Loaded", description: "Your saved marketing brief has been loaded into the form."});
@@ -303,12 +328,20 @@ export default function IPBuilderPage() {
     if (platformForAI === NO_PLATFORM_SELECTED_VALUE || platformForAI === "generic") {
       platformForAI = "";
     }
+    let tvScriptLengthForAI = data.tvScriptLength;
+    if (tvScriptLengthForAI === NO_TV_LENGTH_SELECTED_VALUE) {
+      tvScriptLengthForAI = ""; 
+    }
+    let radioScriptLengthForAI = data.radioScriptLength;
+    if (radioScriptLengthForAI === NO_RADIO_LENGTH_SELECTED_VALUE) {
+      radioScriptLengthForAI = ""; 
+    }
 
 
     try {
       for (const typeValue of data.contentType) {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
-        const marketingInput: any = { // Using 'any' temporarily for easier construction
+        const marketingInput: any = { 
           keywords: data.keywords,
           contentType: typeValue,
           tone: toneForAI || "",
@@ -320,6 +353,13 @@ export default function IPBuilderPage() {
         if (typeValue === "social media post" && platformForAI) {
             marketingInput.socialMediaPlatform = platformForAI;
         }
+        if (typeValue === "tv script") {
+            marketingInput.tvScriptLength = tvScriptLengthForAI;
+        }
+        if (typeValue === "radio script") {
+            marketingInput.radioScriptLength = radioScriptLengthForAI;
+        }
+
 
         const result = await generateMarketingCopy(marketingInput);
         allGeneratedCopies.push({
@@ -505,6 +545,8 @@ export default function IPBuilderPage() {
       contentType: [],
       tone: NO_TONE_SELECTED_VALUE,
       socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
+      tvScriptLength: NO_TV_LENGTH_SELECTED_VALUE,
+      radioScriptLength: NO_RADIO_LENGTH_SELECTED_VALUE,
       additionalInstructions: "",
     });
     setFile(null);
@@ -670,11 +712,11 @@ export default function IPBuilderPage() {
                         <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_TONE_SELECTED_VALUE}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a tone for the copy" />
+                              <SelectValue placeholder="Select a tone (optional, AI default)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={NO_TONE_SELECTED_VALUE}>None (Default)</SelectItem>
+                            <SelectItem value={NO_TONE_SELECTED_VALUE}>None (AI Default)</SelectItem>
                             {TONES.map((tone) => (
                               <SelectItem key={tone.value} value={tone.value}>
                                 {tone.label}
@@ -751,10 +793,11 @@ export default function IPBuilderPage() {
                             <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_PLATFORM_SELECTED_VALUE}>
                             <FormControl>
                                 <SelectTrigger>
-                                <SelectValue placeholder="Select platform (for Social Media Posts)" />
+                                <SelectValue placeholder="Select platform (optional, for Social Media Posts)" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                                <SelectItem value={NO_PLATFORM_SELECTED_VALUE}>Generic / Not Specified</SelectItem>
                                 {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
                                 <SelectItem key={platform.value} value={platform.value}>
                                     {platform.label}
@@ -768,6 +811,68 @@ export default function IPBuilderPage() {
                             <FormMessage />
                         </FormItem>
                         )}
+                    />
+                  )}
+
+                  {showTvScriptLengthSelector && (
+                    <FormField
+                      control={form.control}
+                      name="tvScriptLength"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><Clock className="w-4 h-4 mr-2 text-muted-foreground"/>TV Script Length (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_TV_LENGTH_SELECTED_VALUE}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select TV script length (optional, default 30s)" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={NO_TV_LENGTH_SELECTED_VALUE}>Default (30 seconds)</SelectItem>
+                              {TV_SCRIPT_LENGTHS.map((length) => (
+                                <SelectItem key={length.value} value={length.value}>
+                                  {length.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose the desired length for the TV script. Defaults to 30 seconds if not specified.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {showRadioScriptLengthSelector && (
+                    <FormField
+                      control={form.control}
+                      name="radioScriptLength"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><Clock className="w-4 h-4 mr-2 text-muted-foreground"/>Radio Script Length (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_RADIO_LENGTH_SELECTED_VALUE}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select radio script length (optional, default all)" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={NO_RADIO_LENGTH_SELECTED_VALUE}>Default (All lengths: 10, 15, 30, 60s)</SelectItem>
+                              {RADIO_SCRIPT_LENGTHS.map((length) => (
+                                <SelectItem key={length.value} value={length.value}>
+                                  {length.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose a specific length or get all standard radio script lengths.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   )}
 
