@@ -20,7 +20,7 @@ export type SummarizeWebsiteInput = z.infer<typeof SummarizeWebsiteInputSchema>;
 // Define the output schema locally for this flow
 const SummarizeWebsiteOutputSchema = z.object({
   summary: z.string().describe('A concise summary of the website.'),
-  companyName: z.string().optional().describe('The name of the company described on the website.'),
+  companyName: z.string().optional().describe('The name of the company described on the website. This should be extracted from the page title, headings, prominent branding, or inferred from the domain if clearly indicated.'),
   productDescription: z.string().optional().describe('A brief description of the product or service found on the website.'),
   keywords: z.array(z.string()).optional().describe('A list of keywords relevant to the website.'),
 });
@@ -37,14 +37,18 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeWebsiteOutputSchema}, 
   prompt: `You are an expert summarizer and data extractor.
 
-  You will be provided a specific website URL. Your primary task is to analyze the content found *exclusively* at this exact URL: {{websiteUrl}}. 
-  Do not navigate to other subdomains or different websites unless the content on the provided URL directly and necessarily leads you there for context. Your focus should remain on the single URL given.
+You will be provided a specific website URL. Your primary task is to analyze the content found *exclusively* at this exact URL: {{websiteUrl}}.
+Do not navigate to other subdomains or different websites unless the content on the provided URL directly and necessarily leads you there for context. Your focus should remain on the single URL given.
 
-  From the content of {{websiteUrl}}, create a concise summary, extract the company name (if clearly stated), provide a brief description of the product or service offered (if present), and list relevant keywords.
+From the content of {{websiteUrl}}:
+1.  Create a concise summary of the website.
+2.  **Identify and extract the company name.** Look for it in the page title, main headings, meta tags (like site_name or og:site_name if accessible to you), or prominent branding elements on the page. If the name is not explicitly stated as text, try to infer it from the domain or context if strongly indicated.
+3.  Provide a brief description of the product or service offered (if present).
+4.  List relevant keywords.
 
-  Ensure all fields in the output schema are populated. If information for a particular field cannot be found *on the specified URL*, or if you are unable to access or process the content of {{websiteUrl}}, use an empty string for text fields or an empty array for keyword fields. Do not infer information from external sources or similar-sounding websites. The output should be formatted as a JSON object.
+Ensure all fields in the output schema are populated. If information for a particular field cannot be found *on the specified URL*, or if you are unable to access or process the content of {{websiteUrl}}, use an empty string for text fields or an empty array for keyword fields. Do not infer information from external sources or similar-sounding websites. The output should be formatted as a JSON object.
 
-  Website URL: {{websiteUrl}}`,
+Website URL: {{websiteUrl}}`,
 });
 
 const summarizeWebsiteFlow = ai.defineFlow(
@@ -61,3 +65,4 @@ const summarizeWebsiteFlow = ai.defineFlow(
     return output;
   }
 );
+
