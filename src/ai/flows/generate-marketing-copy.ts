@@ -35,7 +35,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   tvScriptLength: z
     .string()
     .optional()
-    .describe("The desired length for the TV script (e.g., '15s', '30s'). Defaults to 30s if not specified."),
+    .describe("The desired length for the TV script (e.g., '8s', '15s', '30s'). Defaults to 30s if not specified."),
   radioScriptLength: z
     .string()
     .optional()
@@ -48,7 +48,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length or default 30s. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
+    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -222,7 +222,17 @@ const prompt = ai.definePrompt({
   {{/if}}
 
   {{#if isTvScript}}
-  The TV script should be {{#if tvScriptLength}}approximately {{tvScriptLength}}{{else}}approximately 30 seconds{{/if}} in length.
+    {{#if tvScriptLength}}
+      {{#if (eq tvScriptLength "8s")}}
+  Generate an extremely concise and highly creative TV script approximately 8 seconds in length, suitable for Video Engagement Optimization (VEO) platforms.
+  The script must grab attention immediately and deliver a powerful message or call to action within this very short timeframe. Focus on visual storytelling if possible and minimal, impactful dialogue or voiceover.
+  It should be clearly labeled: "**8-Second VEO TV Script:**".
+      {{else}}
+  The TV script should be approximately {{tvScriptLength}} in length.
+      {{/if}}
+    {{else}}
+  The TV script should be approximately 30 seconds in length.
+    {{/if}}
   {{/if}}
   {{#if isBillboard}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
@@ -322,6 +332,14 @@ const generateMarketingCopyFlow = ai.defineFlow(
     const isDisplayAdCopy = input.contentType === "display ad copy";
     const isLeadGenerationEmail = input.contentType === "lead generation email";
 
+    // Helper for Handlebars 'eq'
+    if (typeof Handlebars !== 'undefined') {
+        Handlebars.registerHelper('eq', function (a, b) {
+            return a === b;
+        });
+    }
+
+
     const promptData = {
       ...input,
       currentYear,
@@ -341,3 +359,17 @@ const generateMarketingCopyFlow = ai.defineFlow(
   }
 );
 
+// Ensure Handlebars is available for helpers if not globally registered in the execution context
+// This might be needed depending on how Genkit or the environment handles Handlebars.
+// If it's already available globally, this is redundant but harmless.
+let Handlebars: any; 
+try {
+  Handlebars = (await import('handlebars')).default;
+  if (Handlebars && typeof Handlebars.registerHelper === 'function' && !Handlebars.helpers.eq) {
+    Handlebars.registerHelper('eq', function (a: any, b: any) {
+      return a === b;
+    });
+  }
+} catch (e) {
+  console.warn("Handlebars not available for registering 'eq' helper directly in this context. Ensure it's available if 'eq' is used in prompts.");
+}

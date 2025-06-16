@@ -51,6 +51,7 @@ const SOCIAL_MEDIA_PLATFORMS = [
 ];
 
 const TV_SCRIPT_LENGTHS = [
+  { value: "8s", label: "8 seconds (VEO)" },
   { value: "15s", label: "15 seconds" },
   { value: "30s", label: "30 seconds" },
 ];
