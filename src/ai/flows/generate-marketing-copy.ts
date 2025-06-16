@@ -19,7 +19,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   contentType: z
     .string()
     .describe(
-      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline, display ad copy).'
+      'The type of content to generate (e.g., website copy, social media post, blog post, radio script, tv script, billboard, website wireframe, podcast outline, display ad copy, lead generation email).'
     ),
   tone: z.string().optional().describe('The desired tone for the generated copy (e.g., professional, casual, humorous).'),
   additionalInstructions: z
@@ -48,7 +48,7 @@ export type GenerateMarketingCopyInput = z.infer<
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z
     .string()
-    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length or default 30s. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words.'),
+    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length or default 30s. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -186,6 +186,34 @@ const prompt = ai.definePrompt({
   *   [Ideas for show notes: "Include link to {{companyName}}'s latest blog on {{productDescription}}."]
 
   Ensure the output is plain text, well-formatted, and directly usable as a script outline.
+  {{else if isLeadGenerationEmail}}
+  You are an expert email marketer specializing in crafting high-converting lead generation emails.
+  Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
+  The email should follow industry best practices and include the following distinct sections, clearly labeled:
+
+  **Subject Line:**
+  [A concise and attention-grabbing subject line (max 60 characters recommended)]
+
+  **Email Body:**
+  Hi [Name],
+
+  [Personalized and engaging opening paragraph. Clearly articulate the value proposition related to {{productDescription}}. Highlight key benefits and address potential pain points of the target audience. Use the keywords: "{{keywords}}" naturally throughout the body.]
+
+  [Further paragraphs elaborating on benefits, use cases, or social proof, if applicable.]
+
+  **Call-to-Action (CTA):**
+  [A clear, strong, and singular call-to-action phrase that encourages the recipient to take the next step. For example: "Learn More", "Request a Demo", "Download Our Free Guide", "Get Started Today".]
+  [Optional: Link for the CTA button/text, e.g., (Link: [Your CTA Link Here]) ]
+
+  **Closing:**
+  [A professional closing, e.g., Best regards, Sincerely,]
+
+  [Your Name/Company Name]
+  {{companyName}}
+  [Website (Optional)]
+  [Contact Information (Optional)]
+
+  Keep the email concise, scannable, and mobile-friendly.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -292,6 +320,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
     const isPodcastOutline = input.contentType === "podcast outline";
     const isSocialMediaPost = input.contentType === "social media post";
     const isDisplayAdCopy = input.contentType === "display ad copy";
+    const isLeadGenerationEmail = input.contentType === "lead generation email";
 
     const promptData = {
       ...input,
@@ -304,6 +333,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isPodcastOutline,
       isSocialMediaPost,
       isDisplayAdCopy,
+      isLeadGenerationEmail,
     };
     
     const {output} = await prompt(promptData);

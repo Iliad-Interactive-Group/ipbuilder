@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
-import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History, Clock } from 'lucide-react';
+import { UploadCloud, FileText, Wand2, Download, Loader2, Monitor, Users, Mic, Tv, Podcast, Presentation, LinkIcon, LayoutDashboard, Copy, Image as ImageIconLucide, RotateCcw, Palette, Lightbulb, Save, History, Clock, Mail } from 'lucide-react';
 
 import { summarizeDocument } from '@/ai/flows/summarize-document';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -101,6 +101,7 @@ const CONTENT_TYPES = [
   { value: "billboard", label: "Billboard Ad", icon: <Presentation className="w-4 h-4" /> },
   { value: "website wireframe", label: "Website Wireframe", icon: <LayoutDashboard className="w-4 h-4" /> },
   { value: "display ad copy", label: "Display Ad Copy", icon: <ImageIconLucide className="w-4 h-4" /> },
+  { value: "lead generation email", label: "Lead Generation Email", icon: <Mail className="w-4 h-4" /> },
 ];
 
 const fileToDataUri = (file: File): Promise<string> => {
