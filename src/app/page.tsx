@@ -964,7 +964,7 @@ export default function IPBuilderPage() {
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground text-sm font-body">
-        <p>&copy; {currentYear !== null ? currentYear : '...'} Iliad IPbuilder. All rights reserved.</p>
+        <p>&copy; {currentYear !== null ? currentYear : '...'} The Calton Group. All rights reserved.</p>
       </footer>
     </div>
   );
