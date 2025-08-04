@@ -1,11 +1,13 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import jsPDF from 'jspdf';
+import { useSearchParams, useRouter } from 'next/navigation';
+
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -85,6 +87,12 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface SavedBriefData extends Omit<FormData, 'contentType'> {}
+interface MarketingBrief {
+    companyName?: string;
+    productDescription?: string;
+    keywords?: string[];
+}
+
 
 interface GeneratedCopyItem {
   value: string;
@@ -134,8 +142,11 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
   URL.revokeObjectURL(element.href);
 };
 
-export default function IPBuilderPage() {
+function IPBuilderPageContent() {
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [websiteUrl, setWebsiteUrl] = useState<string>("");
@@ -145,14 +156,6 @@ export default function IPBuilderPage() {
   const [isSuggestingKeywords, setIsSuggestingKeywords] = useState(false);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [hasSavedBrief, setHasSavedBrief] = useState(false);
-
-
-  useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
-    if (typeof window !== 'undefined') {
-      setHasSavedBrief(!!localStorage.getItem(LOCAL_STORAGE_BRIEF_KEY));
-    }
-  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -168,6 +171,37 @@ export default function IPBuilderPage() {
       additionalInstructions: "",
     },
   });
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+    if (typeof window !== 'undefined') {
+      setHasSavedBrief(!!localStorage.getItem(LOCAL_STORAGE_BRIEF_KEY));
+
+      const briefParam = searchParams.get('brief');
+      const errorParam = searchParams.get('error');
+
+      if (briefParam) {
+        try {
+          const decodedBrief = Buffer.from(briefParam, 'base64').toString('utf-8');
+          const briefData: MarketingBrief = JSON.parse(decodedBrief);
+          form.setValue("companyName", briefData.companyName || "");
+          form.setValue("productDescription", briefData.productDescription || "");
+          form.setValue("keywords", (briefData.keywords || []).join(', '));
+          toast({ title: "Marketing Brief Loaded", description: "The brief has been autofilled from the integrated app." });
+        } catch (e) {
+          console.error("Failed to parse brief from URL", e);
+          toast({ title: "Brief Load Error", description: "Could not read the marketing brief from the URL.", variant: "destructive" });
+        } finally {
+            router.replace('/', undefined);
+        }
+      }
+
+      if (errorParam) {
+        toast({ title: "Integration Error", description: errorParam, variant: "destructive" });
+        router.replace('/', undefined);
+      }
+    }
+  }, [searchParams, form, router, toast]);
 
   const selectedContentTypes = form.watch('contentType');
   const showSocialMediaPlatformSelector = selectedContentTypes?.includes('social media post');
@@ -970,3 +1004,10 @@ export default function IPBuilderPage() {
   );
 }
 
+export default function IPBuilderPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <IPBuilderPageContent />
+        </Suspense>
+    )
+}

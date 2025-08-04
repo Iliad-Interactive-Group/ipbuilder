@@ -3,43 +3,60 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { summarizeText } from '@/ai/flows/summarize-text-flow';
 
-// Define the expected schema for the incoming request body
 const IngestStrategySchema = z.object({
   strategyText: z.string().min(1, { message: "strategyText cannot be empty." }),
 });
 
 /**
  * API endpoint to receive marketing strategy text, process it, 
- * and return a structured marketing brief.
+ * and redirect back to the homepage with the marketing brief data in the URL.
  * @param request - The incoming POST request.
- * @returns A NextResponse object with the marketing brief or an error.
+ * @returns A NextResponse object that redirects the user.
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate the request body against the schema
     const validation = IngestStrategySchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json({ success: false, errors: validation.error.flatten().fieldErrors }, { status: 400 });
+      // Redirect to an error page or show an error on the main page
+      const errorQuery = new URLSearchParams({ error: "Invalid input." }).toString();
+      const url = request.nextUrl.clone();
+      url.pathname = '/';
+      url.search = errorQuery;
+      return NextResponse.redirect(url);
     }
 
     const { strategyText } = validation.data;
 
-    // Call the AI flow to summarize the text and generate the brief
     const marketingBrief = await summarizeText({ text: strategyText });
 
-    // Return a success response with the generated brief
-    return NextResponse.json({ success: true, marketingBrief }, { status: 200 });
+    if (!marketingBrief) {
+      throw new Error("The AI failed to generate a marketing brief.");
+    }
+
+    // Encode the brief to be safely passed in a URL
+    const briefString = JSON.stringify(marketingBrief);
+    const encodedBrief = Buffer.from(briefString).toString('base64');
+
+    const briefQuery = new URLSearchParams({ brief: encodedBrief }).toString();
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.search = briefQuery;
+    
+    return NextResponse.redirect(url);
 
   } catch (error) {
     console.error("Error in /api/ingest-strategy:", error);
-    let errorMessage = "An unexpected error occurred.";
+    let errorMessage = "An unexpected error occurred while processing the strategy.";
     if (error instanceof Error) {
         errorMessage = error.message;
     }
-    // Return a more detailed error if AI processing fails
-    return NextResponse.json({ success: false, error: "Failed to process strategy text.", details: errorMessage }, { status: 500 });
+    const errorQuery = new URLSearchParams({ error: errorMessage }).toString();
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.search = errorQuery;
+    return NextResponse.redirect(url);
   }
 }
