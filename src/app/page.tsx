@@ -97,7 +97,7 @@ interface MarketingBrief {
 interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string;
+  marketingCopy: string | string[];
 }
 
 const CONTENT_TYPES = [
@@ -129,7 +129,7 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
   copies.forEach(copy => {
     textContent += `Content Type: ${copy.label}\n`;
     textContent += `------------------------------------------\n`;
-    textContent += `${copy.marketingCopy}\n\n\n`;
+    textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
   });
 
   const element = document.createElement("a");
@@ -468,7 +468,7 @@ function IPBuilderPageContent() {
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
         const textLineHeight = 10 * lineHeightFactor;
-        const marketingText = copy.marketingCopy;
+        const marketingText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy;
         const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
         
         textLines.forEach((line: string) => {
@@ -526,10 +526,11 @@ function IPBuilderPageContent() {
       `;
 
       generatedCopy.forEach(copy => {
+        const marketingText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('<br><br>') : copy.marketingCopy;
         htmlContent += `
           <div>
             <h2>Content Type: ${copy.label}</h2>
-            <pre>${copy.marketingCopy.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+            <pre>${marketingText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
           </div>
         `;
       });
@@ -563,9 +564,10 @@ function IPBuilderPageContent() {
   };
 
 
-  const handleCopy = async (textToCopy: string, label: string) => {
+  const handleCopy = async (textToCopy: string | string[], label: string) => {
+    const text = Array.isArray(textToCopy) ? textToCopy.join('\n\n') : textToCopy;
     try {
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(text);
       toast({ title: "Copied to Clipboard", description: `${label} copy has been copied.` });
     } catch (err) {
       console.error('Failed to copy: ', err);
@@ -962,21 +964,24 @@ function IPBuilderPageContent() {
                     <CardDescription>Review your AI-generated marketing copies below. One for each content type you selected.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {generatedCopy.map((item) => (
-                        <div key={item.value} className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold text-primary flex items-center">
-                                    {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
-                                    {item.label}
-                                </h3>
-                                <Button variant="outline" size="sm" onClick={() => handleCopy(item.marketingCopy, item.label)}>
-                                    <Copy className="w-3 h-3 mr-2" />
-                                    Copy
-                                </Button>
+                    {generatedCopy.map((item) => {
+                        const copyText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : item.marketingCopy;
+                        return (
+                            <div key={item.value} className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-semibold text-primary flex items-center">
+                                        {React.cloneElement(CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || <FileText className="w-5 h-5" />, { className: "w-5 h-5 mr-2"})}
+                                        {item.label}
+                                    </h3>
+                                    <Button variant="outline" size="sm" onClick={() => handleCopy(item.marketingCopy, item.label)}>
+                                        <Copy className="w-3 h-3 mr-2" />
+                                        Copy
+                                    </Button>
+                                </div>
+                                <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                             </div>
-                            <Textarea value={item.marketingCopy} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </CardContent>
                 <CardFooter className="flex flex-wrap gap-2">
                     <Button onClick={handleExportTxt} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">

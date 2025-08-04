@@ -46,9 +46,10 @@ export type GenerateMarketingCopyInput = z.infer<
 >;
 
 const GenerateMarketingCopyOutputSchema = z.object({
-  marketingCopy: z
-    .string()
-    .describe('The generated marketing copy. If "social media post", 5 numbered variations considering platform. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
+  marketingCopy: z.union([
+    z.string(),
+    z.array(z.string())
+  ]).describe('The generated marketing copy. Can be a single string or an array of strings for social media posts. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.')
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -60,28 +61,44 @@ export async function generateMarketingCopy(
   return generateMarketingCopyFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const socialMediaPrompt = ai.definePrompt({
+    name: 'generateSocialMediaCopyPrompt',
+    input: {schema: GenerateMarketingCopyInputSchema},
+    output: {schema: z.object({ marketingCopy: z.array(z.string()).describe("An array of 5 distinct social media post strings, tailored to the platform if specified.") })},
+    prompt: `You are a marketing expert specializing in creating engaging social media content.
+    Generate 5 distinct variations of a social media post.
+    {{#if socialMediaPlatform}}
+    Tailor these posts specifically for the "{{socialMediaPlatform}}" platform. Consider platform-specific best practices such as optimal length, tone, use of hashtags, emojis, and any typical content formats for "{{socialMediaPlatform}}".
+    {{else}}
+    These posts should be general enough for use on multiple platforms.
+    {{/if}}
+    
+    {{#if tone}}
+    Adapt all generated copy to have a {{tone}} tone.
+    {{/if}}
+
+    Incorporate these keywords: {{keywords}}.
+    Company Name (if provided): {{companyName}}
+    Product Description (if provided): {{productDescription}}
+
+    {{#if additionalInstructions}}
+    Additional instructions: {{additionalInstructions}}
+    {{/if}}
+    Return the 5 variations as a JSON array of strings.
+    `,
+});
+
+const genericPrompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
   input: {schema: GenerateMarketingCopyInputSchema},
-  output: {schema: GenerateMarketingCopyOutputSchema},
+  output: {schema: z.object({ marketingCopy: z.string() })},
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
 
   {{#if tone}}
   Adapt all generated copy to have a {{tone}} tone.
   {{/if}}
 
-  {{#if isSocialMediaPost}}
-  Generate 5 distinct variations of a social media post.
-  {{#if socialMediaPlatform}}
-  Tailor these posts specifically for the "{{socialMediaPlatform}}" platform. Consider platform-specific best practices such as optimal length, tone, use of hashtags, emojis, and any typical content formats for "{{socialMediaPlatform}}".
-  {{else}}
-  These posts should be general enough for use on multiple platforms.
-  {{/if}}
-  Each variation should be clearly numbered (e.g., 1. ..., 2. ..., etc.).
-  Incorporate these keywords: {{keywords}}.
-  Company Name (if provided): {{companyName}}
-  Product Description (if provided): {{productDescription}}
-  {{else if isDisplayAdCopy}}
+  {{#if isDisplayAdCopy}}
   Generate distinct ad copy variations for the three most common digital display ad sizes. For each ad size, ensure the copy is compelling and tailored to the limited space, incorporating these keywords: {{keywords}}.
   Company Name: {{companyName}}
   Product Description: {{productDescription}}
@@ -321,33 +338,28 @@ const generateMarketingCopyFlow = ai.defineFlow(
   },
   async (input: GenerateMarketingCopyInput) => {
     const currentYear = new Date().getFullYear().toString();
-    const isRadioScript = input.contentType === "radio script";
-    const isTvScript = input.contentType === "tv script";
-    const isBillboard = input.contentType === "billboard";
-    const isWebsiteWireframe = input.contentType === "website wireframe";
-    const isBlogPost = input.contentType === "blog post";
-    const isPodcastOutline = input.contentType === "podcast outline";
     const isSocialMediaPost = input.contentType === "social media post";
-    const isDisplayAdCopy = input.contentType === "display ad copy";
-    const isLeadGenerationEmail = input.contentType === "lead generation email";
-    const is8sVEO = input.contentType === "tv script" && input.tvScriptLength === "8s";
 
+    if (isSocialMediaPost) {
+        const {output} = await socialMediaPrompt(input);
+        return output!;
+    }
+    
     const promptData = {
       ...input,
       currentYear,
-      isRadioScript,
-      isTvScript,
-      isBillboard,
-      isWebsiteWireframe,
-      isBlogPost,
-      isPodcastOutline,
-      isSocialMediaPost,
-      isDisplayAdCopy,
-      isLeadGenerationEmail,
-      is8sVEO,
+      isRadioScript: input.contentType === "radio script",
+      isTvScript: input.contentType === "tv script",
+      isBillboard: input.contentType === "billboard",
+      isWebsiteWireframe: input.contentType === "website wireframe",
+      isBlogPost: input.contentType === "blog post",
+      isPodcastOutline: input.contentType === "podcast outline",
+      isDisplayAdCopy: input.contentType === "display ad copy",
+      isLeadGenerationEmail: input.contentType === "lead generation email",
+      is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
     };
     
-    const {output} = await prompt(promptData);
+    const {output} = await genericPrompt(promptData);
     return output!;
   }
 );
