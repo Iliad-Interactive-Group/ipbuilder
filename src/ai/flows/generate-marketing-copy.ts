@@ -119,6 +119,7 @@ const genericPrompt = ai.definePrompt({
   {{else}}
   Generate four distinct radio script versions of varying lengths: 10 seconds, 15 seconds, 30 seconds, and 60 seconds.
   Each script version should be clearly labeled with its duration (e.g., "**10-Second Radio Script:**", "**15-Second Radio Script:**", etc.).
+  IMPORTANT: Ensure there are at least two newlines (a blank line) between each script to separate them visually.
   {{/if}}
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
