@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Download, Copy, FileText } from 'lucide-react';
 import { CONTENT_TYPES } from '@/app/page';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export interface GeneratedCopyItem {
   value: string;
@@ -51,28 +52,36 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Generated Marketing Copies</CardTitle>
-          <CardDescription>Review your AI-generated marketing copies below. One for each content type you selected.</CardDescription>
+          <CardDescription>Review your AI-generated marketing copies below. Click each section to expand.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {generatedCopy.map((item) => {
-            const copyText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : item.marketingCopy;
-            const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
-            return (
-              <div key={item.value} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-primary flex items-center">
-                    <Icon className="w-5 h-5 mr-2" />
-                    {item.label}
-                  </h3>
-                  <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)}>
-                    <Copy className="w-3 h-3 mr-2" />
-                    Copy
-                  </Button>
-                </div>
-                <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
-              </div>
-            )
-          })}
+        <CardContent>
+          <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
+            {generatedCopy.map((item) => {
+              const copyText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : item.marketingCopy;
+              const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
+              return (
+                <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
+                   <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
+                     <div className="flex items-center justify-between w-full">
+                        <span className="flex items-center">
+                          <Icon className="w-5 h-5 mr-3" />
+                          {item.label}
+                        </span>
+                     </div>
+                   </AccordionTrigger>
+                   <AccordionContent className="pt-2">
+                      <div className="space-y-4">
+                        <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                        <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
+                          <Copy className="w-3 h-3 mr-2" />
+                          Copy {item.label}
+                        </Button>
+                      </div>
+                   </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
         </CardContent>
         <CardFooter className="flex flex-wrap gap-2">
           <Button onClick={onExportTxt} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
