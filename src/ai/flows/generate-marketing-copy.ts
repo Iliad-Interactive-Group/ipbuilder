@@ -94,7 +94,6 @@ const socialMediaPrompt = ai.definePrompt({
     `,
 });
 
-// A new private prompt for the first step of the podcast outline generation.
 const podcastAnalysisPrompt = ai.definePrompt({
     name: 'podcastAnalysisPrompt',
     input: { schema: GenerateMarketingCopyInputSchema },
@@ -133,7 +132,6 @@ const genericPrompt = ai.definePrompt({
   Generate distinct ad copy variations for the three most common digital display ad sizes. For each ad size, ensure the copy is compelling and tailored to the limited space, incorporating these keywords: {{keywords}}.
   Company Name: {{companyName}}
   Product Description: {{productDescription}}
-  You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   The output for 'display ad copy' should clearly label each size and its corresponding copy (headline, body, call to action).
 
   **1. Medium Rectangle (300x250 pixels):**
@@ -144,6 +142,8 @@ const genericPrompt = ai.definePrompt({
 
   **3. Wide Skyscraper (160x600 pixels):**
   This is a tall, narrow banner. The message needs to be succinct and impactful, often using a vertical flow. Provide a headline, brief body text, and a call to action.
+
+  You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
   You are an expert at writing audio-only radio scripts. DO NOT generate an image suggestion for this content type.
   {{#if radioScriptLength}}
