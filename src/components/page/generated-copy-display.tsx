@@ -5,7 +5,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Copy, FileText } from 'lucide-react';
+import { Download, Copy, FileText, Lightbulb } from 'lucide-react';
 import { CONTENT_TYPES } from '@/app/page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -13,6 +13,7 @@ export interface GeneratedCopyItem {
   value: string;
   label: string;
   marketingCopy: string | string[];
+  imageSuggestion?: string;
 }
 
 interface GeneratedCopyDisplayProps {
@@ -72,6 +73,17 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                    <AccordionContent className="pt-2">
                       <div className="space-y-4">
                         <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                        
+                        {item.imageSuggestion && (
+                            <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md">
+                                <p className="font-semibold flex items-center text-sm">
+                                    <Lightbulb className="w-4 h-4 mr-2"/>
+                                    Image Suggestion
+                                </p>
+                                <p className="text-sm italic pl-6">{item.imageSuggestion}</p>
+                            </div>
+                        )}
+                        
                         <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
                           <Copy className="w-3 h-3 mr-2" />
                           Copy {item.label}

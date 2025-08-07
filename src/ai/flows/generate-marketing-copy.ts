@@ -45,11 +45,21 @@ export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
 >;
 
+const BaseCopyOutputSchema = z.object({
+  marketingCopy: z.union([
+    z.string(),
+    z.array(z.string())
+  ]).describe('The generated marketing copy. Can be a single string or an array of strings for social media posts. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
+  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards."),
+});
+
+
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
     z.string(),
     z.array(z.string())
-  ]).describe('The generated marketing copy. Can be a single string or an array of strings for social media posts. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.')
+  ]).describe('The generated marketing copy. Can be a single string or an array of strings for social media posts. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
+  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -64,9 +74,14 @@ export async function generateMarketingCopy(
 const socialMediaPrompt = ai.definePrompt({
     name: 'generateSocialMediaCopyPrompt',
     input: {schema: GenerateMarketingCopyInputSchema},
-    output: {schema: z.object({ marketingCopy: z.array(z.string()).describe("An array of 5 distinct social media post strings, tailored to the platform if specified.") })},
+    output: {schema: z.object({ 
+        marketingCopy: z.array(z.string()).describe("An array of 5 distinct social media post strings, tailored to the platform if specified."),
+        imageSuggestion: z.string().optional().describe("A single, creative, and descriptive prompt for a relevant image that could accompany these social media posts."),
+    })},
     prompt: `You are a marketing expert specializing in creating engaging social media content.
     Generate 5 distinct variations of a social media post.
+    Also, provide a single, creative, and descriptive prompt for a relevant image that could work for these posts.
+
     {{#if socialMediaPlatform}}
     Tailor these posts specifically for the "{{socialMediaPlatform}}" platform. Consider platform-specific best practices such as optimal length, tone, use of hashtags, emojis, and any typical content formats for "{{socialMediaPlatform}}".
     {{else}}
@@ -84,15 +99,19 @@ const socialMediaPrompt = ai.definePrompt({
     {{#if additionalInstructions}}
     Additional instructions: {{additionalInstructions}}
     {{/if}}
-    Return the 5 variations as a JSON array of strings.
+    Return the 5 variations as a JSON array of strings in the 'marketingCopy' field and the image prompt in the 'imageSuggestion' field.
     `,
 });
 
 const genericPrompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
   input: {schema: GenerateMarketingCopyInputSchema},
-  output: {schema: z.object({ marketingCopy: z.string() })},
+  output: {schema: z.object({ 
+      marketingCopy: z.string(),
+      imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types."),
+  })},
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
+  For all visual content types (display ad, billboard, TV script), you MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
 
   {{#if tone}}
   Adapt all generated copy to have a {{tone}} tone.

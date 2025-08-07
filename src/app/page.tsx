@@ -21,6 +21,7 @@ import { Loader2, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, Layo
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
+import type { GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
@@ -45,6 +46,9 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
   let textContent = "";
   copies.forEach(copy => {
     textContent += `Content Type: ${copy.label}\n`;
+    if (copy.imageSuggestion) {
+      textContent += `Image Suggestion: ${copy.imageSuggestion}\n`;
+    }
     textContent += `------------------------------------------\n`;
     textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
   });
@@ -160,7 +164,7 @@ function IPBuilderPageContent() {
 
   const onSubmit = async (data: MarketingBriefFormData) => {
     setIsGenerating(true);
-    setGeneratedCopy([]);
+    setGeneratedCopy([]); // Clear previous results immediately
     setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
     
     let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
@@ -168,13 +172,13 @@ function IPBuilderPageContent() {
     let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
     let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
 
-    try {
-      let count = 0;
-      for (const typeValue of data.contentType) {
+    const generatePromises = data.contentType.map(async (typeValue, index) => {
+      try {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
-        count++;
-        setGenerationProgress({ total: data.contentType.length, current: count, currentLabel });
+        
+        // This state update is for the progress indicator, not for rendering results
+        setGenerationProgress(prev => ({ ...prev!, current: prev!.current + 1, currentLabel }));
 
         const marketingInput: any = { 
           keywords: data.keywords,
@@ -195,26 +199,39 @@ function IPBuilderPageContent() {
             marketingInput.radioScriptLength = radioScriptLengthForAI;
         }
 
-        const result = await generateMarketingCopy(marketingInput);
+        const result: GenerateMarketingCopyOutput = await generateMarketingCopy(marketingInput);
         
-        setGeneratedCopy(prevCopies => [...prevCopies, {
+        // Return the successfully generated copy
+        return {
           value: typeValue,
           label: currentLabel,
           marketingCopy: result.marketingCopy,
-        }]);
+          imageSuggestion: result.imageSuggestion,
+        };
+      } catch (error) {
+        // Log error and return a specific error object for this type
+        console.error(`Error generating copy for ${typeValue}:`, error);
+        const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
+        const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
+        return {
+          value: typeValue,
+          label: currentLabel,
+          marketingCopy: "Error: Could not generate this content.",
+          isError: true
+        };
       }
-      toast({ title: "Marketing Copy Generation Complete!", description: `Generated copy for ${data.contentType.length} content type(s).` });
-    } catch (error: any) {
-      console.error("Error generating copy:", error);
-      let errorMessage = "An error occurred during content generation. Please check the console for details.";
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      toast({ title: "Generation Error", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsGenerating(false);
-      setGenerationProgress(null);
+    });
+
+    // Process promises and update state as they resolve
+    for (const promise of generatePromises) {
+        const result = await promise;
+        // Add each result (success or error) to the state to be displayed in real-time
+        setGeneratedCopy(prevCopies => [...prevCopies, result as GeneratedCopyItem]);
     }
+    
+    toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating copy for ${data.contentType.length} content type(s).` });
+    setIsGenerating(false);
+    setGenerationProgress(null);
   };
 
   const handleExportTxt = () => {
@@ -262,7 +279,18 @@ function IPBuilderPageContent() {
         const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
         ensureSpace(labelLines.length * labelLineHeight);
         doc.text(labelLines, margin, yPosition);
-        yPosition += (labelLines.length * labelLineHeight) + 5;
+        yPosition += (labelLines.length * labelLineHeight) + 2;
+
+        if (copy.imageSuggestion) {
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'italic');
+            const suggestionLineHeight = 10 * lineHeightFactor;
+            const suggestionText = `Image Suggestion: ${copy.imageSuggestion}`;
+            const suggestionLines = doc.splitTextToSize(suggestionText, maxLineWidth);
+            ensureSpace(suggestionLines.length * suggestionLineHeight + 4);
+            doc.text(suggestionLines, margin, yPosition);
+            yPosition += (suggestionLines.length * suggestionLineHeight) + 5;
+        }
 
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
@@ -306,6 +334,7 @@ function IPBuilderPageContent() {
             body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
             h1 { font-size: 1.8em; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
             h2 { font-size: 1.4em; margin-top: 20px; margin-bottom: 8px; color: #555; }
+            p.suggestion { font-style: italic; color: #777; margin-top: -5px; margin-bottom: 10px; }
             pre {
               background-color: #f8f8f8;
               border: 1px solid #ddd;
@@ -329,6 +358,11 @@ function IPBuilderPageContent() {
         htmlContent += `
           <div>
             <h2>Content Type: ${copy.label}</h2>
+        `;
+        if (copy.imageSuggestion) {
+            htmlContent += `<p class="suggestion"><b>Image Suggestion:</b> ${copy.imageSuggestion.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+        }
+        htmlContent += `
             <pre>${marketingText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
           </div>
         `;
@@ -394,7 +428,7 @@ function IPBuilderPageContent() {
             />
           )}
 
-          {(isGenerating || isSummarizing) && (
+          {isGenerating && (
             <Card className="shadow-lg rounded-xl overflow-hidden mt-8">
               <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
                 <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
@@ -404,12 +438,19 @@ function IPBuilderPageContent() {
                     Generating {generationProgress.current} of {generationProgress.total}: {generationProgress.currentLabel}...
                   </p>
                 )}
-                {isSummarizing && (
-                    <p className="text-muted-foreground">Analyzing your input...</p>
-                )}
               </CardContent>
             </Card>
           )}
+          {isSummarizing && !isGenerating && (
+            <Card className="shadow-lg rounded-xl overflow-hidden mt-8">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
+                <p className="text-muted-foreground">Analyzing your input...</p>
+              </CardContent>
+            </Card>
+          )}
+
 
         </div>
       </main>
@@ -427,5 +468,3 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
-
-    
