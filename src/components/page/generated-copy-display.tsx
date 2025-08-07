@@ -59,8 +59,8 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
         <CardContent>
           <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
             {generatedCopy.map((item) => {
-              const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && 'episodeTitle' in item.marketingCopy;
-              const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && 'sections' in item.marketingCopy;
+              const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy;
+              const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy;
               const isStructuredContent = isPodcast || isBlogPost;
               const copyText = isStructuredContent ? '' : (Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy));
               
@@ -129,3 +129,5 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
+
+    
