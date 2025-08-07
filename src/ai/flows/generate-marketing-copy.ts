@@ -226,6 +226,7 @@ const genericPrompt = ai.definePrompt({
   {{/if}}
 
   {{#if isTvScript}}
+  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
     {{#if is8sVEO}}
   Generate an extremely concise and highly creative TV script approximately 8 seconds in length, suitable for Video Engagement Optimization (VEO) platforms.
   The script must grab attention immediately and deliver a powerful message or call to action within this very short timeframe. Focus on visual storytelling if possible and minimal, impactful dialogue or voiceover.
@@ -235,7 +236,6 @@ const genericPrompt = ai.definePrompt({
     {{else}}
   The TV script should be approximately 30 seconds in length.
     {{/if}}
-  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{/if}}
 
   {{#if isBillboard}}
@@ -251,6 +251,30 @@ const genericPrompt = ai.definePrompt({
   *   Discussing common problems the product/service solves for its target audience.
   *   Potentially exploring related industry trends or use cases, if they can be logically inferred from the provided information and keywords ({{keywords}}).
   The aim is to produce an informative and engaging piece that subtly showcases the value and expertise related to the company's offerings, without sounding like a direct advertisement.
+  
+  IMPORTANT: The output must be formatted for readability. Use plain text and newlines for all formatting. DO NOT use markdown like asterisks.
+  - Use bold headers for the main title and section titles, like this: **This is a Bold Header**
+  - Use regular text for paragraphs.
+  - Use bullet points with an asterisk (*) for any lists.
+  - Ensure there is a blank line between paragraphs and sections.
+
+  For example:
+  **Blog Post Title Here**
+
+  This is the first paragraph of the introduction. It should be engaging and set the stage for the rest of the post.
+
+  **First Section Header**
+
+  This is a paragraph under the first section. It explains the key concepts of this section in detail.
+
+  This is another paragraph in the same section, providing more information or a different perspective.
+
+  * This is a bullet point.
+  * This is another bullet point.
+
+  **Second Section Header**
+
+  This paragraph starts the second section of the blog post, continuing the discussion.
   {{/if}}
   
   {{#if isWebsiteWireframe}}
@@ -351,5 +375,3 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
