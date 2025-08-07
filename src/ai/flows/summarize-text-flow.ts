@@ -21,7 +21,7 @@ export type SummarizeTextInput = z.infer<typeof SummarizeTextInputSchema>;
 
 const SummarizeTextOutputSchema = z.object({
   companyName: z.string().optional().describe('The name of the company described in the text.'),
-  productDescription: z.string().optional().describe('A detailed and comprehensive description of the product or service from the text, capturing key features, benefits, and target audience. Aim for 2-4 sentences.'),
+  productDescription: z.string().optional().describe('A brief description of the product or service from the text.'),
   keywords: z.array(z.string()).optional().describe('A list of keywords relevant to the text.'),
 });
 export type SummarizeTextOutput = z.infer<typeof SummarizeTextOutputSchema>;
@@ -38,7 +38,7 @@ const prompt = ai.definePrompt({
 
   You will be provided with a marketing strategy as a block of text. Your job is to extract the following key pieces of information:
   1. The company name.
-  2. A detailed and comprehensive description of the product or service being marketed. This should capture the key features, benefits, and intended audience from the text. Aim for a 2-4 sentence description that is rich enough to be used as a basis for generating marketing copy.
+  2. A brief description of the product or service being marketed.
   3. A list of 5-10 relevant keywords or key phrases.
 
   Ensure all fields in the output schema are populated. If information for a field is not found, use an empty string or empty array as appropriate. The output must be formatted as a JSON object.
@@ -64,4 +64,5 @@ const summarizeTextFlow = ai.defineFlow(
     return output;
   }
 );
+
 

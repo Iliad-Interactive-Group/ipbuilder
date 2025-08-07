@@ -25,7 +25,7 @@ export type SummarizeDocumentInput = z.infer<typeof SummarizeDocumentInputSchema
 const SummarizeDocumentOutputSchema = z.object({
   summary: z.string().describe('A concise summary of the document.'),
   companyName: z.string().optional().describe('The name of the company described in the document.'),
-  productDescription: z.string().optional().describe('A detailed and comprehensive description of the product or service, capturing key features, benefits, and target audience. Aim for 2-4 sentences.'),
+  productDescription: z.string().optional().describe('A brief description of the product or service.'),
   keywords: z.array(z.string()).optional().describe('A list of keywords relevant to the document.'),
 });
 export type SummarizeDocumentOutput = z.infer<typeof SummarizeDocumentOutputSchema>;
@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   You will be provided a document. Your job is to perform the following tasks:
   1. Create a concise summary of the document.
   2. Extract the company name.
-  3. Provide a detailed and comprehensive description of the product or service offered. This should capture the key features, benefits, and intended audience. Aim for a 2-4 sentence description that is rich enough to be used as a basis for generating marketing copy.
+  3. Provide a brief description of the product or service offered.
   4. List relevant keywords.
 
   Ensure all fields in the output schema are populated. If information for a field is not found, use an empty string or empty array as appropriate. The output should be formatted as a JSON object.
@@ -65,4 +65,5 @@ const summarizeDocumentFlow = ai.defineFlow(
     return output;
   }
 );
+
 
