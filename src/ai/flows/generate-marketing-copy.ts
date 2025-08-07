@@ -45,11 +45,41 @@ export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
 >;
 
+const PodcastOutlineStructureSchema = z.object({
+  episodeTitle: z.string().describe("A catchy, descriptive title reflecting the episode’s topic."),
+  episodeGoal: z.string().describe("A one-sentence summary of the episode's purpose."),
+  targetAudience: z.string().describe("A brief description of the intended listeners."),
+  totalLength: z.string().describe("The target duration for the podcast, e.g., '20–30 minutes'."),
+  introduction: z.object({
+    title: z.string().default("Introduction"),
+    duration: z.string().describe("Approximate duration, e.g., '2–3 minutes'."),
+    hook: z.string().describe("An engaging question, statistic, or anecdote to grab attention."),
+    episodeOverview: z.string().describe("A brief summary of what the episode covers."),
+  }),
+  mainContent: z.array(z.object({
+    segmentTitle: z.string().describe("A descriptive title for this content segment."),
+    duration: z.string().describe("Approximate duration, e.g., '5–7 minutes'."),
+    keyPoints: z.array(z.string()).describe("A list of the main ideas for this segment."),
+    talkingPoints: z.array(z.string()).describe("Specific questions or details to elaborate on the key points."),
+    supportingMaterial: z.string().optional().describe("A brief example, story, or statistic to support the segment."),
+  })).describe("An array of 2-3 main content segments."),
+  conclusion: z.object({
+    title: z.string().default("Conclusion"),
+    duration: z.string().describe("Approximate duration, e.g., '2–3 minutes'."),
+    callToAction: z.string().describe("A clear call-to-action for the listener."),
+    recap: z.string().describe("A summary of the 2-3 main takeaways from the episode."),
+    teaser: z.string().describe("A brief preview of the topic for the next episode."),
+  }),
+});
+export type PodcastOutlineStructure = z.infer<typeof PodcastOutlineStructureSchema>;
+
+
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
     z.string(),
-    z.array(z.string())
-  ]).describe('The generated marketing copy. Can be a single string or an array of strings for social media posts. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
+    z.array(z.string()),
+    PodcastOutlineStructureSchema, // Added structured podcast outline
+  ]).describe('The generated marketing copy. Can be a single string, an array of strings, or a structured podcast outline object. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a structured JSON object. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
   imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
@@ -94,35 +124,33 @@ const socialMediaPrompt = ai.definePrompt({
     `,
 });
 
-const podcastAnalysisPrompt = ai.definePrompt({
-    name: 'podcastAnalysisPrompt',
+const podcastPrompt = ai.definePrompt({
+    name: 'generatePodcastOutlinePrompt',
     input: { schema: GenerateMarketingCopyInputSchema },
-    output: { schema: z.object({
-        episodeTitle: z.string().describe("A catchy, descriptive title reflecting the episode’s topic."),
-        episodeGoal: z.string().describe("A one-sentence summary of the episode's purpose."),
-        targetAudience: z.string().describe("A brief description of the intended listeners.")
-    }) },
-    prompt: `You are an expert podcast producer. Based on the following information, generate a strategic analysis for a podcast episode.
+    output: { schema: z.object({ marketingCopy: PodcastOutlineStructureSchema }) },
+    prompt: `You are an expert podcast producer. Your task is to generate a complete, well-structured podcast outline as a JSON object that conforms to the provided schema.
+
+    Base your outline on the following information:
+    - Keywords: {{keywords}}
     - Company Name: {{companyName}}
     - Product Description: {{productDescription}}
-    - Keywords: {{keywords}}
 
-    Your task is to define the following three elements:
-    1.  A catchy, descriptive **Episode Title** that reflects the episode's topic.
-    2.  A concise, one-sentence **Episode Goal**.
-    3.  A brief description of the **Target Audience**.
-
-    Return these three elements in the specified JSON format.`,
+    Flesh out all the fields in the JSON schema to create a comprehensive and logical episode plan. This is for an audio-only format, so do not generate an image suggestion.
+    - The introduction hook should be engaging.
+    - The main content should have 2-3 distinct segments, each with a clear purpose, key points, and talking points.
+    - The conclusion should effectively summarize the episode and provide a clear call-to-action.
+    `,
 });
+
 
 const genericPrompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
-  input: {schema: z.any()}, // Using z.any() because the input now varies (includes podcast analysis)
+  input: {schema: z.any()},
   output: {schema: z.object({ 
       marketingCopy: z.string(),
-      imageSuggestion: z.string().optional(), // Image suggestion is now conditionally requested inside the prompt
+      imageSuggestion: z.string().optional(),
   })},
-  prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
+  prompt: `You are a marketing expert specializing in creating engaging content.
   
   {{#if tone}}
   Adapt all generated copy to have a {{tone}} tone.
@@ -157,87 +185,6 @@ const genericPrompt = ai.definePrompt({
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
-  {{else if isPodcastOutline}}
-  You are an expert podcast producer. Generate a detailed, human-readable podcast episode outline based on the provided keywords: "{{keywords}}", company name: "{{companyName}}", and product description: "{{productDescription}}".
-  This is an audio-only format, so DO NOT generate an image suggestion.
-  The outline should be well-structured and easy to follow as plain text. Use clear headings (e.g., **Section Title:**) and bullet points (e.g., * Key point) for key details.
-
-  Here is the structure to follow for the plain text podcast outline:
-
-  **Podcast Episode Outline**
-
-  **Episode Title:** {{podcastAnalysis.episodeTitle}}
-
-  **Episode Goal:** {{podcastAnalysis.episodeGoal}}
-
-  **Target Audience:** {{podcastAnalysis.targetAudience}}
-
-  **Total Length:** [Target duration, e.g., 20–30 minutes]
-
-  ---
-  **1. Introduction (Approx. 2–3 minutes)**
-  *   **Hook:** [Start with an engaging question, statistic, quote, or anecdote related to the keywords or product/service to grab attention.]
-  *   **Episode Overview:** [Briefly summarize what the episode covers and why it matters, referencing the company and product.]
-  *   **Host Intro:** (Optional) [E.g., “I’m [Host Name], and this is [Podcast Name].”]
-  *   **Guest Intro (if applicable):** [Name, credentials, and relevance.]
-  *   **Sponsor/Context (Optional):** [E.g., “This episode is brought to you by {{companyName}}.”]
-
-  ---
-  **2. Main Content (Approx. 15–20 minutes)**
-  *(Break into 2–3 segments for structure and pacing. Fill in based on keywords, company, and product.)*
-
-  *   **Segment 1: [Descriptive Title for Segment 1 - e.g., Understanding the Core of {{productDescription}}] (Approx. 5–7 minutes)**
-      *   **Key Points:**
-          *   [Main idea 1 related to product/keywords]
-          *   [Main idea 2 related to product/keywords]
-          *   [Main idea 3 related to product/keywords]
-      *   **Details/Talking Points/Questions:**
-          *   [Specific point or question to elaborate on main idea 1]
-          *   [Specific point or question to elaborate on main idea 2]
-      *   **Supporting Material (Examples/Stories/Data - can be hypothetical or based on product description):**
-          *   [Brief example or statistic related to {{companyName}} or {{productDescription}}]
-      *   **Transition to next segment:** [E.g., “Now that we've covered X, let’s look at Y…”]
-
-  *   **Segment 2: [Descriptive Title for Segment 2 - e.g., Real-World Applications & Benefits] (Approx. 5–7 minutes)**
-      *   **Key Points:**
-          *   [Practical application 1 of {{productDescription}} based on {{keywords}}]
-          *   [Benefit 1 for the target audience]
-      *   **Details/Talking Points/Questions:**
-          *   [How does application 1 solve a problem for the audience?]
-          *   [What are the tangible results of benefit 1?]
-      *   **Supporting Material (Examples/Stories/Data):**
-          *   [Scenario illustrating the application or benefit]
-      *   **Transition to next segment (if any):** [E.g., “So we’ve seen the benefits, but what about potential challenges?”]
-
-  *   **(Optional) Segment 3: [Descriptive Title for Segment 3 - e.g., Overcoming Challenges / Future Outlook] (Approx. 3–5 minutes)**
-      *   **Key Points:**
-          *   [Challenge 1 related to the product/service or industry]
-          *   [Future trend or innovation from {{companyName}}]
-      *   **Details/Talking Points/Questions:**
-          *   [How to address challenge 1?]
-          *   [What does this future trend mean for listeners?]
-      *   **Supporting Material (Examples/Stories/Data):**
-          *   [Insight or statistic about the future trend]
-
-  ---
-  **3. Listener Engagement (Approx. 1–2 minutes)**
-  *   **Call-to-Action:** [Encourage interaction, e.g., “Learn more about {{productDescription}} at {{companyName}}'s website or share your thoughts using #[RelevantHashtag].”]
-  *   **Feedback Prompt:** [E.g., “Send us your questions about X for a future Q&A episode at [email/website].”]
-  *   **Community Plug (Optional):** [E.g., “Join our newsletter for more insights.”]
-
-  ---
-  **4. Conclusion (Approx. 2–3 minutes)**
-  *   **Recap:** [Summarize the 2-3 main takeaways from the episode.]
-  *   **Teaser for Next Episode:** [Preview the topic of the next episode.]
-  *   **Thank You:** [Acknowledge listeners, guests, sponsors.]
-  *   **Sign-Off:** [Consistent closing, e.g., “Until next time, keep innovating with [Podcast Name/ {{companyName}}].”]
-
-  ---
-  **Notes for Production (Optional - For Host/Producer):**
-  *   [Key reminders for recording, e.g., "Emphasize {{keywords}} during Segment 1."]
-  *   [Ideas for show notes: "Include link to {{companyName}}'s latest blog on {{productDescription}}."]
-
-  Ensure the output is plain text, well-formatted, and directly usable as a script outline.
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
   Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
@@ -376,26 +323,17 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async (input: GenerateMarketingCopyInput) => {
-    const isSocialMediaPost = input.contentType === "social media post";
-    if (isSocialMediaPost) {
+    if (input.contentType === "social media post") {
         const {output} = await socialMediaPrompt(input);
         return output!;
     }
 
-    const isPodcastOutline = input.contentType === "podcast outline";
-    if (isPodcastOutline) {
-        const { output: podcastAnalysis } = await podcastAnalysisPrompt(input);
-        if (!podcastAnalysis) {
-            throw new Error("The AI failed to generate the podcast analysis step.");
+    if (input.contentType === "podcast outline") {
+        const { output } = await podcastPrompt(input);
+        if (!output) {
+             throw new Error("The AI failed to generate the podcast outline.");
         }
-
-        const promptData = {
-            ...input,
-            isPodcastOutline: true,
-            podcastAnalysis, // Pass the analysis results to the generic prompt
-        };
-        const { output } = await genericPrompt(promptData);
-        return output!;
+        return output; // The output from podcastPrompt is already in the correct format
     }
     
     const promptData = {

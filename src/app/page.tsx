@@ -21,7 +21,7 @@ import { Loader2, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, Layo
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
-import type { GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
+import type { GenerateMarketingCopyOutput, PodcastOutlineStructure } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
@@ -42,6 +42,33 @@ export const CONTENT_TYPES = [
   { value: "lead generation email", label: "Lead Generation Email", icon: Mail },
 ];
 
+const podcastOutlineToString = (outline: PodcastOutlineStructure): string => {
+  let content = `Podcast Episode Outline\n\n`;
+  content += `Title: ${outline.episodeTitle}\n`;
+  content += `Goal: ${outline.episodeGoal}\n`;
+  content += `Target Audience: ${outline.targetAudience}\n`;
+  content += `Target Length: ${outline.totalLength}\n\n`;
+  content += `--- Introduction (${outline.introduction.duration}) ---\n`;
+  content += `Hook: ${outline.introduction.hook}\n`;
+  content += `Overview: ${outline.introduction.episodeOverview}\n\n`;
+
+  outline.mainContent.forEach((segment, index) => {
+    content += `--- Segment ${index + 1}: ${segment.segmentTitle} (${segment.duration}) ---\n`;
+    content += `Key Points:\n${segment.keyPoints.map(p => `  - ${p}`).join('\n')}\n`;
+    content += `Talking Points:\n${segment.talkingPoints.map(p => `  - ${p}`).join('\n')}\n`;
+    if(segment.supportingMaterial) content += `Supporting Material: ${segment.supportingMaterial}\n`;
+    content += `\n`;
+  });
+
+  content += `--- Conclusion (${outline.conclusion.duration}) ---\n`;
+  content += `Recap: ${outline.conclusion.recap}\n`;
+  content += `Call to Action: ${outline.conclusion.callToAction}\n`;
+  content += `Teaser: ${outline.conclusion.teaser}\n`;
+
+  return content;
+};
+
+
 const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) => {
   let textContent = "";
   copies.forEach(copy => {
@@ -50,7 +77,12 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
       textContent += `Image Suggestion: ${copy.imageSuggestion}\n`;
     }
     textContent += `------------------------------------------\n`;
-    textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
+    
+    if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy)) {
+       textContent += podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure);
+    } else {
+       textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
+    }
   });
 
   const element = document.createElement("a");
@@ -295,7 +327,11 @@ function IPBuilderPageContent() {
         doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
         const textLineHeight = 10 * lineHeightFactor;
-        const marketingText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy;
+        
+        const marketingText = (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy))
+          ? podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure)
+          : Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : String(copy.marketingCopy);
+
         const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
         
         textLines.forEach((line: string) => {
@@ -334,6 +370,7 @@ function IPBuilderPageContent() {
             body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
             h1 { font-size: 1.8em; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
             h2 { font-size: 1.4em; margin-top: 20px; margin-bottom: 8px; color: #555; }
+            h3 { font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; color: #666; }
             p.suggestion { font-style: italic; color: #777; margin-top: -5px; margin-bottom: 10px; }
             pre {
               background-color: #f8f8f8;
@@ -346,6 +383,8 @@ function IPBuilderPageContent() {
               border-radius: 4px;
               overflow-x: auto;
             }
+            div.outline { border: 1px solid #ddd; padding: 15px; border-radius: 4px; background-color: #fdfdfd; }
+            ul { margin-top: 5px; }
             div { margin-bottom: 20px; }
           </style>
         </head>
@@ -354,7 +393,26 @@ function IPBuilderPageContent() {
       `;
 
       generatedCopy.forEach(copy => {
-        const marketingText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('<br><br>') : copy.marketingCopy;
+        let marketingText;
+        if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy)) {
+            const outline = copy.marketingCopy as PodcastOutlineStructure;
+            let outlineHtml = `<div class="outline"><h3>${outline.episodeTitle.replace(/</g, "&lt;")}</h3>`;
+            outlineHtml += `<p><strong>Goal:</strong> ${outline.episodeGoal.replace(/</g, "&lt;")}</p>`;
+            outlineHtml += `<p><strong>Audience:</strong> ${outline.targetAudience.replace(/</g, "&lt;")}</p>`;
+            outlineHtml += `<h4>Introduction (${outline.introduction.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Hook:</strong> ${outline.introduction.hook.replace(/</g, "&lt;")}</li><li><strong>Overview:</strong> ${outline.introduction.episodeOverview.replace(/</g, "&lt;")}</li></ul>`;
+            outline.mainContent.forEach(seg => {
+                outlineHtml += `<h4>Segment: ${seg.segmentTitle.replace(/</g, "&lt;")} (${seg.duration.replace(/</g, "&lt;")})</h4><ul>`;
+                seg.keyPoints.forEach(p => outlineHtml += `<li>${p.replace(/</g, "&lt;")}</li>`);
+                outlineHtml += `</ul>`;
+            });
+            outlineHtml += `<h4>Conclusion (${outline.conclusion.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Recap:</strong> ${outline.conclusion.recap.replace(/</g, "&lt;")}</li><li><strong>CTA:</strong> ${outline.conclusion.callToAction.replace(/</g, "&lt;")}</li><li><strong>Teaser:</strong> ${outline.conclusion.teaser.replace(/</g, "&lt;")}</li></ul>`;
+            outlineHtml += `</div>`;
+            marketingText = outlineHtml;
+        } else {
+            const rawText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('<br><br>') : String(copy.marketingCopy);
+            marketingText = `<pre>${rawText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+        }
+        
         htmlContent += `
           <div>
             <h2>Content Type: ${copy.label}</h2>
@@ -362,10 +420,8 @@ function IPBuilderPageContent() {
         if (copy.imageSuggestion) {
             htmlContent += `<p class="suggestion"><b>Image Suggestion:</b> ${copy.imageSuggestion.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
         }
-        htmlContent += `
-            <pre>${marketingText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
-          </div>
-        `;
+        htmlContent += marketingText;
+        htmlContent += `</div>`;
       });
 
       htmlContent += `
@@ -468,3 +524,5 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
+
+    

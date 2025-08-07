@@ -8,12 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Download, Copy, FileText, Lightbulb } from 'lucide-react';
 import { CONTENT_TYPES } from '@/app/page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import type { PodcastOutlineStructure } from '@/ai/flows/generate-marketing-copy';
+import PodcastOutlineDisplay from './podcast-outline-display';
+
 
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[];
+  marketingCopy: string | string[] | PodcastOutlineStructure;
   imageSuggestion?: string;
+  isError?: boolean;
 }
 
 interface GeneratedCopyDisplayProps {
@@ -39,8 +43,6 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
     switch (contentTypeValue) {
       case 'website wireframe':
       case 'display ad copy':
-      case 'podcast outline':
-      case 'radio script':
       case 'blog post':
         return 15;
       default:
@@ -58,8 +60,11 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
         <CardContent>
           <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
             {generatedCopy.map((item) => {
-              const copyText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : item.marketingCopy;
+              const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy);
+              const copyText = isPodcast ? '' : (Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy));
+              
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
+              
               return (
                 <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
                    <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
@@ -72,7 +77,11 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                    </AccordionTrigger>
                    <AccordionContent className="pt-2">
                       <div className="space-y-4">
-                        <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                        {isPodcast ? (
+                           <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
+                        ) : (
+                          <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+                        )}
                         
                         {item.imageSuggestion && (
                             <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md">
@@ -84,10 +93,12 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                             </div>
                         )}
                         
-                        <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
-                          <Copy className="w-3 h-3 mr-2" />
-                          Copy {item.label}
-                        </Button>
+                        {!isPodcast && (
+                          <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy as (string | string[]), item.label)} className="w-full sm:w-auto">
+                            <Copy className="w-3 h-3 mr-2" />
+                            Copy {item.label}
+                          </Button>
+                        )}
                       </div>
                    </AccordionContent>
                 </AccordionItem>
@@ -115,3 +126,5 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
+
+    
