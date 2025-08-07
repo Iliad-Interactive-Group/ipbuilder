@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { summarizeText } from '@/ai/flows/summarize-text-flow';
+import { createMarketingBriefBlueprint } from '@/ai/flows/create-marketing-brief-blueprint-flow';
 
 const IngestStrategySchema = z.object({
   strategyText: z.string().min(1, { message: "strategyText cannot be empty." }),
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     const { strategyText } = validation.data;
 
-    const marketingBrief = await summarizeText({ text: strategyText });
+    const marketingBrief = await createMarketingBriefBlueprint({ rawText: strategyText });
 
     if (!marketingBrief) {
       throw new Error("The AI failed to generate a marketing brief.");

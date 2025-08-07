@@ -3,38 +3,21 @@
 
 /**
  * @fileOverview Creates a structured marketing brief blueprint from various data sources.
+ * This file contains the server-side logic for the flow.
  *
  * - createMarketingBriefBlueprint - A function that creates the blueprint.
- * - CreateMarketingBriefBlueprintInput - The input type for the function.
- * - MarketingBriefBlueprint - The output type (the blueprint itself).
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const MarketingBriefBlueprintSchema = z.object({
-  companyName: z.string().describe('The name of the company.'),
-  productDescription: z.string().describe('A detailed and comprehensive description of the product or service, suitable for generating marketing copy. It should be at least 3-4 sentences long and capture key features and benefits.'),
-  keywords: z.array(z.string()).describe('A list of 5-10 relevant keywords and key phrases.'),
-});
-export type MarketingBriefBlueprint = z.infer<typeof MarketingBriefBlueprintSchema>;
-
-export const CreateMarketingBriefBlueprintInputSchema = z.object({
-  documentDataUri: z.string().optional().describe(
-      "A document (PDF or Word) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
-  ),
-  websiteUrl: z.string().url({ message: "Invalid URL. Please ensure it starts with http:// or https://." }).optional().describe('The URL of a website.'),
-  rawText: z.string().optional().describe('A block of raw text, like a marketing plan or notes.'),
-}).refine(data => {
-    const provided = [data.documentDataUri, data.websiteUrl, data.rawText].filter(Boolean);
-    return provided.length === 1;
-}, {
-    message: 'Exactly one input source (documentDataUri, websiteUrl, or rawText) must be provided.',
-});
-export type CreateMarketingBriefBlueprintInput = z.infer<typeof CreateMarketingBriefBlueprintInputSchema>;
+import { MarketingBriefBlueprint, MarketingBriefBlueprintSchema, CreateMarketingBriefBlueprintInput, CreateMarketingBriefBlueprintInputSchema } from '@/ai/schemas/marketing-brief-schemas';
 
 
 export async function createMarketingBriefBlueprint(input: CreateMarketingBriefBlueprintInput): Promise<MarketingBriefBlueprint> {
+  // Manual validation to ensure exactly one input source is provided.
+  const providedInputs = [input.documentDataUri, input.websiteUrl, input.rawText].filter(Boolean);
+  if (providedInputs.length !== 1) {
+    throw new Error('Exactly one input source (document, URL, or text) must be provided.');
+  }
   return createMarketingBriefBlueprintFlow(input);
 }
 

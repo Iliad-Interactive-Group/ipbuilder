@@ -18,8 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail } from 'lucide-react';
 
 
-import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
-import type { SummarizeWebsiteOutput } from '@/ai/flows/summarize-website-flow';
+import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
@@ -41,12 +40,6 @@ export const CONTENT_TYPES = [
   { value: "display ad copy", label: "Display Ad Copy", icon: ImageIconLucide },
   { value: "lead generation email", label: "Lead Generation Email", icon: Mail },
 ];
-
-interface MarketingBrief {
-    companyName?: string;
-    productDescription?: string;
-    keywords?: string[];
-}
 
 const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) => {
   let textContent = "";
@@ -75,7 +68,7 @@ function IPBuilderPageContent() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
-  const [briefData, setBriefData] = useState<MarketingBrief | null>(null);
+  const [briefData, setBriefData] = useState<MarketingBriefBlueprint | null>(null);
 
   const form = useForm<MarketingBriefFormData>({
     resolver: zodResolver(formSchema),
@@ -102,7 +95,7 @@ function IPBuilderPageContent() {
       if (briefParam) {
         try {
           const decodedBrief = Buffer.from(briefParam, 'base64').toString('utf-8');
-          const briefDataFromUrl: MarketingBrief = JSON.parse(decodedBrief);
+          const briefDataFromUrl: MarketingBriefBlueprint = JSON.parse(decodedBrief);
           form.setValue("companyName", briefDataFromUrl.companyName || "");
           form.setValue("productDescription", briefDataFromUrl.productDescription || "");
           form.setValue("keywords", (briefDataFromUrl.keywords || []).join(', '));

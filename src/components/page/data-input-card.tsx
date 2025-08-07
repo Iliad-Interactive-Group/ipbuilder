@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, Wand2, RotateCcw, LinkIcon, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { summarizeDocument, SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
-import { summarizeWebsite, SummarizeWebsiteOutput } from '@/ai/flows/summarize-website-flow';
+import { createMarketingBriefBlueprint } from '@/ai/flows/create-marketing-brief-blueprint-flow';
+import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
+
 
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -28,7 +29,7 @@ interface DataInputCardProps {
   setIsSummarizing: (isSummarizing: boolean) => void;
   isGenerating: boolean;
   onClearForm: () => void;
-  onSummarizationComplete: (data: SummarizeDocumentOutput | SummarizeWebsiteOutput) => void;
+  onSummarizationComplete: (data: MarketingBriefBlueprint) => void;
 }
 
 const DataInputCard: React.FC<DataInputCardProps> = ({
@@ -79,30 +80,29 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
     }
 
     setIsSummarizing(true);
-    // onSummarizationStart();
 
     try {
-      let summaryOutput: SummarizeDocumentOutput | SummarizeWebsiteOutput;
+      let blueprintOutput: MarketingBriefBlueprint;
 
       if (file) {
         const dataUri = await fileToDataUri(file);
-        summaryOutput = await summarizeDocument({ documentDataUri: dataUri });
+        blueprintOutput = await createMarketingBriefBlueprint({ documentDataUri: dataUri });
       } else {
-        summaryOutput = await summarizeWebsite({ websiteUrl: websiteUrl.trim() });
+        blueprintOutput = await createMarketingBriefBlueprint({ websiteUrl: websiteUrl.trim() });
       }
       
-      onSummarizationComplete(summaryOutput);
+      onSummarizationComplete(blueprintOutput);
       
-      toast({ title: "Input Summarized", description: "Form fields have been populated with extracted information." });
+      toast({ title: "Input Summarized", description: "Form fields have been populated with the generated blueprint." });
     } catch (error: any) {
-      console.error("Error summarizing input:", error);
-      let errorMessage = "Could not summarize the input. Please try again.";
+      console.error("Error creating blueprint from input:", error);
+      let errorMessage = "Could not create the brief. Please try again.";
       if (error.message && error.message.toLowerCase().includes("invalid url")) {
           errorMessage = "Invalid URL format. Please ensure it starts with http:// or https:// and is a valid URL.";
       } else if (error.message) {
           errorMessage = error.message;
       }
-      toast({ title: "Summarization Error", description: errorMessage, variant: "destructive" });
+      toast({ title: "Blueprint Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsSummarizing(false);
     }
