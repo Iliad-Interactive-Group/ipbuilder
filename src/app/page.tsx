@@ -96,9 +96,9 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
     }
     textContent += `------------------------------------------\n`;
     
-    if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && 'episodeTitle' in copy.marketingCopy) {
-       textContent += podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure);
-    } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && 'sections' in copy.marketingCopy) {
+    if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy) {
+       textContent += podcastOutlineToString(copy.marketingCopy);
+    } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'sections' in copy.marketingCopy) {
         textContent += blogPostToString(copy.marketingCopy as BlogPostStructure);
     } else {
        textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
@@ -203,14 +203,14 @@ function IPBuilderPageContent() {
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
   
-  const handleCopy = async (textToCopy: string | string[], label: string) => {
-    if (typeof textToCopy !== 'string' && !Array.isArray(textToCopy)) {
-      toast({ title: "Copy Failed", description: `Cannot copy complex object for ${label}.`, variant: "destructive" });
+  const handleCopy = (textToCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure, label: string) => {
+    if (typeof textToCopy === 'object' && textToCopy !== null) {
+      toast({ title: "Copy Failed", description: `Cannot copy complex object for ${label}. Please use export instead.`, variant: "destructive" });
       return;
     }
     const text = Array.isArray(textToCopy) ? textToCopy.join('\n\n') : textToCopy;
     try {
-      await navigator.clipboard.writeText(text);
+      navigator.clipboard.writeText(text);
       toast({ title: "Copied to Clipboard", description: `${label} copy has been copied.` });
     } catch (err) {
       console.error('Failed to copy: ', err);
@@ -347,9 +347,9 @@ function IPBuilderPageContent() {
         doc.setFont(undefined, 'normal');
         const textLineHeight = 10 * lineHeightFactor;
         
-        const marketingText = (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && 'episodeTitle' in copy.marketingCopy)
-          ? podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure)
-          : (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && 'sections' in copy.marketingCopy)
+        const marketingText = (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy)
+          ? podcastOutlineToString(copy.marketingCopy)
+          : (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'sections' in copy.marketingCopy)
           ? blogPostToString(copy.marketingCopy as BlogPostStructure)
           : Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : String(copy.marketingCopy);
 
@@ -416,7 +416,7 @@ function IPBuilderPageContent() {
 
       generatedCopy.forEach(copy => {
         let marketingText;
-        if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && 'episodeTitle' in copy.marketingCopy) {
+        if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy) {
             const outline = copy.marketingCopy as PodcastOutlineStructure;
             let outlineHtml = `<div class="structured-content"><h3>Podcast: ${outline.episodeTitle.replace(/</g, "&lt;")}</h3>`;
             outlineHtml += `<p><strong>Goal:</strong> ${outline.episodeGoal.replace(/</g, "&lt;")}</p>`;
@@ -430,7 +430,7 @@ function IPBuilderPageContent() {
             outlineHtml += `<h4>Conclusion (${outline.conclusion.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Recap:</strong> ${outline.conclusion.recap.replace(/</g, "&lt;")}</li><li><strong>CTA:</strong> ${outline.conclusion.callToAction.replace(/</g, "&lt;")}</li><li><strong>Teaser:</strong> ${outline.conclusion.teaser.replace(/</g, "&lt;")}</li></ul>`;
             outlineHtml += `</div>`;
             marketingText = outlineHtml;
-        } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && 'sections' in copy.marketingCopy) {
+        } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'sections' in copy.marketingCopy) {
             const post = copy.marketingCopy as BlogPostStructure;
             let postHtml = `<div class="structured-content"><h3>Blog Post: ${post.title.replace(/</g, "&lt;")}</h3>`;
             post.sections.forEach(section => {
@@ -561,5 +561,3 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
-
-    
