@@ -59,14 +59,21 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
   URL.revokeObjectURL(element.href);
 };
 
+interface GenerationProgress {
+  total: number;
+  current: number;
+  currentLabel: string;
+}
+
 function IPBuilderPageContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[] | null>(null);
+  const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[]>([]);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [briefData, setBriefData] = useState<MarketingBriefBlueprint | null>(null);
 
@@ -136,7 +143,7 @@ function IPBuilderPageContent() {
       radioScriptLength: "_no_radio_length_",
       additionalInstructions: "",
     });
-    setGeneratedCopy(null);
+    setGeneratedCopy([]);
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
   
@@ -153,30 +160,22 @@ function IPBuilderPageContent() {
 
   const onSubmit = async (data: MarketingBriefFormData) => {
     setIsGenerating(true);
-    setGeneratedCopy(null);
-    const allGeneratedCopies: GeneratedCopyItem[] = [];
-
-    let toneForAI = data.tone;
-    if (toneForAI === "_no_tone_selected_") {
-      toneForAI = "";
-    }
-    let platformForAI = data.socialMediaPlatform;
-    if (platformForAI === "_no_platform_selected_" || platformForAI === "generic") {
-      platformForAI = "";
-    }
-    let tvScriptLengthForAI = data.tvScriptLength;
-    if (tvScriptLengthForAI === "_no_tv_length_") {
-      tvScriptLengthForAI = ""; 
-    }
-    let radioScriptLengthForAI = data.radioScriptLength;
-    if (radioScriptLengthForAI === "_no_radio_length_") {
-      radioScriptLengthForAI = ""; 
-    }
-
+    setGeneratedCopy([]);
+    setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
+    
+    let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
+    let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
+    let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
+    let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
 
     try {
+      let count = 0;
       for (const typeValue of data.contentType) {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
+        const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
+        count++;
+        setGenerationProgress({ total: data.contentType.length, current: count, currentLabel });
+
         const marketingInput: any = { 
           keywords: data.keywords,
           contentType: typeValue,
@@ -196,25 +195,25 @@ function IPBuilderPageContent() {
             marketingInput.radioScriptLength = radioScriptLengthForAI;
         }
 
-
         const result = await generateMarketingCopy(marketingInput);
-        allGeneratedCopies.push({
+        
+        setGeneratedCopy(prevCopies => [...prevCopies, {
           value: typeValue,
-          label: contentTypeDefinition ? contentTypeDefinition.label : typeValue,
+          label: currentLabel,
           marketingCopy: result.marketingCopy,
-        });
+        }]);
       }
-      setGeneratedCopy(allGeneratedCopies);
-      toast({ title: "Marketing Copy Generated!", description: `Generated copy for ${allGeneratedCopies.length} content type(s).` });
+      toast({ title: "Marketing Copy Generation Complete!", description: `Generated copy for ${data.contentType.length} content type(s).` });
     } catch (error: any) {
       console.error("Error generating copy:", error);
-      let errorMessage = "Could not generate marketing copy. Please try again or check your input.";
-       if (error.message) {
+      let errorMessage = "An error occurred during content generation. Please check the console for details.";
+      if (error.message) {
         errorMessage = error.message;
       }
       toast({ title: "Generation Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsGenerating(false);
+      setGenerationProgress(null);
     }
   };
 
@@ -385,16 +384,6 @@ function IPBuilderPageContent() {
             isGenerating={isGenerating || isSummarizing}
            />
 
-          {(isGenerating || isSummarizing) && (!generatedCopy || generatedCopy.length === 0) && (
-             <Card className="shadow-lg rounded-xl overflow-hidden">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
-                <p className="text-muted-foreground">Please wait a moment.</p>
-              </CardContent>
-            </Card>
-          )}
-
           {generatedCopy && generatedCopy.length > 0 && (
             <GeneratedCopyDisplay
               generatedCopy={generatedCopy}
@@ -404,6 +393,24 @@ function IPBuilderPageContent() {
               onExportHtml={handleExportHtmlForGoogleDocs}
             />
           )}
+
+          {(isGenerating || isSummarizing) && (
+            <Card className="shadow-lg rounded-xl overflow-hidden mt-8">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
+                {generationProgress && (
+                  <p className="text-muted-foreground">
+                    Generating {generationProgress.current} of {generationProgress.total}: {generationProgress.currentLabel}...
+                  </p>
+                )}
+                {isSummarizing && (
+                    <p className="text-muted-foreground">Analyzing your input...</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground text-sm font-body">
@@ -420,3 +427,5 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
+
+    
