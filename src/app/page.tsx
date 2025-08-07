@@ -61,31 +61,30 @@ function IPBuilderPageContent() {
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
-    if (typeof window !== 'undefined') {
+    
+    const briefParam = searchParams.get('brief');
+    const errorParam = searchParams.get('error');
 
-      const briefParam = searchParams.get('brief');
-      const errorParam = searchParams.get('error');
-
-      if (briefParam) {
-        try {
-          const decodedBrief = Buffer.from(briefParam, 'base64').toString('utf-8');
-          const briefDataFromUrl: MarketingBriefBlueprint = JSON.parse(decodedBrief);
-          form.setValue("companyName", briefDataFromUrl.companyName || "");
-          form.setValue("productDescription", briefDataFromUrl.productDescription || "");
-          form.setValue("keywords", (briefDataFromUrl.keywords || []).join(', '));
-          toast({ title: "Marketing Brief Loaded", description: "The brief has been autofilled from the integrated app." });
-        } catch (e) {
-          console.error("Failed to parse brief from URL", e);
-          toast({ title: "Brief Load Error", description: "Could not read the marketing brief from the URL.", variant: "destructive" });
-        } finally {
-            router.replace('/', undefined);
-        }
+    if (briefParam) {
+      try {
+        const decodedBrief = Buffer.from(briefParam, 'base64').toString('utf-8');
+        const briefDataFromUrl: MarketingBriefBlueprint = JSON.parse(decodedBrief);
+        form.setValue("companyName", briefDataFromUrl.companyName || "");
+        form.setValue("productDescription", briefDataFromUrl.productDescription || "");
+        form.setValue("keywords", (briefDataFromUrl.keywords || []).join(', '));
+        toast({ title: "Marketing Brief Loaded", description: "The brief has been autofilled from the integrated app." });
+      } catch (e) {
+        console.error("Failed to parse brief from URL", e);
+        toast({ title: "Brief Load Error", description: "Could not read the marketing brief from the URL.", variant: "destructive" });
+      } finally {
+        // A non-persistent URL is a better user experience
+        router.replace('/', { scroll: false });
       }
+    }
 
-      if (errorParam) {
-        toast({ title: "Integration Error", description: errorParam, variant: "destructive" });
-        router.replace('/', undefined);
-      }
+    if (errorParam) {
+      toast({ title: "Integration Error", description: decodeURIComponent(errorParam), variant: "destructive" });
+      router.replace('/', { scroll: false });
     }
   }, [searchParams, form, router, toast]);
 
@@ -322,7 +321,7 @@ function IPBuilderPageContent() {
 
 export default function IPBuilderPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense>
             <IPBuilderPageContent />
         </Suspense>
     )

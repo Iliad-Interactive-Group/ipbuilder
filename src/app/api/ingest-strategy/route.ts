@@ -1,11 +1,7 @@
 
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
 import { createMarketingBriefBlueprint } from '@/ai/flows/create-marketing-brief-blueprint-flow';
-
-const IngestStrategySchema = z.object({
-  strategyText: z.string().min(1, { message: "strategyText cannot be empty." }),
-});
+import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -14,10 +10,7 @@ const corsHeaders = {
 };
 
 /**
- * API endpoint to receive marketing strategy text, process it using the blueprint flow,
- * and return the marketing brief data as JSON. Now includes CORS headers.
- * @param request - The incoming POST or OPTIONS request.
- * @returns A NextResponse object with the brief data or an error.
+ * Handles preflight CORS requests.
  */
 export async function OPTIONS(request: Request) {
     return new NextResponse(null, {
@@ -26,31 +19,50 @@ export async function OPTIONS(request: Request) {
     });
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const validation = IngestStrategySchema.safeParse(body);
+/**
+ * API endpoint to receive marketing strategy text from various sources, 
+ * process it, and then redirect the user to the main page with the 
+ * marketing brief data encoded in the URL.
+ * 
+ * This endpoint can handle both 'application/json' and 
+ * 'application/x-www-form-urlencoded' content types.
+ * @param request - The incoming POST request.
+ * @returns A NextResponse object that redirects the user.
+ */
+export async function POST(request: NextRequest) {
+  const origin = request.nextUrl.origin;
 
-    if (!validation.success) {
-      return new NextResponse(
-        JSON.stringify({ error: "Invalid input. 'strategyText' cannot be empty." }),
-        { status: 400, headers: corsHeaders }
-      );
+  try {
+    let strategyText: string | null = null;
+    const contentType = request.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        const body = await request.json();
+        strategyText = body.strategyText;
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        const formData = await request.formData();
+        strategyText = formData.get('strategyText') as string | null;
     }
 
-    const { strategyText } = validation.data;
+    if (!strategyText || typeof strategyText !== 'string' || strategyText.trim() === '') {
+        const errorUrl = new URL('/', origin);
+        errorUrl.searchParams.set('error', 'Invalid input. Strategy text cannot be empty.');
+        return NextResponse.redirect(errorUrl.toString());
+    }
 
-    const marketingBrief = await createMarketingBriefBlueprint({ rawText: strategyText });
+    const marketingBrief: MarketingBriefBlueprint = await createMarketingBriefBlueprint({ rawText: strategyText });
 
     if (!marketingBrief) {
-      throw new Error("The AI failed to generate a marketing brief blueprint.");
+        throw new Error("The AI failed to generate a marketing brief blueprint.");
     }
     
-    // Instead of redirecting, we now return the JSON data directly.
-    return new NextResponse(JSON.stringify(marketingBrief), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    const briefString = JSON.stringify(marketingBrief);
+    const encodedBrief = Buffer.from(briefString).toString('base64');
+
+    const successUrl = new URL('/', origin);
+    successUrl.searchParams.set('brief', encodedBrief);
+    
+    return NextResponse.redirect(successUrl.toString());
 
   } catch (error) {
     console.error("Error in /api/ingest-strategy:", error);
@@ -58,10 +70,9 @@ export async function POST(request: Request) {
     if (error instanceof Error) {
         errorMessage = error.message;
     }
-    
-    return new NextResponse(
-        JSON.stringify({ error: errorMessage }),
-        { status: 500, headers: corsHeaders }
-    );
+
+    const errorUrl = new URL('/', origin);
+    errorUrl.searchParams.set('error', errorMessage);
+    return NextResponse.redirect(errorUrl.toString());
   }
 }
