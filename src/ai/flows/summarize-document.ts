@@ -1,4 +1,3 @@
-
 // Summarize the uploaded document and prepopulate the form fields with key information.
 'use server';
 
@@ -65,5 +64,3 @@ const summarizeDocumentFlow = ai.defineFlow(
     return output;
   }
 );
-
-
