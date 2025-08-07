@@ -45,15 +45,6 @@ export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
 >;
 
-const BaseCopyOutputSchema = z.object({
-  marketingCopy: z.union([
-    z.string(),
-    z.array(z.string())
-  ]).describe('The generated marketing copy. Can be a single string or an array of strings for social media posts. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a human-readable text outline. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
-  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards."),
-});
-
-
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
     z.string(),
@@ -111,8 +102,7 @@ const genericPrompt = ai.definePrompt({
       imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types."),
   })},
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
-  For all visual content types (display ad, billboard, TV script), you MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
-
+  
   {{#if tone}}
   Adapt all generated copy to have a {{tone}} tone.
   {{/if}}
@@ -121,6 +111,7 @@ const genericPrompt = ai.definePrompt({
   Generate distinct ad copy variations for the three most common digital display ad sizes. For each ad size, ensure the copy is compelling and tailored to the limited space, incorporating these keywords: {{keywords}}.
   Company Name: {{companyName}}
   Product Description: {{productDescription}}
+  You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   The output for 'display ad copy' should clearly label each size and its corresponding copy (headline, body, call to action).
 
   **1. Medium Rectangle (300x250 pixels):**
@@ -132,6 +123,7 @@ const genericPrompt = ai.definePrompt({
   **3. Wide Skyscraper (160x600 pixels):**
   This is a tall, narrow banner. The message needs to be succinct and impactful, often using a vertical flow. Provide a headline, brief body text, and a call to action.
   {{else if isRadioScript}}
+  You are an expert at writing audio-only radio scripts. DO NOT generate an image suggestion for this content type.
   {{#if radioScriptLength}}
   Generate a radio script for the specified length: {{radioScriptLength}}.
   The script should be clearly labeled with its duration (e.g., "**{{radioScriptLength}} Radio Script:**").
@@ -145,6 +137,7 @@ const genericPrompt = ai.definePrompt({
   Product Description (if provided): {{productDescription}}
   {{else if isPodcastOutline}}
   You are an expert podcast producer. Generate a detailed, human-readable podcast episode outline based on the provided keywords: "{{keywords}}", company name: "{{companyName}}", and product description: "{{productDescription}}".
+  This is an audio-only format, so DO NOT generate an image suggestion.
   The outline should be well-structured and easy to follow as plain text. Use clear headings (e.g., **Section Title:**) and bullet points (e.g., * Key point) for key details.
 
   Here is the structure to follow for the plain text podcast outline:
@@ -259,6 +252,7 @@ const genericPrompt = ai.definePrompt({
   {{/if}}
 
   {{#if isTvScript}}
+  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
     {{#if is8sVEO}}
   Generate an extremely concise and highly creative TV script approximately 8 seconds in length, suitable for Video Engagement Optimization (VEO) platforms.
   The script must grab attention immediately and deliver a powerful message or call to action within this very short timeframe. Focus on visual storytelling if possible and minimal, impactful dialogue or voiceover.
@@ -272,6 +266,7 @@ const genericPrompt = ai.definePrompt({
 
   {{#if isBillboard}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
+  You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{/if}}
   {{#if isBlogPost}}
   The blog post should be approximately 2450 words in length.
@@ -383,5 +378,3 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
