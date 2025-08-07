@@ -30,6 +30,7 @@ import { suggestKeywords } from '@/ai/flows/suggest-keywords-flow.ts';
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
+import DataInputCard from '@/components/page/data-input-card';
 
 const TONES = [
   { value: "professional", label: "Professional" },
@@ -231,6 +232,30 @@ function IPBuilderPageContent() {
         fileInput.value = "";
       }
     }
+  };
+
+  const handleClearForm = () => {
+    form.reset({
+      companyName: "",
+      productDescription: "",
+      keywords: "",
+      contentType: [],
+      tone: NO_TONE_SELECTED_VALUE,
+      socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
+      tvScriptLength: NO_TV_LENGTH_SELECTED_VALUE,
+      radioScriptLength: NO_RADIO_LENGTH_SELECTED_VALUE,
+      additionalInstructions: "",
+    });
+    setFile(null);
+    setFileName("");
+    setWebsiteUrl("");
+    setGeneratedCopy(null);
+    
+    const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+    toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
 
   const handleSummarize = async () => {
@@ -575,30 +600,6 @@ function IPBuilderPageContent() {
     }
   };
 
-  const handleClearForm = () => {
-    form.reset({
-      companyName: "",
-      productDescription: "",
-      keywords: "",
-      contentType: [],
-      tone: NO_TONE_SELECTED_VALUE,
-      socialMediaPlatform: NO_PLATFORM_SELECTED_VALUE,
-      tvScriptLength: NO_TV_LENGTH_SELECTED_VALUE,
-      radioScriptLength: NO_RADIO_LENGTH_SELECTED_VALUE,
-      additionalInstructions: "",
-    });
-    setFile(null);
-    setFileName("");
-    setWebsiteUrl("");
-    setGeneratedCopy(null);
-    
-    const fileInput = document.getElementById('document-upload') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = "";
-    }
-    toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
-  };
-
   const getRowsForContentType = (contentTypeValue: string) => {
     switch (contentTypeValue) {
       case 'website wireframe':
@@ -620,65 +621,17 @@ function IPBuilderPageContent() {
         </header>
 
         <div className="space-y-8">
-          <Card className="shadow-lg rounded-xl overflow-hidden">
-            <CardHeader>
-              <CardTitle className="font-headline text-2xl flex items-center">
-                <UploadCloud className="w-6 h-6 mr-3 text-primary" /> Data Input
-              </CardTitle>
-              <CardDescription>Upload a document (PDF/Word) OR enter a website URL to auto-fill the form below.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="document-upload" className="font-medium">Upload Document</Label>
-                <Input
-                  id="document-upload"
-                  type="file"
-                  onChange={handleFileChange}
-                  className="mt-1"
-                  accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf"
-                  disabled={isSummarizing || !!websiteUrl.trim()}
-                />
-                {fileName && <p className="mt-2 text-sm text-muted-foreground">Selected file: {fileName}</p>}
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Or
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="website-url" className="font-medium">Enter Website URL</Label>
-                <div className="flex items-center space-x-2 mt-1">
-                    <LinkIcon className="h-5 w-5 text-muted-foreground" />
-                    <Input
-                        id="website-url"
-                        type="url"
-                        placeholder="https://example.com"
-                        value={websiteUrl}
-                        onChange={handleUrlChange}
-                        className="flex-grow"
-                        disabled={isSummarizing || !!file}
-                    />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={handleSummarize} disabled={(!file && !websiteUrl.trim()) || isSummarizing || isGenerating} className="w-full sm:w-auto">
-                {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                Summarize & Autofill
-              </Button>
-              <Button variant="outline" onClick={handleClearForm} className="w-full sm:w-auto">
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Clear Form & Inputs
-              </Button>
-            </CardFooter>
-          </Card>
+          <DataInputCard
+            file={file}
+            fileName={fileName}
+            websiteUrl={websiteUrl}
+            isSummarizing={isSummarizing}
+            isGenerating={isGenerating}
+            handleFileChange={handleFileChange}
+            handleUrlChange={handleUrlChange}
+            handleSummarize={handleSummarize}
+            handleClearForm={handleClearForm}
+          />
 
           <Card className="shadow-lg rounded-xl overflow-hidden">
             <CardHeader>
@@ -1016,5 +969,3 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
-
-    
