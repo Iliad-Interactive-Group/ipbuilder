@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { useToast } from "@/hooks/use-toast";
 
-import { Download, Loader2, Copy, FileText } from 'lucide-react';
+import { Download, Loader2, Copy, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail } from 'lucide-react';
 
 
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -29,16 +29,16 @@ import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/compon
 
 
 export const CONTENT_TYPES = [
-  { value: "website copy", label: "Website Copy", icon: "Monitor" },
-  { value: "social media post", label: "Social Media Post", icon: "Users" },
-  { value: "blog post", label: "Blog Post", icon: "FileText" },
-  { value: "radio script", label: "Radio Script", icon: "Mic" },
-  { value: "tv script", label: "TV Script", icon: "Tv" },
-  { value: "podcast outline", label: "Podcast Outline", icon: "Podcast" },
-  { value: "billboard", label: "Billboard Ad", icon: "Presentation" },
-  { value: "website wireframe", label: "Website Wireframe", icon: "LayoutDashboard" },
-  { value: "display ad copy", label: "Display Ad Copy", icon: "ImageIcon" },
-  { value: "lead generation email", label: "Lead Generation Email", icon: "Mail" },
+  { value: "website copy", label: "Website Copy", icon: Monitor },
+  { value: "social media post", label: "Social Media Post", icon: Users },
+  { value: "blog post", label: "Blog Post", icon: FileText },
+  { value: "radio script", label: "Radio Script", icon: Mic },
+  { value: "tv script", label: "TV Script", icon: Tv },
+  { value: "podcast outline", label: "Podcast Outline", icon: Podcast },
+  { value: "billboard", label: "Billboard Ad", icon: Presentation },
+  { value: "website wireframe", label: "Website Wireframe", icon: LayoutDashboard },
+  { value: "display ad copy", label: "Display Ad Copy", icon: ImageIconLucide },
+  { value: "lead generation email", label: "Lead Generation Email", icon: Mail },
 ];
 
 
@@ -447,7 +447,6 @@ function IPBuilderPageContent() {
                             <div key={item.value} className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-lg font-semibold text-primary flex items-center">
-                                       {/* @ts-ignore */}
                                        <Icon className="w-5 h-5 mr-2" />
                                         {item.label}
                                     </h3>
@@ -494,3 +493,5 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
+
+    
