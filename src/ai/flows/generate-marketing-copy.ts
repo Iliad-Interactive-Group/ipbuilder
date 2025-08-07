@@ -94,9 +94,31 @@ const socialMediaPrompt = ai.definePrompt({
     `,
 });
 
+// A new private prompt for the first step of the podcast outline generation.
+const podcastAnalysisPrompt = ai.definePrompt({
+    name: 'podcastAnalysisPrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({
+        episodeTitle: z.string().describe("A catchy, descriptive title reflecting the episode’s topic."),
+        episodeGoal: z.string().describe("A one-sentence summary of the episode's purpose."),
+        targetAudience: z.string().describe("A brief description of the intended listeners.")
+    }) },
+    prompt: `You are an expert podcast producer. Based on the following information, generate a strategic analysis for a podcast episode.
+    - Company Name: {{companyName}}
+    - Product Description: {{productDescription}}
+    - Keywords: {{keywords}}
+
+    Your task is to define the following three elements:
+    1.  A catchy, descriptive **Episode Title** that reflects the episode's topic.
+    2.  A concise, one-sentence **Episode Goal**.
+    3.  A brief description of the **Target Audience**.
+
+    Return these three elements in the specified JSON format.`,
+});
+
 const genericPrompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
-  input: {schema: GenerateMarketingCopyInputSchema},
+  input: {schema: z.any()}, // Using z.any() because the input now varies (includes podcast analysis)
   output: {schema: z.object({ 
       marketingCopy: z.string(),
       imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types."),
@@ -144,11 +166,11 @@ const genericPrompt = ai.definePrompt({
 
   **Podcast Episode Outline**
 
-  **Episode Title:** [Generate a catchy, descriptive title reflecting the episode’s topic or theme related to the product/service and keywords]
+  **Episode Title:** {{podcastAnalysis.episodeTitle}}
 
-  **Episode Goal:** [One sentence summarizing the purpose, e.g., “To explore how the product/service helps X and share practical insights.”]
+  **Episode Goal:** {{podcastAnalysis.episodeGoal}}
 
-  **Target Audience:** [Briefly describe the intended listeners, e.g., “Marketing professionals interested in Y.”]
+  **Target Audience:** {{podcastAnalysis.targetAudience}}
 
   **Total Length:** [Target duration, e.g., 20–30 minutes]
 
@@ -252,7 +274,6 @@ const genericPrompt = ai.definePrompt({
   {{/if}}
 
   {{#if isTvScript}}
-  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
     {{#if is8sVEO}}
   Generate an extremely concise and highly creative TV script approximately 8 seconds in length, suitable for Video Engagement Optimization (VEO) platforms.
   The script must grab attention immediately and deliver a powerful message or call to action within this very short timeframe. Focus on visual storytelling if possible and minimal, impactful dialogue or voiceover.
@@ -262,12 +283,14 @@ const genericPrompt = ai.definePrompt({
     {{else}}
   The TV script should be approximately 30 seconds in length.
     {{/if}}
+  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{/if}}
 
   {{#if isBillboard}}
   The billboard ad should be highly creative and concise, using no more than 8 words.
-  You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{/if}}
+
   {{#if isBlogPost}}
   The blog post should be approximately 2450 words in length.
   When crafting the blog post, please incorporate relevant information and insights about the company's core products or services, primarily drawing from the '{{productDescription}}' and using '{{companyName}}' for context.
@@ -277,6 +300,7 @@ const genericPrompt = ai.definePrompt({
   *   Potentially exploring related industry trends or use cases, if they can be logically inferred from the provided information and keywords ({{keywords}}).
   The aim is to produce an informative and engaging piece that subtly showcases the value and expertise related to the company's offerings, without sounding like a direct advertisement.
   {{/if}}
+  
   {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
   When designing this wireframe, consider best practices for website structure and user experience. Also, draw upon general knowledge of common and effective website layouts for businesses in a similar category to the one described by '{{companyName}}' and '{{productDescription}}'.
@@ -335,7 +359,7 @@ const genericPrompt = ai.definePrompt({
   *   **FAQ Section (Optional):** Address common questions about these services/products.
   *   **Footer:** (Consistent with Homepage)
 
-  Ensure the wireframe is described clearly, promotes good usability, and provides a solid foundation for design and development, reflecting typical user expectations for such a business.
+  Ensure the wireframe is described clearly, promotes good usability, and provides a solid foundation for design and development, reflecting a typical user's expectations for such a business.
   {{/if}}
 
 
@@ -352,23 +376,36 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async (input: GenerateMarketingCopyInput) => {
-    const currentYear = new Date().getFullYear().toString();
     const isSocialMediaPost = input.contentType === "social media post";
-
     if (isSocialMediaPost) {
         const {output} = await socialMediaPrompt(input);
+        return output!;
+    }
+
+    const isPodcastOutline = input.contentType === "podcast outline";
+    if (isPodcastOutline) {
+        const { output: podcastAnalysis } = await podcastAnalysisPrompt(input);
+        if (!podcastAnalysis) {
+            throw new Error("The AI failed to generate the podcast analysis step.");
+        }
+
+        const promptData = {
+            ...input,
+            isPodcastOutline: true,
+            podcastAnalysis, // Pass the analysis results to the generic prompt
+        };
+        const { output } = await genericPrompt(promptData);
         return output!;
     }
     
     const promptData = {
       ...input,
-      currentYear,
+      currentYear: new Date().getFullYear().toString(),
       isRadioScript: input.contentType === "radio script",
       isTvScript: input.contentType === "tv script",
       isBillboard: input.contentType === "billboard",
       isWebsiteWireframe: input.contentType === "website wireframe",
       isBlogPost: input.contentType === "blog post",
-      isPodcastOutline: input.contentType === "podcast outline",
       isDisplayAdCopy: input.contentType === "display ad copy",
       isLeadGenerationEmail: input.contentType === "lead generation email",
       is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
