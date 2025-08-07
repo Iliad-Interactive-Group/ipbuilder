@@ -1,36 +1,124 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, Wand2, RotateCcw, LinkIcon, Loader2 } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { summarizeDocument, SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
+import { summarizeWebsite, SummarizeWebsiteOutput } from '@/ai/flows/summarize-website-flow';
+
+const fileToDataUri = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 
 interface DataInputCardProps {
-  file: File | null;
-  fileName: string;
-  websiteUrl: string;
   isSummarizing: boolean;
+  setIsSummarizing: (isSummarizing: boolean) => void;
   isGenerating: boolean;
-  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleUrlChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSummarize: () => void;
-  handleClearForm: () => void;
+  onClearForm: () => void;
+  onSummarizationComplete: (data: SummarizeDocumentOutput | SummarizeWebsiteOutput) => void;
 }
 
 const DataInputCard: React.FC<DataInputCardProps> = ({
-  file,
-  fileName,
-  websiteUrl,
   isSummarizing,
+  setIsSummarizing,
   isGenerating,
-  handleFileChange,
-  handleUrlChange,
-  handleSummarize,
-  handleClearForm,
+  onClearForm,
+  onSummarizationComplete,
 }) => {
+  const { toast } = useToast();
+  const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+  const [websiteUrl, setWebsiteUrl] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setFileName(selectedFile.name);
+      setWebsiteUrl("");
+    } else {
+      setFile(null);
+      setFileName("");
+    }
+  };
+
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const url = event.target.value;
+    setWebsiteUrl(url);
+    if (url) {
+      setFile(null);
+      setFileName("");
+      const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    }
+  };
+
+  const handleSummarize = async () => {
+    if (!file && !websiteUrl.trim()) {
+      toast({ title: "No Input", description: "Please upload a document or enter a website URL.", variant: "destructive" });
+      return;
+    }
+    if (file && websiteUrl.trim()) {
+        toast({ title: "Multiple Inputs", description: "Please provide either a file OR a URL, not both.", variant: "destructive" });
+        return;
+    }
+
+    setIsSummarizing(true);
+    // onSummarizationStart();
+
+    try {
+      let summaryOutput: SummarizeDocumentOutput | SummarizeWebsiteOutput;
+
+      if (file) {
+        const dataUri = await fileToDataUri(file);
+        summaryOutput = await summarizeDocument({ documentDataUri: dataUri });
+      } else {
+        summaryOutput = await summarizeWebsite({ websiteUrl: websiteUrl.trim() });
+      }
+      
+      onSummarizationComplete(summaryOutput);
+      
+      toast({ title: "Input Summarized", description: "Form fields have been populated with extracted information." });
+    } catch (error: any) {
+      console.error("Error summarizing input:", error);
+      let errorMessage = "Could not summarize the input. Please try again.";
+      if (error.message && error.message.toLowerCase().includes("invalid url")) {
+          errorMessage = "Invalid URL format. Please ensure it starts with http:// or https:// and is a valid URL.";
+      } else if (error.message) {
+          errorMessage = error.message;
+      }
+      toast({ title: "Summarization Error", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleClear = () => {
+    setFile(null);
+    setFileName("");
+    setWebsiteUrl("");
+    const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+    onClearForm();
+  }
+
   return (
     <Card className="shadow-lg rounded-xl overflow-hidden">
       <CardHeader>
@@ -85,7 +173,7 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
           {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
           Summarize & Autofill
         </Button>
-        <Button variant="outline" onClick={handleClearForm} className="w-full sm:w-auto">
+        <Button variant="outline" onClick={handleClear} className="w-full sm:w-auto">
           <RotateCcw className="mr-2 h-4 w-4" />
           Clear Form & Inputs
         </Button>
