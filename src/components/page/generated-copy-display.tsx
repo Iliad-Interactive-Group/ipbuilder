@@ -2,9 +2,11 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Copy, FileText, Lightbulb } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
@@ -19,6 +21,8 @@ export interface GeneratedCopyItem {
   marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure;
   imageSuggestion?: string;
   isError?: boolean;
+  isGeneratingImage?: boolean;
+  generatedImage?: string;
 }
 
 interface GeneratedCopyDisplayProps {
@@ -87,12 +91,33 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         )}
                         
                         {item.imageSuggestion && (
-                            <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md">
-                                <p className="font-semibold flex items-center text-sm">
-                                    <Lightbulb className="w-4 h-4 mr-2"/>
-                                    Image Suggestion
-                                </p>
-                                <p className="text-sm italic pl-6">{item.imageSuggestion}</p>
+                            <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md space-y-3">
+                                <div>
+                                    <p className="font-semibold flex items-center text-sm">
+                                        <Lightbulb className="w-4 h-4 mr-2"/>
+                                        Image Suggestion
+                                    </p>
+                                    <p className="text-sm italic pl-6">{item.imageSuggestion}</p>
+                                </div>
+                                {item.isGeneratingImage ? (
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-[256px] w-full rounded-md" />
+                                        <p className="text-xs text-center text-muted-foreground animate-pulse">Generating image...</p>
+                                    </div>
+                                ) : item.generatedImage ? (
+                                    <Image 
+                                      src={item.generatedImage} 
+                                      alt={item.imageSuggestion}
+                                      width={512}
+                                      height={512}
+                                      className="rounded-lg border-2 border-border object-cover w-full"
+                                      data-ai-hint="generated image"
+                                    />
+                                ) : (
+                                    <div className="p-4 bg-destructive/10 text-destructive text-center text-sm rounded-md">
+                                        Image generation failed.
+                                    </div>
+                                )}
                             </div>
                         )}
                         

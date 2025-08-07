@@ -17,6 +17,7 @@ import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schem
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 import type { GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
@@ -171,6 +172,7 @@ function IPBuilderPageContent() {
           label: currentLabel,
           marketingCopy: result.marketingCopy,
           imageSuggestion: result.imageSuggestion,
+          isGeneratingImage: !!result.imageSuggestion,
         };
       } catch (error) {
         console.error(`Error generating copy for ${typeValue}:`, error);
@@ -185,14 +187,47 @@ function IPBuilderPageContent() {
       }
     });
 
+    const initialResults: GeneratedCopyItem[] = [];
     for (const promise of generatePromises) {
         const result = await promise;
-        setGeneratedCopy(prevCopies => [...prevCopies, result as GeneratedCopyItem]);
+        if (result) initialResults.push(result);
     }
-    
-    toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating copy for ${data.contentType.length} content type(s).` });
+
+    setGeneratedCopy(initialResults);
+    toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating text for ${data.contentType.length} content type(s). Now generating images...` });
     setIsGenerating(false);
     setGenerationProgress(null);
+
+    // Now, generate images for items that have a suggestion
+    initialResults.forEach(item => {
+        if (item.imageSuggestion) {
+            generateImage(item.imageSuggestion)
+                .then(imageDataUri => {
+                    setGeneratedCopy(prevCopies => 
+                        prevCopies.map(copy => 
+                            copy.value === item.value 
+                            ? { ...copy, generatedImage: imageDataUri, isGeneratingImage: false } 
+                            : copy
+                        )
+                    );
+                })
+                .catch(error => {
+                    console.error(`Error generating image for ${item.label}:`, error);
+                    toast({
+                        title: "Image Generation Failed",
+                        description: `Could not generate the image for ${item.label}.`,
+                        variant: "destructive"
+                    });
+                    setGeneratedCopy(prevCopies => 
+                        prevCopies.map(copy => 
+                            copy.value === item.value 
+                            ? { ...copy, isGeneratingImage: false } // Stop loading on error
+                            : copy
+                        )
+                    );
+                });
+        }
+    });
   };
 
   const handleExportTxt = () => {
