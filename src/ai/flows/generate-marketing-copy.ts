@@ -160,27 +160,32 @@ const genericPrompt = ai.definePrompt({
   Generate distinct ad copy variations for the three most common digital display ad sizes. For each ad size, ensure the copy is compelling and tailored to the limited space, incorporating these keywords: {{keywords}}.
   Company Name: {{companyName}}
   Product Description: {{productDescription}}
-  The output for 'display ad copy' should clearly label each size and its corresponding copy (headline, body, call to action).
+  The output for 'display ad copy' should clearly label each size and its corresponding copy (headline, body, call to action). Use the following format, with no asterisks or markdown:
 
-  **1. Medium Rectangle (300x250 pixels):**
-  This size allows for a bit more text. Provide a headline, a short body (1-2 sentences), and a call to action.
+  Medium Rectangle (300x250 pixels):
+  Headline: [Compelling headline]
+  Body: [Short body text, 1-2 sentences]
+  CTA: [Call to Action]
 
-  **2. Leaderboard (728x90 pixels):**
-  This is a wide, short banner. Focus on a concise headline and a strong call to action. Body text might be very limited or omitted.
+  Leaderboard (728x90 pixels):
+  Headline: [Concise headline]
+  CTA: [Strong Call to Action]
 
-  **3. Wide Skyscraper (160x600 pixels):**
-  This is a tall, narrow banner. The message needs to be succinct and impactful, often using a vertical flow. Provide a headline, brief body text, and a call to action.
+  Wide Skyscraper (160x600 pixels):
+  Headline: [Impactful headline]
+  Body: [Brief body text]
+  CTA: [Call to Action]
 
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
   You are an expert at writing audio-only radio scripts.
   {{#if radioScriptLength}}
   Generate a radio script for the specified length: {{radioScriptLength}}.
-  The script should be clearly labeled with its duration (e.g., "**{{radioScriptLength}} Radio Script:**").
+  The script should be clearly labeled with its duration (e.g., "15s Radio Script:"). Use plain text and newlines for formatting, not markdown.
   {{else}}
   Generate four distinct radio script versions of varying lengths: 10 seconds, 15 seconds, 30 seconds, and 60 seconds.
-  Each script version should be clearly labeled with its duration (e.g., "**10-Second Radio Script:**", "**15-Second Radio Script:**", etc.).
-  IMPORTANT: Ensure there are at least two newlines (a blank line) between each script to separate them visually.
+  Each script version should be clearly labeled with its duration (e.g., "10-Second Radio Script:", "15-Second Radio Script:", etc.).
+  IMPORTANT: Ensure there are at least two newlines (a blank line) between each script to separate them visually. Use plain text labels, not markdown.
   {{/if}}
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
@@ -188,23 +193,23 @@ const genericPrompt = ai.definePrompt({
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
   Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
-  The email should follow industry best practices and include the following distinct sections, clearly labeled:
+  The email should follow industry best practices and include the following distinct sections, clearly labeled using plain text, not markdown:
 
-  **Subject Line:**
+  Subject Line:
   [A concise and attention-grabbing subject line (max 60 characters recommended)]
 
-  **Email Body:**
+  Email Body:
   Hi [Name],
 
   [Personalized and engaging opening paragraph. Clearly articulate the value proposition related to {{productDescription}}. Highlight key benefits and address potential pain points of the target audience. Use the keywords: "{{keywords}}" naturally throughout the body.]
 
   [Further paragraphs elaborating on benefits, use cases, or social proof, if applicable.]
 
-  **Call-to-Action (CTA):**
+  Call-to-Action (CTA):
   [A clear, strong, and singular call-to-action phrase that encourages the recipient to take the next step. For example: "Learn More", "Request a Demo", "Download Our Free Guide", "Get Started Today".]
   [Optional: Link for the CTA button/text, e.g., (Link: [Your CTA Link Here]) ]
 
-  **Closing:**
+  Closing:
   [A professional closing, e.g., Best regards, Sincerely,]
 
   [Your Name/Company Name]
@@ -224,7 +229,7 @@ const genericPrompt = ai.definePrompt({
     {{#if is8sVEO}}
   Generate an extremely concise and highly creative TV script approximately 8 seconds in length, suitable for Video Engagement Optimization (VEO) platforms.
   The script must grab attention immediately and deliver a powerful message or call to action within this very short timeframe. Focus on visual storytelling if possible and minimal, impactful dialogue or voiceover.
-  It should be clearly labeled: "**8-Second VEO TV Script:**".
+  It should be clearly labeled with a plain text header: "8-Second VEO TV Script:".
     {{else if tvScriptLength}}
   The TV script should be approximately {{tvScriptLength}} in length.
     {{else}}
@@ -252,61 +257,46 @@ const genericPrompt = ai.definePrompt({
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
   When designing this wireframe, consider best practices for website structure and user experience. Also, draw upon general knowledge of common and effective website layouts for businesses in a similar category to the one described by '{{companyName}}' and '{{productDescription}}'.
 
-  For each page, outline the key sections and elements (e.g., Navbar, Hero Section, Feature List, Call to Action, Footer).
-  Use the provided Company Name, Product Description, and Keywords to suggest relevant placeholder content for headlines, navigation links, service names, etc.
-  The output should be a structured textual description of the wireframe. For example:
+  For each page, outline the key sections and elements. Use plain text for all headers and labels (e.g., "Homepage", "Navbar:", "Hero Section:"). Do not use markdown like asterisks. Use indentation and newlines to create a clear hierarchy. For example:
 
-  **Homepage**
-  *   **Navbar:** Logo ({{companyName}}), Home, About Us, Services, Contact Us (Consider clear, standard navigation)
-  *   **Hero Section:**
-      *   Headline: [Compelling headline based on {{productDescription}} and {{keywords}}, conveying core value proposition]
-      *   Sub-headline: [Brief explanation or benefit, supporting the main headline]
-      *   CTA Button: "Learn More" or "Get Started" (Clear and action-oriented)
-      *   Background Image: Placeholder for a relevant, high-quality image
-  *   **Services/Products Overview (using {{keywords}}):**
-      *   Section Title: Our Core Offerings / Key Solutions
-      *   Service 1: [Name based on keyword 1] - [Short, benefit-driven description]
-      *   Service 2: [Name based on keyword 2] - [Short, benefit-driven description]
-      *   Service 3: [Name based on keyword 3] - [Short, benefit-driven description]
-      *   (Consider visual placeholders if applicable, e.g., icons or small images per service)
-  *   **About Us Snippet:**
-      *   Text: Brief introduction to {{companyName}}, its mission, and unique selling points.
-      *   Link: "Read More About Us" (to About Us page)
-  *   **Key Differentiators/Trust Signals (Optional, but good practice):**
-      *   Section for client logos, testimonials, or key statistics.
-  *   **Call to Action (Main):**
-      *   Headline: Ready to experience [key benefit from {{productDescription}}]?
-      *   Button: "Contact Us Today" or "Request a Quote"
-  *   **Footer:** Copyright {{companyName}} {{currentYear}}, Social Media Links, Privacy Policy, Terms of Service, Contact Info (Standard footer elements)
+  Homepage
+    Navbar: Logo ({{companyName}}), Home, About Us, Services, Contact Us
+    Hero Section:
+      Headline: [Compelling headline based on {{productDescription}} and {{keywords}}]
+      Sub-headline: [Brief explanation or benefit]
+      CTA Button: "Learn More" or "Get Started"
+      Background Image: Placeholder for a relevant, high-quality image
+    Services/Products Overview (using {{keywords}}):
+      Section Title: Our Core Offerings
+      Service 1: [Name based on keyword 1] - [Short, benefit-driven description]
+      Service 2: [Name based on keyword 2] - [Short, benefit-driven description]
+      Service 3: [Name based on keyword 3] - [Short, benefit-driven description]
+    About Us Snippet:
+      Text: Brief introduction to {{companyName}}.
+      Link: "Read More About Us" (to About Us page)
+    Call to Action (Main):
+      Headline: Ready to experience [key benefit]?
+      Button: "Contact Us Today"
+    Footer: Copyright {{companyName}} {{currentYear}}, Social Media Links, Privacy Policy
 
-  **About Us Page**
-  *   **Navbar:** (Consistent with Homepage)
-  *   **Page Title:** About {{companyName}}
-  *   **Our Mission/Vision:** [Detailed text about company mission, values, goals, related to {{productDescription}}]
-  *   **Our Story/History:** [Brief history, founding story, or evolution of {{companyName}}]
-  *   **Our Team (Optional, good for building trust):** Placeholder for "Meet Our Team" with brief bios/photos.
-  *   **Company Values/Culture (Optional):** Highlight what makes {{companyName}} unique.
-  *   **Footer:** (Consistent with Homepage)
+  About Us Page
+    Navbar: (Consistent with Homepage)
+    Page Title: About {{companyName}}
+    Our Mission/Vision: [Detailed text about company mission and values]
+    Our Story/History: [Brief history of {{companyName}}]
+    Our Team (Optional): Placeholder for "Meet Our Team"
 
-  **Services/Product Page (can be one page or multiple, depending on complexity)**
-  *   **Navbar:** (Consistent with Homepage)
-  *   **Page Title:** Our Services / Our Products (tailor based on {{productDescription}})
-  *   **Service/Product 1 (based on {{keywords}}):**
-      *   Headline: [Detailed name of Service/Product 1]
-      *   Image/Icon Placeholder
-      *   Detailed Description: [Comprehensive description of features, benefits, use cases, and problems solved]
-      *   Specific CTA: "Request a Demo," "View Pricing," "Add to Cart," or "Learn More about [Service 1]"
-  *   **Service/Product 2 (if applicable, based on {{keywords}}):**
-      *   Headline: [Detailed name of Service/Product 2]
-      *   Image/Icon Placeholder
-      *   Detailed Description: [Comprehensive description]
-      *   Specific CTA
-  *   **(Repeat for other key services/products)**
-  *   **Testimonial Section (Optional, highly recommended for service/product pages):** Placeholder for client quotes relevant to these offerings.
-  *   **FAQ Section (Optional):** Address common questions about these services/products.
-  *   **Footer:** (Consistent with Homepage)
+  Services/Product Page
+    Navbar: (Consistent with Homepage)
+    Page Title: Our Services
+    Service/Product 1 (based on {{keywords}}):
+      Headline: [Detailed name of Service/Product 1]
+      Image/Icon Placeholder
+      Detailed Description: [Comprehensive description of features and benefits]
+      Specific CTA: "Request a Demo"
+    (Repeat for other key services/products)
 
-  Ensure the wireframe is described clearly, promotes good usability, and provides a solid foundation for design and development, reflecting a typical user's expectations for such a business.
+  Ensure the wireframe is described clearly and provides a solid foundation for design and development.
   {{/if}}
 
 
