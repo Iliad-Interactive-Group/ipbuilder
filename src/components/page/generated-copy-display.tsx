@@ -8,21 +8,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Download, Copy, FileText, Lightbulb } from 'lucide-react';
 import { CONTENT_TYPES } from '@/app/page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { PodcastOutlineStructure } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
+import BlogPostDisplay from './blog-post-display';
 
 
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure;
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure;
   imageSuggestion?: string;
   isError?: boolean;
 }
 
 interface GeneratedCopyDisplayProps {
   generatedCopy: GeneratedCopyItem[] | null;
-  onCopy: (textToCopy: string | string[] | PodcastOutlineStructure, label: string) => void;
+  onCopy: (textToCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure, label: string) => void;
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
@@ -42,8 +43,6 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   const getRowsForContentType = (contentTypeValue: string) => {
     switch (contentTypeValue) {
       case 'website wireframe':
-      case 'display ad copy':
-      case 'blog post':
         return 15;
       default:
         return 8;
@@ -60,8 +59,10 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
         <CardContent>
           <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
             {generatedCopy.map((item) => {
-              const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy);
-              const copyText = isPodcast ? '' : (Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy));
+              const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && 'episodeTitle' in item.marketingCopy;
+              const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && 'sections' in item.marketingCopy;
+              const isStructuredContent = isPodcast || isBlogPost;
+              const copyText = isStructuredContent ? '' : (Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy));
               
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
               
@@ -79,6 +80,8 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                       <div className="space-y-4">
                         {isPodcast ? (
                            <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
+                        ) : isBlogPost ? (
+                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
                         ) : (
                           <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
                         )}
@@ -93,7 +96,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                             </div>
                         )}
                         
-                        {!isPodcast && (
+                        {!isStructuredContent && (
                           <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
                             <Copy className="w-3 h-3 mr-2" />
                             Copy {item.label}
@@ -126,5 +129,3 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
-
-    

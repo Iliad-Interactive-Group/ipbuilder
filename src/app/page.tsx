@@ -21,7 +21,7 @@ import { Loader2, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, Layo
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
-import type { GenerateMarketingCopyOutput, PodcastOutlineStructure } from '@/ai/flows/generate-marketing-copy';
+import type { GenerateMarketingCopyOutput, PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
@@ -68,6 +68,24 @@ const podcastOutlineToString = (outline: PodcastOutlineStructure): string => {
   return content;
 };
 
+const blogPostToString = (post: BlogPostStructure): string => {
+    let content = `Blog Post\n\n`;
+    content += `Title: ${post.title}\n\n`;
+    
+    post.sections.forEach(section => {
+        content += `--- ${section.heading} ---\n`;
+        section.contentItems.forEach(item => {
+            if (item.type === 'paragraph') {
+                content += `${item.text}\n\n`;
+            } else if (item.type === 'list') {
+                content += item.items.map(li => `  - ${li}`).join('\n') + '\n\n';
+            }
+        });
+    });
+
+    return content;
+};
+
 
 const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) => {
   let textContent = "";
@@ -78,8 +96,10 @@ const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) 
     }
     textContent += `------------------------------------------\n`;
     
-    if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy)) {
+    if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && 'episodeTitle' in copy.marketingCopy) {
        textContent += podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure);
+    } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && 'sections' in copy.marketingCopy) {
+        textContent += blogPostToString(copy.marketingCopy as BlogPostStructure);
     } else {
        textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
     }
@@ -327,8 +347,10 @@ function IPBuilderPageContent() {
         doc.setFont(undefined, 'normal');
         const textLineHeight = 10 * lineHeightFactor;
         
-        const marketingText = (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy))
+        const marketingText = (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && 'episodeTitle' in copy.marketingCopy)
           ? podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure)
+          : (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && 'sections' in copy.marketingCopy)
+          ? blogPostToString(copy.marketingCopy as BlogPostStructure)
           : Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : String(copy.marketingCopy);
 
         const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
@@ -370,6 +392,7 @@ function IPBuilderPageContent() {
             h1 { font-size: 1.8em; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
             h2 { font-size: 1.4em; margin-top: 20px; margin-bottom: 8px; color: #555; }
             h3 { font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; color: #666; }
+            h4 { font-size: 1.1em; margin-top: 10px; margin-bottom: 5px; color: #777; }
             p.suggestion { font-style: italic; color: #777; margin-top: -5px; margin-bottom: 10px; }
             pre {
               background-color: #f8f8f8;
@@ -382,7 +405,7 @@ function IPBuilderPageContent() {
               border-radius: 4px;
               overflow-x: auto;
             }
-            div.outline { border: 1px solid #ddd; padding: 15px; border-radius: 4px; background-color: #fdfdfd; }
+            div.structured-content { border: 1px solid #ddd; padding: 15px; border-radius: 4px; background-color: #fdfdfd; }
             ul { margin-top: 5px; }
             div { margin-bottom: 20px; }
           </style>
@@ -393,9 +416,9 @@ function IPBuilderPageContent() {
 
       generatedCopy.forEach(copy => {
         let marketingText;
-        if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy)) {
+        if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && 'episodeTitle' in copy.marketingCopy) {
             const outline = copy.marketingCopy as PodcastOutlineStructure;
-            let outlineHtml = `<div class="outline"><h3>${outline.episodeTitle.replace(/</g, "&lt;")}</h3>`;
+            let outlineHtml = `<div class="structured-content"><h3>Podcast: ${outline.episodeTitle.replace(/</g, "&lt;")}</h3>`;
             outlineHtml += `<p><strong>Goal:</strong> ${outline.episodeGoal.replace(/</g, "&lt;")}</p>`;
             outlineHtml += `<p><strong>Audience:</strong> ${outline.targetAudience.replace(/</g, "&lt;")}</p>`;
             outlineHtml += `<h4>Introduction (${outline.introduction.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Hook:</strong> ${outline.introduction.hook.replace(/</g, "&lt;")}</li><li><strong>Overview:</strong> ${outline.introduction.episodeOverview.replace(/</g, "&lt;")}</li></ul>`;
@@ -407,6 +430,21 @@ function IPBuilderPageContent() {
             outlineHtml += `<h4>Conclusion (${outline.conclusion.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Recap:</strong> ${outline.conclusion.recap.replace(/</g, "&lt;")}</li><li><strong>CTA:</strong> ${outline.conclusion.callToAction.replace(/</g, "&lt;")}</li><li><strong>Teaser:</strong> ${outline.conclusion.teaser.replace(/</g, "&lt;")}</li></ul>`;
             outlineHtml += `</div>`;
             marketingText = outlineHtml;
+        } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && 'sections' in copy.marketingCopy) {
+            const post = copy.marketingCopy as BlogPostStructure;
+            let postHtml = `<div class="structured-content"><h3>Blog Post: ${post.title.replace(/</g, "&lt;")}</h3>`;
+            post.sections.forEach(section => {
+                postHtml += `<h4>${section.heading.replace(/</g, "&lt;")}</h4>`;
+                section.contentItems.forEach(item => {
+                    if (item.type === 'paragraph') {
+                        postHtml += `<p>${item.text.replace(/</g, "&lt;")}</p>`;
+                    } else if (item.type === 'list') {
+                        postHtml += `<ul>${item.items.map(li => `<li>${li.replace(/</g, "&lt;")}</li>`).join('')}</ul>`;
+                    }
+                });
+            });
+            postHtml += '</div>';
+            marketingText = postHtml;
         } else {
             const rawText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('<br><br>') : String(copy.marketingCopy);
             marketingText = `<pre>${rawText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;

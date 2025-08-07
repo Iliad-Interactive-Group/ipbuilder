@@ -73,13 +73,26 @@ const PodcastOutlineStructureSchema = z.object({
 });
 export type PodcastOutlineStructure = z.infer<typeof PodcastOutlineStructureSchema>;
 
+const BlogPostStructureSchema = z.object({
+  title: z.string().describe("The main, compelling title of the blog post."),
+  sections: z.array(z.object({
+    heading: z.string().describe("The heading for this section of the blog post."),
+    contentItems: z.array(z.union([
+        z.object({ type: z.literal('paragraph'), text: z.string() }),
+        z.object({ type: z.literal('list'), items: z.array(z.string()) })
+    ])).describe("An array of content items, which can be paragraphs or bulleted lists. Use paragraphs for standard text and lists for itemized points. Aim for a total word count of approximately 2450 words for the entire post.")
+  })).describe("An array of sections, each with a heading and content.")
+});
+export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
+
 
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
     z.string(),
     z.array(z.string()),
-    PodcastOutlineStructureSchema, // Added structured podcast outline
-  ]).describe('The generated marketing copy. Can be a single string, an array of strings, or a structured podcast outline object. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline", a structured JSON object. If "blog post", approx 2450 words. If "lead generation email", a complete email structure.'),
+    PodcastOutlineStructureSchema,
+    BlogPostStructureSchema,
+  ]).describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
   imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
@@ -139,6 +152,31 @@ const podcastPrompt = ai.definePrompt({
     - The introduction hook should be engaging.
     - The main content should have 2-3 distinct segments, each with a clear purpose, key points, and talking points.
     - The conclusion should effectively summarize the episode and provide a clear call-to-action.
+    `,
+});
+
+const blogPostPrompt = ai.definePrompt({
+    name: 'generateBlogPostPrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: BlogPostStructureSchema }) },
+    prompt: `You are an expert content strategist and writer. Your task is to generate a comprehensive, well-structured blog post as a JSON object that conforms to the provided schema. The total word count for the entire post should be approximately 2450 words.
+
+    Base your post on the following information:
+    - Keywords: {{keywords}}
+    - Company Name: {{companyName}}
+    - Product Description: {{productDescription}}
+    
+    When crafting the blog post, please incorporate relevant information and insights about the company's core products or services, primarily drawing from the '{{productDescription}}' and using '{{companyName}}' for context.
+    This should involve:
+    *   Elaborating on the key features and benefits mentioned in the product description.
+    *   Discussing common problems the product/service solves for its target audience.
+    *   Potentially exploring related industry trends or use cases, if they can be logically inferred from the provided information and keywords ({{keywords}}).
+    The aim is to produce an informative and engaging piece that subtly showcases the value and expertise related to the company's offerings, without sounding like a direct advertisement.
+
+    Flesh out all the fields in the JSON schema to create a comprehensive and logical blog post. This is a text-based format, so do not generate an image suggestion.
+    - The title should be engaging and SEO-friendly.
+    - The content should be broken into multiple sections, each with a clear heading.
+    - Within each section, use a mix of paragraph and list content items to improve readability.
     `,
 });
 
@@ -242,40 +280,6 @@ const genericPrompt = ai.definePrompt({
   The billboard ad should be highly creative and concise, using no more than 8 words.
   You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{/if}}
-
-  {{#if isBlogPost}}
-  The blog post should be approximately 2450 words in length.
-  When crafting the blog post, please incorporate relevant information and insights about the company's core products or services, primarily drawing from the '{{productDescription}}' and using '{{companyName}}' for context.
-  This should involve:
-  *   Elaborating on the key features and benefits mentioned in the product description.
-  *   Discussing common problems the product/service solves for its target audience.
-  *   Potentially exploring related industry trends or use cases, if they can be logically inferred from the provided information and keywords ({{keywords}}).
-  The aim is to produce an informative and engaging piece that subtly showcases the value and expertise related to the company's offerings, without sounding like a direct advertisement.
-  
-  IMPORTANT: The output must be formatted for readability. Use plain text and newlines for all formatting. DO NOT use markdown like asterisks.
-  - Use bold headers for the main title and section titles, like this: **This is a Bold Header**
-  - Use regular text for paragraphs.
-  - Use bullet points with an asterisk (*) for any lists.
-  - Ensure there is a blank line between paragraphs and sections.
-
-  For example:
-  **Blog Post Title Here**
-
-  This is the first paragraph of the introduction. It should be engaging and set the stage for the rest of the post.
-
-  **First Section Header**
-
-  This is a paragraph under the first section. It explains the key concepts of this section in detail.
-
-  This is another paragraph in the same section, providing more information or a different perspective.
-
-  * This is a bullet point.
-  * This is another bullet point.
-
-  **Second Section Header**
-
-  This paragraph starts the second section of the blog post, continuing the discussion.
-  {{/if}}
   
   {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
@@ -350,8 +354,14 @@ const generateMarketingCopyFlow = ai.defineFlow(
         if (!output) {
              throw new Error("The AI failed to generate the podcast outline.");
         }
-        // The output from podcastPrompt is already in the correct format { marketingCopy: PodcastOutlineStructure }
-        // and does not include an image suggestion, which is correct for this audio-only format.
+        return output;
+    }
+
+    if (input.contentType === "blog post") {
+        const { output } = await blogPostPrompt(input);
+        if (!output) {
+             throw new Error("The AI failed to generate the blog post.");
+        }
         return output;
     }
     
@@ -362,7 +372,6 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isTvScript: input.contentType === "tv script",
       isBillboard: input.contentType === "billboard",
       isWebsiteWireframe: input.contentType === "website wireframe",
-      isBlogPost: input.contentType === "blog post",
       isDisplayAdCopy: input.contentType === "display ad copy",
       isLeadGenerationEmail: input.contentType === "lead generation email",
       is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
