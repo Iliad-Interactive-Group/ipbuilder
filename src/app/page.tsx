@@ -184,6 +184,10 @@ function IPBuilderPageContent() {
   };
   
   const handleCopy = async (textToCopy: string | string[], label: string) => {
+    if (typeof textToCopy !== 'string' && !Array.isArray(textToCopy)) {
+      toast({ title: "Copy Failed", description: `Cannot copy complex object for ${label}.`, variant: "destructive" });
+      return;
+    }
     const text = Array.isArray(textToCopy) ? textToCopy.join('\n\n') : textToCopy;
     try {
       await navigator.clipboard.writeText(text);
@@ -209,7 +213,6 @@ function IPBuilderPageContent() {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
         
-        // This state update is for the progress indicator, not for rendering results
         setGenerationProgress(prev => ({ ...prev!, current: prev!.current + 1, currentLabel }));
 
         const marketingInput: any = { 
@@ -233,7 +236,6 @@ function IPBuilderPageContent() {
 
         const result: GenerateMarketingCopyOutput = await generateMarketingCopy(marketingInput);
         
-        // Return the successfully generated copy
         return {
           value: typeValue,
           label: currentLabel,
@@ -241,7 +243,6 @@ function IPBuilderPageContent() {
           imageSuggestion: result.imageSuggestion,
         };
       } catch (error) {
-        // Log error and return a specific error object for this type
         console.error(`Error generating copy for ${typeValue}:`, error);
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
@@ -254,10 +255,8 @@ function IPBuilderPageContent() {
       }
     });
 
-    // Process promises and update state as they resolve
     for (const promise of generatePromises) {
         const result = await promise;
-        // Add each result (success or error) to the state to be displayed in real-time
         setGeneratedCopy(prevCopies => [...prevCopies, result as GeneratedCopyItem]);
     }
     

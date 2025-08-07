@@ -325,7 +325,10 @@ const generateMarketingCopyFlow = ai.defineFlow(
   async (input: GenerateMarketingCopyInput) => {
     if (input.contentType === "social media post") {
         const {output} = await socialMediaPrompt(input);
-        return output!;
+        if (!output) {
+          throw new Error('The AI failed to generate social media posts.');
+        }
+        return output;
     }
 
     if (input.contentType === "podcast outline") {
@@ -333,7 +336,9 @@ const generateMarketingCopyFlow = ai.defineFlow(
         if (!output) {
              throw new Error("The AI failed to generate the podcast outline.");
         }
-        return output; // The output from podcastPrompt is already in the correct format
+        // The output from podcastPrompt is already in the correct format { marketingCopy: PodcastOutlineStructure }
+        // and does not include an image suggestion, which is correct for this audio-only format.
+        return output;
     }
     
     const promptData = {
@@ -350,7 +355,10 @@ const generateMarketingCopyFlow = ai.defineFlow(
     };
     
     const {output} = await genericPrompt(promptData);
-    return output!;
+    if (!output) {
+      throw new Error('The AI failed to generate the requested marketing copy.');
+    }
+    return output;
   }
 );
 

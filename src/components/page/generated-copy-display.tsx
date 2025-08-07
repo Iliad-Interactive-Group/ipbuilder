@@ -22,7 +22,7 @@ export interface GeneratedCopyItem {
 
 interface GeneratedCopyDisplayProps {
   generatedCopy: GeneratedCopyItem[] | null;
-  onCopy: (textToCopy: string | string[], label: string) => void;
+  onCopy: (textToCopy: string | string[] | PodcastOutlineStructure, label: string) => void;
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
@@ -94,7 +94,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         )}
                         
                         {!isPodcast && (
-                          <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy as (string | string[]), item.label)} className="w-full sm:w-auto">
+                          <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
                             <Copy className="w-3 h-3 mr-2" />
                             Copy {item.label}
                           </Button>
