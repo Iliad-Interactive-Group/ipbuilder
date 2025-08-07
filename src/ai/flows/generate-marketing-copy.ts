@@ -87,12 +87,7 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 
 const GenerateMarketingCopyOutputSchema = z.object({
-  marketingCopy: z.union([
-    z.string(),
-    z.array(z.string()),
-    PodcastOutlineStructureSchema,
-    BlogPostStructureSchema,
-  ]).describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
+  marketingCopy: z.any().describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
   imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards.")
 });
 export type GenerateMarketingCopyOutput = z.infer<

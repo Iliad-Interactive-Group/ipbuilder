@@ -6,11 +6,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Download, Copy, FileText, Lightbulb } from 'lucide-react';
-import { CONTENT_TYPES } from '@/app/page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
+import { CONTENT_TYPES } from '@/lib/content-types';
 
 
 export interface GeneratedCopyItem {
@@ -23,7 +23,7 @@ export interface GeneratedCopyItem {
 
 interface GeneratedCopyDisplayProps {
   generatedCopy: GeneratedCopyItem[] | null;
-  onCopy: (textToCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure, label: string) => void;
+  onCopy: (textToCopy: any, label: string) => void;
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
