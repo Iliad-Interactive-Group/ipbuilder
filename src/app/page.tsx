@@ -17,7 +17,6 @@ import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schem
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 import type { GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
-import { generateImage } from '@/ai/flows/generate-image-flow';
 
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
@@ -25,6 +24,7 @@ import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/compon
 import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
+import { generateImage } from '@/ai/flows/generate-image-flow';
 
 interface GenerationProgress {
   total: number;

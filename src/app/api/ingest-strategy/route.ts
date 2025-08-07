@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
     const successUrl = new URL('/', origin);
     successUrl.searchParams.set('brief', encodedBrief);
     
-    return NextResponse.redirect(successUrl.toString());
+    // Use NextResponse.redirect for external-style redirects, even within the app
+    return NextResponse.redirect(successUrl.toString(), { headers: corsHeaders });
 
   } catch (error) {
     console.error("Error in /api/ingest-strategy:", error);
@@ -73,6 +74,6 @@ export async function POST(request: NextRequest) {
 
     const errorUrl = new URL('/', origin);
     errorUrl.searchParams.set('error', errorMessage);
-    return NextResponse.redirect(errorUrl.toString());
+    return NextResponse.redirect(errorUrl.toString(), { headers: corsHeaders });
   }
 }
