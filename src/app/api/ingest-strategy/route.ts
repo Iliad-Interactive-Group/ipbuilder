@@ -14,6 +14,10 @@ const IngestStrategySchema = z.object({
  * @returns A NextResponse object that redirects the user.
  */
 export async function POST(request: Request) {
+  const host = request.headers.get('host');
+  const protocol = host?.startsWith('localhost') ? 'http' : 'https';
+  const baseUrl = `${protocol}://${host}`;
+
   try {
     const body = await request.json();
 
@@ -21,10 +25,8 @@ export async function POST(request: Request) {
 
     if (!validation.success) {
       const errorQuery = new URLSearchParams({ error: "Invalid input. 'strategyText' cannot be empty." }).toString();
-      const url = request.nextUrl.clone();
-      url.pathname = '/';
-      url.search = errorQuery;
-      return NextResponse.redirect(url);
+      const errorUrl = new URL(`/?${errorQuery}`, baseUrl);
+      return NextResponse.redirect(errorUrl);
     }
 
     const { strategyText } = validation.data;
@@ -41,11 +43,9 @@ export async function POST(request: Request) {
     const encodedBrief = Buffer.from(briefString).toString('base64');
 
     const briefQuery = new URLSearchParams({ brief: encodedBrief }).toString();
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    url.search = briefQuery;
+    const successUrl = new URL(`/?${briefQuery}`, baseUrl);
     
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(successUrl);
 
   } catch (error) {
     console.error("Error in /api/ingest-strategy:", error);
@@ -54,9 +54,7 @@ export async function POST(request: Request) {
         errorMessage = error.message;
     }
     const errorQuery = new URLSearchParams({ error: errorMessage }).toString();
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    url.search = errorQuery;
-    return NextResponse.redirect(url);
+    const errorUrl = new URL(`/?${errorQuery}`, baseUrl);
+    return NextResponse.redirect(errorUrl);
   }
 }
