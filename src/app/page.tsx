@@ -10,12 +10,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+
 
 import { useToast } from "@/hooks/use-toast";
 
-import { Download, Loader2, Copy, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail } from 'lucide-react';
+import { Loader2, FileText, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail } from 'lucide-react';
 
 
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
@@ -26,6 +26,7 @@ import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
 import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/components/page/marketing-brief-form';
+import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
 
 
 export const CONTENT_TYPES = [
@@ -41,29 +42,11 @@ export const CONTENT_TYPES = [
   { value: "lead generation email", label: "Lead Generation Email", icon: Mail },
 ];
 
-
-export interface GeneratedCopyItem {
-  value: string;
-  label: string;
-  marketingCopy: string | string[];
-}
-
 interface MarketingBrief {
     companyName?: string;
     productDescription?: string;
     keywords?: string[];
 }
-
-const fileToDataUri = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      resolve(reader.result as string);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-};
 
 const exportTextFile = (filenameBase: string, copies: Array<GeneratedCopyItem>) => {
   let textContent = "";
@@ -172,19 +155,6 @@ function IPBuilderPageContent() {
     } catch (err) {
       console.error('Failed to copy: ', err);
       toast({ title: "Copy Failed", description: `Could not copy ${label}.`, variant: "destructive" });
-    }
-  };
-
-  const getRowsForContentType = (contentTypeValue: string) => {
-    switch (contentTypeValue) {
-      case 'website wireframe':
-      case 'display ad copy':
-      case 'podcast outline':
-      case 'radio script':
-      case 'blog post':
-        return 15;
-      default:
-        return 8;
     }
   };
 
@@ -433,49 +403,13 @@ function IPBuilderPageContent() {
           )}
 
           {generatedCopy && generatedCopy.length > 0 && (
-            <div className="space-y-8">
-              <Card className="shadow-lg rounded-xl overflow-hidden">
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl">Generated Marketing Copies</CardTitle>
-                    <CardDescription>Review your AI-generated marketing copies below. One for each content type you selected.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {generatedCopy.map((item) => {
-                        const copyText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : item.marketingCopy;
-                        const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
-                        return (
-                            <div key={item.value} className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold text-primary flex items-center">
-                                       <Icon className="w-5 h-5 mr-2" />
-                                        {item.label}
-                                    </h3>
-                                    <Button variant="outline" size="sm" onClick={() => handleCopy(item.marketingCopy, item.label)}>
-                                        <Copy className="w-3 h-3 mr-2" />
-                                        Copy
-                                    </Button>
-                                </div>
-                                <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
-                            </div>
-                        )
-                    })}
-                </CardContent>
-                <CardFooter className="flex flex-wrap gap-2">
-                    <Button onClick={handleExportTxt} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export All (TXT)
-                    </Button>
-                    <Button onClick={handleExportPdf} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export All (PDF)
-                    </Button>
-                    <Button onClick={handleExportHtmlForGoogleDocs} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export All (HTML for Google Docs)
-                    </Button>
-                </CardFooter>
-              </Card>
-            </div>
+            <GeneratedCopyDisplay
+              generatedCopy={generatedCopy}
+              onCopy={handleCopy}
+              onExportTxt={handleExportTxt}
+              onExportPdf={handleExportPdf}
+              onExportHtml={handleExportHtmlForGoogleDocs}
+            />
           )}
         </div>
       </main>
@@ -493,5 +427,3 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
-
-    

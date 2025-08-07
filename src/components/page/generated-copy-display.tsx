@@ -1,0 +1,96 @@
+
+'use client';
+
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Download, Copy, FileText } from 'lucide-react';
+import { CONTENT_TYPES } from '@/app/page';
+
+export interface GeneratedCopyItem {
+  value: string;
+  label: string;
+  marketingCopy: string | string[];
+}
+
+interface GeneratedCopyDisplayProps {
+  generatedCopy: GeneratedCopyItem[] | null;
+  onCopy: (textToCopy: string | string[], label: string) => void;
+  onExportTxt: () => void;
+  onExportPdf: () => void;
+  onExportHtml: () => void;
+}
+
+const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
+  generatedCopy,
+  onCopy,
+  onExportTxt,
+  onExportPdf,
+  onExportHtml,
+}) => {
+  if (!generatedCopy || generatedCopy.length === 0) {
+    return null;
+  }
+
+  const getRowsForContentType = (contentTypeValue: string) => {
+    switch (contentTypeValue) {
+      case 'website wireframe':
+      case 'display ad copy':
+      case 'podcast outline':
+      case 'radio script':
+      case 'blog post':
+        return 15;
+      default:
+        return 8;
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <Card className="shadow-lg rounded-xl overflow-hidden">
+        <CardHeader>
+          <CardTitle className="font-headline text-2xl">Generated Marketing Copies</CardTitle>
+          <CardDescription>Review your AI-generated marketing copies below. One for each content type you selected.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {generatedCopy.map((item) => {
+            const copyText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : item.marketingCopy;
+            const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
+            return (
+              <div key={item.value} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-primary flex items-center">
+                    <Icon className="w-5 h-5 mr-2" />
+                    {item.label}
+                  </h3>
+                  <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)}>
+                    <Copy className="w-3 h-3 mr-2" />
+                    Copy
+                  </Button>
+                </div>
+                <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
+              </div>
+            )
+          })}
+        </CardContent>
+        <CardFooter className="flex flex-wrap gap-2">
+          <Button onClick={onExportTxt} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" />
+            Export All (TXT)
+          </Button>
+          <Button onClick={onExportPdf} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" />
+            Export All (PDF)
+          </Button>
+          <Button onClick={onExportHtml} disabled={!generatedCopy || generatedCopy.length === 0} className="w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" />
+            Export All (HTML for Google Docs)
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
+
+export default GeneratedCopyDisplay;
