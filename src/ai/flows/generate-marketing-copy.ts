@@ -120,7 +120,7 @@ const genericPrompt = ai.definePrompt({
   input: {schema: z.any()}, // Using z.any() because the input now varies (includes podcast analysis)
   output: {schema: z.object({ 
       marketingCopy: z.string(),
-      imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types."),
+      imageSuggestion: z.string().optional(), // Image suggestion is now conditionally requested inside the prompt
   })},
   prompt: `You are a marketing expert specializing in creating engaging content and strategic outlines.
   
@@ -145,7 +145,7 @@ const genericPrompt = ai.definePrompt({
 
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
-  You are an expert at writing audio-only radio scripts. DO NOT generate an image suggestion for this content type.
+  You are an expert at writing audio-only radio scripts.
   {{#if radioScriptLength}}
   Generate a radio script for the specified length: {{radioScriptLength}}.
   The script should be clearly labeled with its duration (e.g., "**{{radioScriptLength}} Radio Script:**").
@@ -415,3 +415,5 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
