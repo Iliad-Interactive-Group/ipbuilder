@@ -75,10 +75,10 @@ const blogPostToString = (post: BlogPostStructure): string => {
     post.sections.forEach(section => {
         content += `--- ${section.heading} ---\n`;
         section.contentItems.forEach(item => {
-            if (item.type === 'paragraph') {
-                content += `${item.text}\n\n`;
-            } else if (item.type === 'list') {
-                content += item.items.map(li => `  - ${li}`).join('\n') + '\n\n';
+            if (item.paragraph) {
+                content += `${item.paragraph}\n\n`;
+            } else if (item.listItems) {
+                content += item.listItems.map(li => `  - ${li}`).join('\n') + '\n\n';
             }
         });
     });
@@ -436,10 +436,10 @@ function IPBuilderPageContent() {
             post.sections.forEach(section => {
                 postHtml += `<h4>${section.heading.replace(/</g, "&lt;")}</h4>`;
                 section.contentItems.forEach(item => {
-                    if (item.type === 'paragraph') {
-                        postHtml += `<p>${item.text.replace(/</g, "&lt;")}</p>`;
-                    } else if (item.type === 'list') {
-                        postHtml += `<ul>${item.items.map(li => `<li>${li.replace(/</g, "&lt;")}</li>`).join('')}</ul>`;
+                    if (item.paragraph) {
+                        postHtml += `<p>${item.paragraph.replace(/</g, "&lt;")}</p>`;
+                    } else if (item.listItems) {
+                        postHtml += `<ul>${item.listItems.map(li => `<li>${li.replace(/</g, "&lt;")}</li>`).join('')}</ul>`;
                     }
                 });
             });

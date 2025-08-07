@@ -20,12 +20,12 @@ const BlogPostDisplay: React.FC<BlogPostDisplayProps> = ({ post }) => {
           <h3 className="text-lg font-semibold text-foreground mb-2">{section.heading}</h3>
           <div className="space-y-3">
             {section.contentItems.map((item, itemIndex) => {
-              if (item.type === 'paragraph') {
-                return <p key={itemIndex}>{item.text}</p>;
-              } else if (item.type === 'list') {
+              if (item.paragraph) {
+                return <p key={itemIndex}>{item.paragraph}</p>;
+              } else if (item.listItems && item.listItems.length > 0) {
                 return (
                   <ul key={itemIndex} className="list-disc pl-5 space-y-1">
-                    {item.items.map((listItem, listIndex) => (
+                    {item.listItems.map((listItem, listIndex) => (
                       <li key={listIndex}>{listItem}</li>
                     ))}
                   </ul>

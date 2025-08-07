@@ -77,10 +77,10 @@ const BlogPostStructureSchema = z.object({
   title: z.string().describe("The main, compelling title of the blog post."),
   sections: z.array(z.object({
     heading: z.string().describe("The heading for this section of the blog post."),
-    contentItems: z.array(z.union([
-        z.object({ type: z.literal('paragraph'), text: z.string() }),
-        z.object({ type: z.literal('list'), items: z.array(z.string()) })
-    ])).describe("An array of content items, which can be paragraphs or bulleted lists. Use paragraphs for standard text and lists for itemized points. Aim for a total word count of approximately 2450 words for the entire post.")
+    contentItems: z.array(z.object({
+        paragraph: z.string().optional().describe("A paragraph of text. Use this for standard text blocks."),
+        listItems: z.array(z.string()).optional().describe("A list of bullet points. Use this for itemized points. One of these, paragraph or listItems, must be provided."),
+    })).describe("An array of content items. Each item is either a paragraph or a list of bullet points. Aim for a total word count of approximately 2450 words for the entire post.")
   })).describe("An array of sections, each with a heading and content.")
 });
 export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
@@ -176,7 +176,7 @@ const blogPostPrompt = ai.definePrompt({
     Flesh out all the fields in the JSON schema to create a comprehensive and logical blog post. This is a text-based format, so do not generate an image suggestion.
     - The title should be engaging and SEO-friendly.
     - The content should be broken into multiple sections, each with a clear heading.
-    - Within each section, use a mix of paragraph and list content items to improve readability.
+    - Within each section, use a mix of paragraph and list content items to improve readability. For each content item, you must provide either a 'paragraph' (for standard text) or 'listItems' (for bullet points), but not both.
     `,
 });
 
