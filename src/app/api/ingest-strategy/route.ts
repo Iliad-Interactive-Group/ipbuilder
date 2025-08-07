@@ -8,7 +8,7 @@ const IngestStrategySchema = z.object({
 });
 
 /**
- * API endpoint to receive marketing strategy text, process it, 
+ * API endpoint to receive marketing strategy text, process it using the blueprint flow,
  * and redirect back to the homepage with the marketing brief data in the URL.
  * @param request - The incoming POST request.
  * @returns A NextResponse object that redirects the user.
@@ -20,8 +20,7 @@ export async function POST(request: Request) {
     const validation = IngestStrategySchema.safeParse(body);
 
     if (!validation.success) {
-      // Redirect to an error page or show an error on the main page
-      const errorQuery = new URLSearchParams({ error: "Invalid input." }).toString();
+      const errorQuery = new URLSearchParams({ error: "Invalid input. 'strategyText' cannot be empty." }).toString();
       const url = request.nextUrl.clone();
       url.pathname = '/';
       url.search = errorQuery;
@@ -30,10 +29,11 @@ export async function POST(request: Request) {
 
     const { strategyText } = validation.data;
 
+    // Use the new, unified blueprint flow
     const marketingBrief = await createMarketingBriefBlueprint({ rawText: strategyText });
 
     if (!marketingBrief) {
-      throw new Error("The AI failed to generate a marketing brief.");
+      throw new Error("The AI failed to generate a marketing brief blueprint.");
     }
 
     // Encode the brief to be safely passed in a URL
