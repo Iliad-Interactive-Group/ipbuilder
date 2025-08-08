@@ -48,6 +48,7 @@ function IPBuilderPageContent() {
   const searchParams = useSearchParams();
 
   const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[]>([]);
+  const [editedCopy, setEditedCopy] = useState<Record<string, string>>({});
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
@@ -122,6 +123,7 @@ function IPBuilderPageContent() {
       additionalInstructions: "",
     });
     setGeneratedCopy([]);
+    setEditedCopy({});
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
   
@@ -140,9 +142,14 @@ function IPBuilderPageContent() {
     }
   };
 
+  const handleCopyEdit = (itemValue: string, newText: string) => {
+    setEditedCopy(prev => ({...prev, [itemValue]: newText}));
+  };
+
   const onSubmit = async (data: MarketingBriefFormData) => {
     setIsGenerating(true);
     setGeneratedCopy([]); // Clear previous results immediately
+    setEditedCopy({}); // Clear previous edits
     setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
     
     let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
@@ -242,21 +249,16 @@ function IPBuilderPageContent() {
   };
 
   const handleGenerateAudio = async (item: GeneratedCopyItem) => {
-    let script: string;
+    // Use the edited copy if it exists, otherwise use the original.
+    const script = editedCopy[item.value] ?? (typeof item.marketingCopy === 'string' ? item.marketingCopy : null);
 
-    // This robustly extracts the script text, handling strings and arrays of strings.
-    if (typeof item.marketingCopy === 'string') {
-        script = item.marketingCopy;
-    } else if (Array.isArray(item.marketingCopy) && item.marketingCopy.every(i => typeof i === 'string')) {
-        script = item.marketingCopy.join('\n\n');
-    } else {
-        // It will not attempt to process complex objects, preventing errors.
-        toast({ title: "Invalid Content", description: "Cannot generate audio from this complex content type.", variant: "destructive" });
-        return;
-    }
-
-    if (!script.trim()) {
-        toast({ title: "No Script", description: "Cannot generate audio from empty content.", variant: "destructive" });
+    // Ensure we have a valid script to process.
+    if (typeof script !== 'string' || !script.trim()) {
+        toast({ 
+            title: "Invalid Content for Audio", 
+            description: "Cannot generate audio. The content is either empty or in a format that cannot be converted to speech (like a podcast outline).", 
+            variant: "destructive" 
+        });
         return;
     }
 
@@ -299,14 +301,14 @@ function IPBuilderPageContent() {
 
   const handleExportTxt = () => {
     if (generatedCopy && generatedCopy.length > 0) {
-      exportTextFile(generatedCopy);
+      exportTextFile(generatedCopy, editedCopy);
       toast({ title: "Copies Exported", description: `All generated copies exported as a .txt file.`});
     }
   };
   
   const handleExportPdf = () => {
     if (generatedCopy && generatedCopy.length > 0) {
-      exportPdf(generatedCopy);
+      exportPdf(generatedCopy, editedCopy);
       toast({ title: "Copies Exported", description: `All generated copies exported as a .pdf file.`});
     } else {
       toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
@@ -315,7 +317,7 @@ function IPBuilderPageContent() {
 
   const handleExportHtml = () => {
     if (generatedCopy && generatedCopy.length > 0) {
-      exportHtmlForGoogleDocs(generatedCopy);
+      exportHtmlForGoogleDocs(generatedCopy, editedCopy);
       toast({ title: "Copies Exported", description: `All generated copies exported as a .html file for Google Docs.`});
     } else {
       toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
@@ -347,7 +349,9 @@ function IPBuilderPageContent() {
           {generatedCopy && generatedCopy.length > 0 && (
             <GeneratedCopyDisplay
               generatedCopy={generatedCopy}
+              editedCopy={editedCopy}
               onCopy={handleCopy}
+              onEdit={handleCopyEdit}
               onExportTxt={handleExportTxt}
               onExportPdf={handleExportPdf}
               onExportHtml={handleExportHtml}
@@ -411,5 +415,3 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
-
-    

@@ -53,7 +53,23 @@ const getFilenameBase = (copies: GeneratedCopyItem[]): string => {
     return `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`;
 }
 
-export const exportTextFile = (copies: GeneratedCopyItem[]) => {
+const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string => {
+    const editedText = editedCopy[item.value];
+    if (editedText !== undefined) {
+        return editedText;
+    }
+    
+    if (item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy) {
+       return podcastOutlineToString(item.marketingCopy as PodcastOutlineStructure);
+    } else if (item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy) {
+       return blogPostToString(item.marketingCopy as BlogPostStructure);
+    } else {
+       return Array.isArray(item.marketingCopy) ? item.marketingCopy.join('\n\n') : String(item.marketingCopy);
+    }
+};
+
+
+export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
   let textContent = "";
   copies.forEach(copy => {
     textContent += `Content Type: ${copy.label}\n`;
@@ -62,13 +78,8 @@ export const exportTextFile = (copies: GeneratedCopyItem[]) => {
     }
     textContent += `------------------------------------------\n`;
     
-    if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy) {
-       textContent += podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure);
-    } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'sections' in copy.marketingCopy) {
-        textContent += blogPostToString(copy.marketingCopy as BlogPostStructure);
-    } else {
-       textContent += `${Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : copy.marketingCopy}\n\n\n`;
-    }
+    const itemText = getItemText(copy, editedCopy);
+    textContent += `${itemText}\n\n\n`;
   });
 
   const element = document.createElement("a");
@@ -81,7 +92,7 @@ export const exportTextFile = (copies: GeneratedCopyItem[]) => {
   URL.revokeObjectURL(element.href);
 };
 
-export const exportPdf = (copies: GeneratedCopyItem[]) => {
+export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
     try {
       const doc = new jsPDF();
       let yPosition = 15;
@@ -129,12 +140,7 @@ export const exportPdf = (copies: GeneratedCopyItem[]) => {
         doc.setFont(undefined, 'normal');
         const textLineHeight = 10 * lineHeightFactor;
         
-        const marketingText = (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy)
-          ? podcastOutlineToString(copy.marketingCopy as PodcastOutlineStructure)
-          : (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'sections' in copy.marketingCopy)
-          ? blogPostToString(copy.marketingCopy as BlogPostStructure)
-          : Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('\n\n') : String(copy.marketingCopy);
-
+        const marketingText = getItemText(copy, editedCopy);
         const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
         
         textLines.forEach((line: string) => {
@@ -154,7 +160,7 @@ export const exportPdf = (copies: GeneratedCopyItem[]) => {
     }
 }
 
-export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[]) => {
+export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
     try {
       let htmlContent = `
         <!DOCTYPE html>
@@ -192,37 +198,19 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[]) => {
 
       copies.forEach(copy => {
         let marketingText;
-        if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy) {
-            const outline = copy.marketingCopy as PodcastOutlineStructure;
-            let outlineHtml = `<div class="structured-content"><h3>Podcast: ${outline.episodeTitle.replace(/</g, "&lt;")}</h3>`;
-            outlineHtml += `<p><strong>Goal:</strong> ${outline.episodeGoal.replace(/</g, "&lt;")}</p>`;
-            outlineHtml += `<p><strong>Audience:</strong> ${outline.targetAudience.replace(/</g, "&lt;")}</p>`;
-            outlineHtml += `<h4>Introduction (${outline.introduction.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Hook:</strong> ${outline.introduction.hook.replace(/</g, "&lt;")}</li><li><strong>Overview:</strong> ${outline.introduction.episodeOverview.replace(/</g, "&lt;")}</li></ul>`;
-            outline.mainContent.forEach(seg => {
-                outlineHtml += `<h4>Segment: ${seg.segmentTitle.replace(/</g, "&lt;")} (${seg.duration.replace(/</g, "&lt;")})</h4><ul>`;
-                seg.keyPoints.forEach(p => outlineHtml += `<li>${p.replace(/</g, "&lt;")}</li>`);
-                outlineHtml += `</ul>`;
-            });
-            outlineHtml += `<h4>Conclusion (${outline.conclusion.duration.replace(/</g, "&lt;")})</h4><ul><li><strong>Recap:</strong> ${outline.conclusion.recap.replace(/</g, "&lt;")}</li><li><strong>CTA:</strong> ${outline.conclusion.callToAction.replace(/</g, "&lt;")}</li><li><strong>Teaser:</strong> ${outline.conclusion.teaser.replace(/</g, "&lt;")}</li></ul>`;
-            outlineHtml += `</div>`;
-            marketingText = outlineHtml;
-        } else if (copy.value === 'blog post' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'sections' in copy.marketingCopy) {
-            const post = copy.marketingCopy as BlogPostStructure;
-            let postHtml = `<div class="structured-content"><h3>Blog Post: ${post.title.replace(/</g, "&lt;")}</h3>`;
-            post.sections.forEach(section => {
-                postHtml += `<h4>${section.heading.replace(/</g, "&lt;")}</h4>`;
-                section.contentItems.forEach(item => {
-                    if (item.paragraph) {
-                        postHtml += `<p>${item.paragraph.replace(/</g, "&lt;")}</p>`;
-                    } else if (item.listItems) {
-                        postHtml += `<ul>${item.listItems.map(li => `<li>${li.replace(/</g, "&lt;")}</li>`).join('')}</ul>`;
-                    }
-                });
-            });
-            postHtml += '</div>';
-            marketingText = postHtml;
+        const itemText = getItemText(copy, editedCopy);
+
+        if (copy.value === 'podcast outline' || copy.value === 'blog post') {
+            const rawHtml = itemText
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;")
+              .replace(/\n/g, '<br>');
+            marketingText = `<div class="structured-content">${rawHtml}</div>`;
         } else {
-            const rawText = Array.isArray(copy.marketingCopy) ? copy.marketingCopy.join('<br><br>') : String(copy.marketingCopy);
+            const rawText = itemText;
             marketingText = `<pre>${rawText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
         }
         

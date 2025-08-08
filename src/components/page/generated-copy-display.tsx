@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,16 +29,64 @@ export interface GeneratedCopyItem {
 
 interface GeneratedCopyDisplayProps {
   generatedCopy: GeneratedCopyItem[] | null;
+  editedCopy: Record<string, string>;
   onCopy: (textToCopy: any, label: string) => void;
+  onEdit: (itemValue: string, newText: string) => void;
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
   onGenerateAudio: (item: GeneratedCopyItem) => void;
 }
 
+const EditableTextDisplay: React.FC<{
+  item: GeneratedCopyItem;
+  editedText: string | undefined;
+  onEdit: (newText: string) => void;
+}> = ({ item, editedText, onEdit }) => {
+    const initialText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy);
+    const [currentText, setCurrentText] = useState(initialText);
+
+    useEffect(() => {
+        // This ensures the textarea updates if a new generation happens
+        setCurrentText(initialText);
+    }, [initialText]);
+    
+    useEffect(() => {
+        // If an edited value comes from props, update the local state
+        if (editedText !== undefined) {
+            setCurrentText(editedText);
+        }
+    }, [editedText]);
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setCurrentText(e.target.value);
+        onEdit(e.target.value);
+    };
+
+    const getRowsForContentType = (contentTypeValue: string) => {
+        switch (contentTypeValue) {
+            case 'website wireframe': return 20;
+            case 'blog post': return 25;
+            default: return 8;
+        }
+    };
+    
+    return (
+        <Textarea 
+            value={currentText} 
+            onChange={handleTextChange} 
+            rows={getRowsForContentType(item.value)} 
+            className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
+        />
+    );
+};
+
+
 const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   generatedCopy,
+  editedCopy,
   onCopy,
+  onEdit,
   onExportTxt,
   onExportPdf,
   onExportHtml,
@@ -48,36 +96,26 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
     return null;
   }
 
-  const getRowsForContentType = (contentTypeValue: string) => {
-    switch (contentTypeValue) {
-      case 'website wireframe':
-        return 20;
-      case 'blog post':
-          return 25;
-      default:
-        return 8;
-    }
-  };
-
   const isAudioContent = (item: GeneratedCopyItem) => {
     return ['radio script', 'tv script'].includes(item.value);
   }
+
+  const isEditableContent = (item: GeneratedCopyItem) => {
+    return typeof item.marketingCopy === 'string' || Array.isArray(item.marketingCopy);
+  };
 
   return (
     <div className="space-y-8">
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Generated Marketing Copies</CardTitle>
-          <CardDescription>Review your AI-generated marketing copies below. Click each section to expand.</CardDescription>
+          <CardDescription>Review your AI-generated marketing copies below. Scripts for audio/video are editable.</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
             {generatedCopy.map((item) => {
               const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy;
               const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy;
-              const isStructuredContent = isPodcast || isBlogPost;
-              const copyText = isStructuredContent ? '' : (Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy));
-              
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
               
               return (
@@ -103,10 +141,10 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         ) : isPodcast ? (
                            <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
                         ) : isBlogPost ? (
-                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
-                        ) : (
-                          <Textarea value={copyText} readOnly rows={getRowsForContentType(item.value)} className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"/>
-                        )}
+                           <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
+                        ) : isEditableContent(item) ? (
+                           <EditableTextDisplay item={item} editedText={editedCopy[item.value]} onEdit={(newText) => onEdit(item.value, newText)} />
+                        ) : null}
                         
                         {item.imageSuggestion && (
                             <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md space-y-3">
@@ -140,8 +178,8 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         )}
                         
                         <div className="flex flex-wrap gap-2 items-center">
-                          {!isStructuredContent && !item.isError && (
-                            <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
+                          {!isPodcast && !isBlogPost && !item.isError && (
+                            <Button variant="outline" size="sm" onClick={() => onCopy(editedCopy[item.value] || item.marketingCopy, item.label)} className="w-full sm:w-auto">
                               <Copy className="w-3 h-3 mr-2" />
                               Copy {item.label}
                             </Button>
@@ -159,16 +197,6 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                     {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
                                     {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio' : 'Generate Audio')}
                                 </Button>
-                                <audio 
-                                    src={item.generatedAudio} 
-                                    controls 
-                                    className={`w-full ${item.generatedAudio ? '' : 'hidden'}`}
-                                >
-                                    Your browser does not support the audio element.
-                                </audio>
-                                {!item.generatedAudio && item.isGeneratingAudio && (
-                                    <span className="text-sm text-muted-foreground animate-pulse">Processing...</span>
-                                )}
                             </div>
                           )}
                         </div>
