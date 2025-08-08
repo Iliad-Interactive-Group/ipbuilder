@@ -401,7 +401,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center"><Clock className="w-4 h-4 mr-2 text-muted-foreground"/>Radio Script Length (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_RADIO_LENGTH_SELECTED_VALUE}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={"30s"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select radio script length (default: 30s)" />
@@ -460,5 +460,3 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
 };
 
 export default MarketingBriefForm;
-
-    

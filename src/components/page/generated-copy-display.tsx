@@ -42,15 +42,17 @@ const EditableTextDisplay: React.FC<{
   item: GeneratedCopyItem;
   editedText: string | undefined;
   onEdit: (newText: string) => void;
-}> = ({ item, editedText, onEdit }) => {
+  isReadOnly: boolean;
+}> = ({ item, editedText, onEdit, isReadOnly }) => {
     
     const [currentText, setCurrentText] = useState(editedText || '');
 
     useEffect(() => {
         // This effect ensures the textarea updates if the underlying prop changes
         // For example, when a new generation happens.
-        setCurrentText(editedText || '');
-    }, [editedText]);
+        const initialText = editedText || (Array.isArray(item.marketingCopy) ? item.marketingCopy.join('\n\n') : String(item.marketingCopy));
+        setCurrentText(initialText);
+    }, [editedText, item.marketingCopy]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newText = e.target.value;
@@ -69,7 +71,8 @@ const EditableTextDisplay: React.FC<{
     return (
         <Textarea 
             value={currentText} 
-            onChange={handleTextChange} 
+            onChange={handleTextChange}
+            readOnly={isReadOnly}
             rows={getRowsForContentType(item.value)} 
             className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
         />
@@ -138,7 +141,12 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         ) : isBlogPost ? (
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
                         ) : isEditableContent(item) ? (
-                           <EditableTextDisplay item={item} editedText={editedCopy[item.value]} onEdit={(newText) => onEdit(item.value, newText)} />
+                           <EditableTextDisplay 
+                                item={item} 
+                                editedText={editedCopy[item.value]} 
+                                onEdit={(newText) => onEdit(item.value, newText)}
+                                isReadOnly={!isAudioContent(item)}
+                           />
                         ) : null}
                         
                         {item.imageSuggestion && (
@@ -222,5 +230,3 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
-
-    
