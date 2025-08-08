@@ -72,7 +72,7 @@ Document: {{media url=documentDataUri}}
 
 {{#if websiteUrl}}
 Input Source: Website URL
-Your analysis must be based exclusively on the content found at this exact URL.
+Your analysis must be based exclusively on the content found at this exact URL. If you cannot access the URL, you must not invent information.
 URL: {{websiteUrl}}
 {{/if}}
 
@@ -100,4 +100,3 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
     return output;
   }
 );
-
