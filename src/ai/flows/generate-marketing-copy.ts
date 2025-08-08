@@ -383,9 +383,10 @@ const generateMarketingCopyFlow = ai.defineFlow(
       throw new Error('The AI failed to generate the requested marketing copy.');
     }
     
-    // For audio/script types, we must only return the script text itself to avoid data mismatch in the frontend.
+    // For audio/script types, we must ONLY return the script text itself.
+    // The schema mismatch was causing the frontend to fail to render the audio player.
     if (promptData.isRadioScript || promptData.isTvScript) {
-      return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+      return output.marketingCopy as any;
     }
 
     // For all other generic types, return the full output object
