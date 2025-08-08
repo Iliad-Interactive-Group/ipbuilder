@@ -43,27 +43,32 @@ const EditableTextDisplay: React.FC<{
   editedText: string | undefined;
   onEdit: (newText: string) => void;
 }> = ({ item, editedText, onEdit }) => {
-    const initialText = Array.isArray(item.marketingCopy) ? item.marketingCopy.join("\n\n") : String(item.marketingCopy);
+    // Determine the initial text based on its type.
+    const getInitialText = () => {
+        if (Array.isArray(item.marketingCopy)) {
+            return item.marketingCopy.join("\n\n");
+        }
+        if (typeof item.marketingCopy === 'string') {
+            return item.marketingCopy;
+        }
+        // Fallback for complex objects that aren't meant to be directly edited here
+        return JSON.stringify(item.marketingCopy, null, 2);
+    }
+    
+    const initialText = getInitialText();
     const [currentText, setCurrentText] = useState(initialText);
 
     useEffect(() => {
-        // This ensures the textarea updates if a new generation happens
-        setCurrentText(initialText);
-    }, [initialText]);
-    
-    useEffect(() => {
-        // If an edited value comes from props, update the local state
-        if (editedText !== undefined) {
-            setCurrentText(editedText);
-        } else {
-            // if editedText is cleared (e.g. new generation), reset to initial
-            setCurrentText(initialText);
-        }
-    }, [editedText, initialText]);
+        // This effect ensures the textarea updates if a new generation happens
+        // or if the underlying marketingCopy prop changes for any reason.
+        const newInitialText = getInitialText();
+        setCurrentText(editedText ?? newInitialText);
+    }, [item.marketingCopy, editedText]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setCurrentText(e.target.value);
-        onEdit(e.target.value);
+        const newText = e.target.value;
+        setCurrentText(newText);
+        onEdit(newText);
     };
 
     const getRowsForContentType = (contentTypeValue: string) => {
@@ -230,5 +235,3 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
-
-    
