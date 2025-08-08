@@ -233,16 +233,18 @@ function IPBuilderPageContent() {
   const handleGenerateAudio = async (item: GeneratedCopyItem) => {
     let script: string;
 
+    // This robustly extracts the script text, handling strings and arrays of strings.
     if (typeof item.marketingCopy === 'string') {
         script = item.marketingCopy;
     } else if (Array.isArray(item.marketingCopy)) {
         script = item.marketingCopy.join(' ');
     } else {
-        toast({ title: "Invalid Content", description: "Cannot generate audio from this content type.", variant: "destructive" });
+        // It will not attempt to process complex objects, preventing errors.
+        toast({ title: "Invalid Content", description: "Cannot generate audio from this complex content type.", variant: "destructive" });
         return;
     }
 
-    if (!script) {
+    if (!script.trim()) {
         toast({ title: "No Script", description: "Cannot generate audio from empty content.", variant: "destructive" });
         return;
     }

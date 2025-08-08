@@ -43,7 +43,7 @@ Document: {{media url=documentDataUri}}
 
 {{#if websiteUrl}}
 Input Source: Website URL
-Your analysis must be based exclusively on the content found at this exact URL.
+Your analysis must be based exclusively on the content found at this exact URL. If you cannot access the content at the URL for any reason, do not invent information. Instead, return an error stating that the website could not be analyzed.
 URL: {{websiteUrl}}
 {{/if}}
 

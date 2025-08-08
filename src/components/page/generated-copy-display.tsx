@@ -153,11 +153,11 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                   variant="outline" 
                                   size="sm" 
                                   onClick={() => onGenerateAudio(item)} 
-                                  disabled={item.isGeneratingAudio || !!item.generatedAudio}
+                                  disabled={item.isGeneratingAudio}
                                   className="w-auto"
                                 >
                                     {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
-                                    {item.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
+                                    {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio' : 'Generate Audio')}
                                 </Button>
                                 <audio 
                                     src={item.generatedAudio} 
