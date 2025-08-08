@@ -231,7 +231,17 @@ function IPBuilderPageContent() {
   };
 
   const handleGenerateAudio = async (item: GeneratedCopyItem) => {
-    const script = Array.isArray(item.marketingCopy) ? item.marketingCopy.join(' ') : String(item.marketingCopy);
+    let script: string;
+
+    if (typeof item.marketingCopy === 'string') {
+        script = item.marketingCopy;
+    } else if (Array.isArray(item.marketingCopy)) {
+        script = item.marketingCopy.join(' ');
+    } else {
+        toast({ title: "Invalid Content", description: "Cannot generate audio from this content type.", variant: "destructive" });
+        return;
+    }
+
     if (!script) {
         toast({ title: "No Script", description: "Cannot generate audio from empty content.", variant: "destructive" });
         return;

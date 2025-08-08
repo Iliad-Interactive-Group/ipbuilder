@@ -44,7 +44,6 @@ Document: {{media url=documentDataUri}}
 {{#if websiteUrl}}
 Input Source: Website URL
 Your analysis must be based exclusively on the content found at this exact URL.
-IMPORTANT: If you are unable to access or process the content at the provided URL for any reason, you MUST NOT invent or infer information. Instead, you must throw an error with the message "The specified website could not be analyzed. Please check the URL for accuracy or try another source."
 URL: {{websiteUrl}}
 {{/if}}
 
@@ -65,6 +64,20 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
     outputSchema: MarketingBriefBlueprintSchema,
   },
   async input => {
+    if (input.websiteUrl) {
+      try {
+        const response = await fetch(input.websiteUrl, { method: 'GET', redirect: 'follow' });
+        if (!response.ok) {
+          // Throw a specific error if the website is not accessible
+          throw new Error('The specified website could not be analyzed. Please check the URL for accuracy or try another source.');
+        }
+      } catch (e) {
+        // Catch fetch errors (e.g., DNS, network issues)
+        console.error("URL fetch failed:", e);
+        throw new Error('The specified website could not be analyzed. Please check the URL for accuracy or try another source.');
+      }
+    }
+  
     const {output} = await prompt(input);
     if (!output) {
       throw new Error('The AI model did not return the expected blueprint output.');
