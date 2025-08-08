@@ -55,8 +55,11 @@ const EditableTextDisplay: React.FC<{
         // If an edited value comes from props, update the local state
         if (editedText !== undefined) {
             setCurrentText(editedText);
+        } else {
+            // if editedText is cleared (e.g. new generation), reset to initial
+            setCurrentText(initialText);
         }
-    }, [editedText]);
+    }, [editedText, initialText]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setCurrentText(e.target.value);
@@ -227,3 +230,5 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
+
+    
