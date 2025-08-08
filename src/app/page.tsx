@@ -8,6 +8,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog"
+
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,6 +53,8 @@ function IPBuilderPageContent() {
   const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [briefData, setBriefData] = useState<MarketingBriefBlueprint | null>(null);
+  const [activeAudioItem, setActiveAudioItem] = useState<GeneratedCopyItem | null>(null);
+
 
   const form = useForm<MarketingBriefFormData>({
     resolver: zodResolver(formSchema),
@@ -255,12 +266,23 @@ function IPBuilderPageContent() {
 
     try {
         const audioDataUri = await generateAudio(script);
+        
+        const updatedItem = { ...item, generatedAudio: audioDataUri, isGeneratingAudio: false };
+
         setGeneratedCopy(prev => prev.map(copy => 
-            copy.value === item.value 
-            ? { ...copy, generatedAudio: audioDataUri, isGeneratingAudio: false } 
-            : copy
+            copy.value === item.value ? updatedItem : copy
         ));
-        toast({ title: "Audio Generated", description: `Audio for ${item.label} is ready.` });
+
+        toast({
+          title: "Audio Generated",
+          description: `Audio for ${item.label} is ready.`,
+          action: (
+            <Button variant="secondary" size="sm" onClick={() => setActiveAudioItem(updatedItem)}>
+              Play Audio
+            </Button>
+          ),
+        });
+
     } catch (error) {
         console.error(`Error generating audio for ${item.label}:`, error);
         toast({
@@ -356,7 +378,23 @@ function IPBuilderPageContent() {
             </Card>
           )}
 
-
+          {activeAudioItem && (
+             <AlertDialog open={!!activeAudioItem} onOpenChange={(isOpen) => !isOpen && setActiveAudioItem(null)}>
+                <AlertDialogContent>
+                   <AlertDialogHeader>
+                      <AlertDialogTitle>Playing Audio for: {activeAudioItem.label}</AlertDialogTitle>
+                   </AlertDialogHeader>
+                   <div className="py-4">
+                      <audio src={activeAudioItem.generatedAudio} controls autoPlay className="w-full">
+                         Your browser does not support the audio element.
+                      </audio>
+                   </div>
+                   <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setActiveAudioItem(null)}>Close</AlertDialogCancel>
+                   </AlertDialogFooter>
+                </AlertDialogContent>
+             </AlertDialog>
+          )}
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground text-sm font-body">
@@ -373,3 +411,5 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
+
+    
