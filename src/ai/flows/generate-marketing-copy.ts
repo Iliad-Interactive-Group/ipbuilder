@@ -223,7 +223,7 @@ const genericPrompt = ai.definePrompt({
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
-  Do NOT generate an image suggestion.
+  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
   {{else if isTvScript}}
   You are an expert at writing TV scripts. Generate a script that is ready for a text-to-speech model.
   IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, camera directions, character names, visual cues, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
@@ -235,7 +235,7 @@ const genericPrompt = ai.definePrompt({
     {{else}}
   The TV script should be approximately 30 seconds in length.
     {{/if}}
-  Do NOT generate an image suggestion.
+  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
   Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
@@ -349,7 +349,8 @@ const generateMarketingCopyFlow = ai.defineFlow(
         if (!output) {
              throw new Error("The AI failed to generate the podcast outline.");
         }
-        return output;
+        // Ensure no image suggestion for podcast outlines
+        return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
 
     if (input.contentType === "blog post") {
@@ -357,7 +358,8 @@ const generateMarketingCopyFlow = ai.defineFlow(
         if (!output) {
              throw new Error("The AI failed to generate the blog post.");
         }
-        return output;
+        // Ensure no image suggestion for blog posts
+        return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
     
     const promptData = {
@@ -376,8 +378,12 @@ const generateMarketingCopyFlow = ai.defineFlow(
     if (!output) {
       throw new Error('The AI failed to generate the requested marketing copy.');
     }
+    
+    // Explicitly remove image suggestion for audio/script types
+    if (promptData.isRadioScript || promptData.isTvScript) {
+      output.imageSuggestion = undefined;
+    }
+
     return output;
   }
 );
-
-    

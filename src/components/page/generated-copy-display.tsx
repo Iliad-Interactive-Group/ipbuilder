@@ -51,7 +51,9 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   const getRowsForContentType = (contentTypeValue: string) => {
     switch (contentTypeValue) {
       case 'website wireframe':
-        return 15;
+        return 20;
+      case 'blog post':
+          return 25;
       default:
         return 8;
     }
