@@ -43,27 +43,14 @@ const EditableTextDisplay: React.FC<{
   editedText: string | undefined;
   onEdit: (newText: string) => void;
 }> = ({ item, editedText, onEdit }) => {
-    // Determine the initial text based on its type.
-    const getInitialText = () => {
-        if (Array.isArray(item.marketingCopy)) {
-            return item.marketingCopy.join("\n\n");
-        }
-        if (typeof item.marketingCopy === 'string') {
-            return item.marketingCopy;
-        }
-        // Fallback for complex objects that aren't meant to be directly edited here
-        return JSON.stringify(item.marketingCopy, null, 2);
-    }
     
-    const initialText = getInitialText();
-    const [currentText, setCurrentText] = useState(initialText);
+    const [currentText, setCurrentText] = useState(editedText || '');
 
     useEffect(() => {
-        // This effect ensures the textarea updates if a new generation happens
-        // or if the underlying marketingCopy prop changes for any reason.
-        const newInitialText = getInitialText();
-        setCurrentText(editedText ?? newInitialText);
-    }, [item.marketingCopy, editedText]);
+        // This effect ensures the textarea updates if the underlying prop changes
+        // For example, when a new generation happens.
+        setCurrentText(editedText || '');
+    }, [editedText]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newText = e.target.value;
@@ -203,7 +190,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                   className="w-auto"
                                 >
                                     {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
-                                    {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio' : 'Generate Audio')}
+                                    {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio Spec' : 'Generate Audio Spec')}
                                 </Button>
                             </div>
                           )}
@@ -235,3 +222,5 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
+
+    

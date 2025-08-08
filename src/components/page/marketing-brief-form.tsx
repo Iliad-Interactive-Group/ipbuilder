@@ -373,7 +373,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                     <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_TV_LENGTH_SELECTED_VALUE}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select TV script length (optional, default 30s)" />
+                          <SelectValue placeholder="Select TV script length (default: 30s)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -386,7 +386,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Choose the desired length for the TV script. Defaults to 30 seconds if not specified.
+                      Choose the desired length for the TV script.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -404,11 +404,11 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                     <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_RADIO_LENGTH_SELECTED_VALUE}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select radio script length (optional, default all)" />
+                          <SelectValue placeholder="Select radio script length (default: 30s)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={NO_RADIO_LENGTH_SELECTED_VALUE}>Default (All lengths: 10, 15, 30, 60s)</SelectItem>
+                        <SelectItem value={NO_RADIO_LENGTH_SELECTED_VALUE}>Default (30 seconds)</SelectItem>
                         {RADIO_SCRIPT_LENGTHS.map((length) => (
                           <SelectItem key={length.value} value={length.value}>
                             {length.label}
@@ -417,7 +417,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Choose a specific length or get all standard radio script lengths.
+                      Choose the desired length for the radio script.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

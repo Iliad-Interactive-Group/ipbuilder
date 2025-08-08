@@ -39,7 +39,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   radioScriptLength: z
     .string()
     .optional()
-    .describe("The desired length for the Radio script (e.g., '10s', '15s', '30s', '60s'). Defaults to all lengths if not specified.")
+    .describe("The desired length for the Radio script (e.g., '10s', '15s', '30s', '60s'). Defaults to 30s if not specified.")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -214,13 +214,19 @@ const genericPrompt = ai.definePrompt({
   You are an expert at writing audio-only radio scripts. Generate a script that is ready for a text-to-speech model.
   IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, sound effect cues (like "SFX:"), music cues, character names, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
   Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
+  You MUST spell out all numbers (e.g., write "one hundred" not "100").
   
+  Generate a radio script for the specified length. The word count must be strictly followed:
   {{#if radioScriptLength}}
-  Generate a radio script for the specified length: {{radioScriptLength}}.
+    - For '60s', the script must be approximately 175 words.
+    - For '30s', the script must be approximately 85 words.
+    - For '15s', the script must be approximately 40 words.
+    - For '10s', the script must be approximately 25 words.
+    Current length: {{radioScriptLength}}.
   {{else}}
-  Generate four distinct radio script versions of varying lengths: 10 seconds, 15 seconds, 30 seconds, and 60 seconds.
-  To separate the different versions, use a simple divider like '---' on its own line between each script.
+    The script must be for 30 seconds, so approximately 85 words.
   {{/if}}
+  
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
@@ -228,14 +234,19 @@ const genericPrompt = ai.definePrompt({
   You are an expert at writing TV scripts. Generate a script that is ready for a text-to-speech model.
   IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, camera directions, character names, visual cues, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
   Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
-
-    {{#if is8sVEO}}
-  Generate an extremely concise and highly creative TV script approximately 8 seconds in length.
-    {{else if tvScriptLength}}
-  The TV script should be approximately {{tvScriptLength}} in length.
-    {{else}}
-  The TV script should be approximately 30 seconds in length.
-    {{/if}}
+  You MUST spell out all numbers (e.g., write "one hundred" not "100").
+  
+  Generate a TV script for the specified length. The word count must be strictly followed:
+  {{#if is8sVEO}}
+    - For '8s', the script must be very concise, approximately 20 words.
+  {{else if tvScriptLength}}
+    - For '30s', the script must be approximately 85 words.
+    - For '15s', the script must be approximately 40 words.
+    Current length: {{tvScriptLength}}.
+  {{else}}
+    The script must be for 30 seconds, so approximately 85 words.
+  {{/if}}
+  
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
   Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
@@ -392,3 +403,5 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output;
   }
 );
+
+    

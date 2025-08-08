@@ -210,8 +210,21 @@ function IPBuilderPageContent() {
         const result = await promise;
         if (result) initialResults.push(result);
     }
-
+    
+    // Set the initial copy (unedited)
     setGeneratedCopy(initialResults);
+    
+    // Also initialize the editedCopy state with the generated copy
+    const initialEdits: Record<string, string> = {};
+    initialResults.forEach(item => {
+        if (typeof item.marketingCopy === 'string') {
+            initialEdits[item.value] = item.marketingCopy;
+        } else if (Array.isArray(item.marketingCopy)) {
+            initialEdits[item.value] = item.marketingCopy.join('\n\n');
+        }
+    });
+    setEditedCopy(initialEdits);
+
     toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating text for ${data.contentType.length} content type(s). Now generating images...` });
     setIsGenerating(false);
     setGenerationProgress(null);
@@ -250,7 +263,7 @@ function IPBuilderPageContent() {
 
   const handleGenerateAudio = async (item: GeneratedCopyItem) => {
     // Use the edited copy if it exists, otherwise use the original.
-    const script = editedCopy[item.value] ?? (typeof item.marketingCopy === 'string' ? item.marketingCopy : null);
+    const script = editedCopy[item.value];
 
     // Ensure we have a valid script to process.
     if (typeof script !== 'string' || !script.trim()) {
@@ -415,3 +428,5 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
+
+    
