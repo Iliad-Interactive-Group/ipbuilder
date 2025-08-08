@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, Copy, FileText, Lightbulb, Volume2, Loader2 } from 'lucide-react';
+import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
@@ -92,7 +92,15 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                    </AccordionTrigger>
                    <AccordionContent className="pt-2">
                       <div className="space-y-4">
-                        {isPodcast ? (
+                        {item.isError ? (
+                           <div className="p-3 bg-destructive/10 border-l-4 border-destructive text-destructive-foreground rounded-r-md">
+                                <p className="font-semibold flex items-center text-sm">
+                                    <Info className="w-4 h-4 mr-2"/>
+                                    Content Generation Failed
+                                </p>
+                                <p className="text-sm pl-6">{String(item.marketingCopy)}</p>
+                           </div>
+                        ) : isPodcast ? (
                            <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
                         ) : isBlogPost ? (
                             <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
@@ -132,29 +140,34 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         )}
                         
                         <div className="flex flex-wrap gap-2 items-center">
-                          {!isStructuredContent && (
+                          {!isStructuredContent && !item.isError && (
                             <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
                               <Copy className="w-3 h-3 mr-2" />
                               Copy {item.label}
                             </Button>
                           )}
 
-                          {isAudioContent(item) && (
+                          {isAudioContent(item) && !item.isError && (
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
                                   onClick={() => onGenerateAudio(item)} 
-                                  disabled={item.isGeneratingAudio}
+                                  disabled={item.isGeneratingAudio || !!item.generatedAudio}
                                   className="w-auto"
                                 >
                                     {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
                                     {item.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
                                 </Button>
-                                {item.generatedAudio && (
-                                  <audio controls src={item.generatedAudio} className="w-full">
+                                <audio 
+                                    src={item.generatedAudio} 
+                                    controls 
+                                    className={`w-full ${!item.generatedAudio ? 'hidden' : ''}`}
+                                >
                                     Your browser does not support the audio element.
-                                  </audio>
+                                </audio>
+                                {!item.generatedAudio && item.isGeneratingAudio && (
+                                    <span className="text-sm text-muted-foreground animate-pulse">Processing...</span>
                                 )}
                             </div>
                           )}
@@ -186,3 +199,5 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
+
+    
