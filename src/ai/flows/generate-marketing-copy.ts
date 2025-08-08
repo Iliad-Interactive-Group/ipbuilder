@@ -336,6 +336,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async (input: GenerateMarketingCopyInput) => {
+    // Isolate social media post generation as it has a unique output structure (array)
     if (input.contentType === "social media post") {
         const {output} = await socialMediaPrompt(input);
         if (!output) {
@@ -344,6 +345,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
         return output;
     }
 
+    // Isolate podcast outline generation for its unique JSON structure
     if (input.contentType === "podcast outline") {
         const { output } = await podcastPrompt(input);
         if (!output) {
@@ -352,7 +354,8 @@ const generateMarketingCopyFlow = ai.defineFlow(
         // Ensure no image suggestion for podcast outlines
         return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
-
+    
+    // Isolate blog post generation for its unique JSON structure
     if (input.contentType === "blog post") {
         const { output } = await blogPostPrompt(input);
         if (!output) {
@@ -362,6 +365,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
         return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
     
+    // For all other content types, use the generic prompt
     const promptData = {
       ...input,
       currentYear: new Date().getFullYear().toString(),
@@ -379,11 +383,12 @@ const generateMarketingCopyFlow = ai.defineFlow(
       throw new Error('The AI failed to generate the requested marketing copy.');
     }
     
-    // For audio/script types, we only want the script text itself.
+    // For audio/script types, we must only return the script text itself to avoid data mismatch in the frontend.
     if (promptData.isRadioScript || promptData.isTvScript) {
       return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
 
+    // For all other generic types, return the full output object
     return output;
   }
 );
