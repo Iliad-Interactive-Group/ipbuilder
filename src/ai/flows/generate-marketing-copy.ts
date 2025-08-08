@@ -213,6 +213,7 @@ const genericPrompt = ai.definePrompt({
   {{else if isRadioScript}}
   You are an expert at writing audio-only radio scripts. Generate a script that is ready for a text-to-speech model.
   IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, sound effect cues (like "SFX:"), music cues, character names, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
+  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
   
   {{#if radioScriptLength}}
   Generate a radio script for the specified length: {{radioScriptLength}}.
@@ -223,10 +224,10 @@ const genericPrompt = ai.definePrompt({
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
-  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
   {{else if isTvScript}}
   You are an expert at writing TV scripts. Generate a script that is ready for a text-to-speech model.
   IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, camera directions, character names, visual cues, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
+  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
 
     {{#if is8sVEO}}
   Generate an extremely concise and highly creative TV script approximately 8 seconds in length.
@@ -235,7 +236,6 @@ const genericPrompt = ai.definePrompt({
     {{else}}
   The TV script should be approximately 30 seconds in length.
     {{/if}}
-  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
   Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
@@ -379,11 +379,13 @@ const generateMarketingCopyFlow = ai.defineFlow(
       throw new Error('The AI failed to generate the requested marketing copy.');
     }
     
-    // Explicitly remove image suggestion for audio/script types
+    // For audio/script types, we only want the script text itself.
     if (promptData.isRadioScript || promptData.isTvScript) {
-      output.imageSuggestion = undefined;
+      return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
 
     return output;
   }
 );
+
+    
