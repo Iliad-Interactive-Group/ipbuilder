@@ -18,6 +18,35 @@ export async function createMarketingBriefBlueprint(input: CreateMarketingBriefB
   if (providedInputs.length !== 1) {
     throw new Error('Exactly one input source (document, URL, or text) must be provided.');
   }
+    
+  // Pre-validate the URL before calling the AI model to prevent hallucinations on inaccessible sites.
+  if (input.websiteUrl) {
+    try {
+      // Using a longer timeout and a common user-agent to improve success rate
+      const response = await fetch(input.websiteUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      if (!response.ok) {
+        // Throw a specific error if the website is not accessible (e.g., 404, 500)
+        throw new Error(`The specified website could not be analyzed (Status: ${response.status}). Please check the URL or try another source.`);
+      }
+      const text = await response.text();
+      if (!text || text.length < 100) {
+        // If the page returns ok but has very little content, it's likely a JS-rendered page or an error page.
+         throw new Error('The website content appears to be empty or too short for analysis. It may rely on client-side JavaScript.');
+      }
+    } catch (e: any) {
+      // Catch fetch errors (e.g., DNS, network issues, timeout)
+      console.error("URL fetch failed:", e);
+      // Return a more specific error message based on the caught error.
+      throw new Error(e.message || 'The specified website could not be analyzed. Please check the URL for accuracy or try another source.');
+    }
+  }
+
   return createMarketingBriefBlueprintFlow(input);
 }
 
@@ -43,7 +72,7 @@ Document: {{media url=documentDataUri}}
 
 {{#if websiteUrl}}
 Input Source: Website URL
-Your analysis must be based exclusively on the content found at this exact URL. If you cannot access the content at the URL for any reason, do not invent information. Instead, return an error stating that the website could not be analyzed.
+Your analysis must be based exclusively on the content found at this exact URL.
 URL: {{websiteUrl}}
 {{/if}}
 
@@ -64,20 +93,6 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
     outputSchema: MarketingBriefBlueprintSchema,
   },
   async input => {
-    if (input.websiteUrl) {
-      try {
-        const response = await fetch(input.websiteUrl, { method: 'GET', redirect: 'follow' });
-        if (!response.ok) {
-          // Throw a specific error if the website is not accessible
-          throw new Error('The specified website could not be analyzed. Please check the URL for accuracy or try another source.');
-        }
-      } catch (e) {
-        // Catch fetch errors (e.g., DNS, network issues)
-        console.error("URL fetch failed:", e);
-        throw new Error('The specified website could not be analyzed. Please check the URL for accuracy or try another source.');
-      }
-    }
-  
     const {output} = await prompt(input);
     if (!output) {
       throw new Error('The AI model did not return the expected blueprint output.');
@@ -85,3 +100,4 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
     return output;
   }
 );
+

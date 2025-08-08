@@ -119,7 +119,7 @@ function IPBuilderPageContent() {
       toast({ title: "Copy Failed", description: `Cannot copy complex object for ${label}. Please use export instead.`, variant: "destructive" });
       return;
     }
-    const text = Array.isArray(textToCopy) ? textToCopy.join('\n\n') : textToCopy;
+    const text = Array.isArray(textToCopy) ? textToCopy.join('\n\n') : String(textToCopy);
     try {
       navigator.clipboard.writeText(text);
       toast({ title: "Copied to Clipboard", description: `${label} copy has been copied.` });
@@ -236,8 +236,8 @@ function IPBuilderPageContent() {
     // This robustly extracts the script text, handling strings and arrays of strings.
     if (typeof item.marketingCopy === 'string') {
         script = item.marketingCopy;
-    } else if (Array.isArray(item.marketingCopy)) {
-        script = item.marketingCopy.join(' ');
+    } else if (Array.isArray(item.marketingCopy) && item.marketingCopy.every(i => typeof i === 'string')) {
+        script = item.marketingCopy.join('\n\n');
     } else {
         // It will not attempt to process complex objects, preventing errors.
         toast({ title: "Invalid Content", description: "Cannot generate audio from this complex content type.", variant: "destructive" });
