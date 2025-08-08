@@ -87,8 +87,8 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 
 const GenerateMarketingCopyOutputSchema = z.object({
-  marketingCopy: z.any().describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script", specific length or 10, 15, 30, 60 sec versions. If "tv script", specific length (8s, 15s, 30s) or default 30s; 8s scripts are ultra-concise and creative for VEO. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
-  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards.")
+  marketingCopy: z.any().describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script" or "tv script", the response should be a clean, voice-ready script containing ONLY the dialogue or voiceover lines, with no scene headings, SFX, or other non-speech text. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
+  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards. This should NOT be generated for audio-only or script-based content like radio or TV scripts.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -211,18 +211,31 @@ const genericPrompt = ai.definePrompt({
 
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
-  You are an expert at writing audio-only radio scripts.
+  You are an expert at writing audio-only radio scripts. Generate a script that is ready for a text-to-speech model.
+  IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, sound effect cues (like "SFX:"), music cues, character names, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
+  
   {{#if radioScriptLength}}
   Generate a radio script for the specified length: {{radioScriptLength}}.
-  The script should be clearly labeled with its duration (e.g., "15s Radio Script:"). Use plain text and newlines for formatting, not markdown.
   {{else}}
   Generate four distinct radio script versions of varying lengths: 10 seconds, 15 seconds, 30 seconds, and 60 seconds.
-  Each script version should be clearly labeled with its duration (e.g., "10-Second Radio Script:", "15-Second Radio Script:", etc.).
-  IMPORTANT: Ensure there are at least two newlines (a blank line) between each script to separate them visually. Use plain text labels, not markdown.
+  To separate the different versions, use a simple divider like '---' on its own line between each script.
   {{/if}}
   Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
+  Do NOT generate an image suggestion.
+  {{else if isTvScript}}
+  You are an expert at writing TV scripts. Generate a script that is ready for a text-to-speech model.
+  IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, camera directions, character names, visual cues, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
+
+    {{#if is8sVEO}}
+  Generate an extremely concise and highly creative TV script approximately 8 seconds in length.
+    {{else if tvScriptLength}}
+  The TV script should be approximately {{tvScriptLength}} in length.
+    {{else}}
+  The TV script should be approximately 30 seconds in length.
+    {{/if}}
+  Do NOT generate an image suggestion.
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
   Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
@@ -256,19 +269,6 @@ const genericPrompt = ai.definePrompt({
   Incorporate these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
-  {{/if}}
-
-  {{#if isTvScript}}
-  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
-    {{#if is8sVEO}}
-  Generate an extremely concise and highly creative TV script approximately 8 seconds in length, suitable for Video Engagement Optimization (VEO) platforms.
-  The script must grab attention immediately and deliver a powerful message or call to action within this very short timeframe. Focus on visual storytelling if possible and minimal, impactful dialogue or voiceover.
-  It should be clearly labeled with a plain text header: "8-Second VEO TV Script:".
-    {{else if tvScriptLength}}
-  The TV script should be approximately {{tvScriptLength}} in length.
-    {{else}}
-  The TV script should be approximately 30 seconds in length.
-    {{/if}}
   {{/if}}
 
   {{#if isBillboard}}
@@ -379,3 +379,5 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
