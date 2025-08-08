@@ -44,6 +44,7 @@ Document: {{media url=documentDataUri}}
 {{#if websiteUrl}}
 Input Source: Website URL
 Your analysis must be based exclusively on the content found at this exact URL.
+IMPORTANT: If you are unable to access or process the content at the provided URL for any reason, you MUST NOT invent or infer information. Instead, you must throw an error with the message "The specified website could not be analyzed. Please check the URL for accuracy or try another source."
 URL: {{websiteUrl}}
 {{/if}}
 

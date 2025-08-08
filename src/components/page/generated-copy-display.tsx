@@ -140,19 +140,17 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                           )}
 
                           {isAudioContent(item) && (
-                            <div className="w-full sm:w-auto">
-                                {!item.generatedAudio && (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    onClick={() => onGenerateAudio(item)} 
-                                    disabled={item.isGeneratingAudio}
-                                    className="w-full"
-                                  >
-                                      {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
-                                      {item.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
-                                  </Button>
-                                )}
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => onGenerateAudio(item)} 
+                                  disabled={item.isGeneratingAudio}
+                                  className="w-auto"
+                                >
+                                    {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
+                                    {item.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
+                                </Button>
                                 {item.generatedAudio && (
                                   <audio controls src={item.generatedAudio} className="w-full">
                                     Your browser does not support the audio element.
