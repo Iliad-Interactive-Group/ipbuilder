@@ -162,7 +162,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                 <audio 
                                     src={item.generatedAudio} 
                                     controls 
-                                    className={`w-full ${!item.generatedAudio ? 'hidden' : ''}`}
+                                    className={`w-full ${item.generatedAudio ? '' : 'hidden'}`}
                                 >
                                     Your browser does not support the audio element.
                                 </audio>
