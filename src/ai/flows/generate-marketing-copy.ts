@@ -383,10 +383,12 @@ const generateMarketingCopyFlow = ai.defineFlow(
       throw new Error('The AI failed to generate the requested marketing copy.');
     }
     
+    // For audio-based content, ensure no image suggestion is returned.
     if (promptData.isRadioScript || promptData.isTvScript) {
       return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
     }
 
+    // For all other generic types, return the full output from the prompt
     return output;
   }
 );

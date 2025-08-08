@@ -65,6 +65,8 @@ Based *only* on the content of the provided input, your job is to extract the fo
 
 Ensure all fields in the output schema are populated. Do not leave any fields empty.
 
+If you are given a websiteUrl and you cannot access it, you MUST respond with an error. Do not invent information.
+
 {{#if documentDataUri}}
 Input Source: Document
 Document: {{media url=documentDataUri}}
