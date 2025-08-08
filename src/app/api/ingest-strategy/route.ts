@@ -1,6 +1,5 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createMarketingBriefBlueprint } from '@/ai/flows/create-marketing-brief-blueprint-flow';
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 const corsHeaders = {
@@ -20,7 +19,7 @@ export async function OPTIONS(request: Request) {
 }
 
 /**
- * API endpoint to receive marketing strategy text from various sources, 
+ * API endpoint to receive structured or unstructured marketing data, 
  * process it, and then redirect the user to the main page with the 
  * marketing brief data encoded in the URL.
  * 
@@ -33,27 +32,36 @@ export async function POST(request: NextRequest) {
   const origin = request.nextUrl.origin;
 
   try {
-    let strategyText: string | null = null;
+    let marketingBrief: MarketingBriefBlueprint;
     const contentType = request.headers.get('content-type') || '';
 
-    if (contentType.includes('application/json')) {
-        const body = await request.json();
-        strategyText = body.strategyText;
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+    // Check if the incoming request is from the external GrowthOS form
+    // which sends structured data.
+    if (contentType.includes('application/x-www-form-urlencoded')) {
         const formData = await request.formData();
-        strategyText = formData.get('strategyText') as string | null;
-    }
+        const companyName = formData.get('companyName') as string | null;
+        const productDescription = formData.get('productServiceDescription') as string | null;
+        const keywords = formData.get('keywords') as string | null;
 
-    if (!strategyText || typeof strategyText !== 'string' || strategyText.trim() === '') {
-        const errorUrl = new URL('/', origin);
-        errorUrl.searchParams.set('error', 'Invalid input. Strategy text cannot be empty.');
-        return NextResponse.redirect(errorUrl.toString());
+        if (companyName && productDescription && keywords) {
+            // Directly construct the brief from the form data, bypassing the AI parsing step.
+            marketingBrief = {
+                companyName: companyName,
+                productDescription: productDescription,
+                keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
+            };
+        } else {
+             // If the expected fields aren't there, throw an error.
+             throw new Error("Incomplete form data. Required fields are missing.");
+        }
+    } else {
+         // Fallback for any other type of request, which should not happen in the current flow.
+         // This can be adapted if other input methods are added later.
+        throw new Error(`Unsupported content type: ${contentType}`);
     }
-
-    const marketingBrief: MarketingBriefBlueprint = await createMarketingBriefBlueprint({ rawText: strategyText });
 
     if (!marketingBrief) {
-        throw new Error("The AI failed to generate a marketing brief blueprint.");
+        throw new Error("Failed to create a marketing brief from the provided input.");
     }
     
     const briefString = JSON.stringify(marketingBrief);
@@ -62,7 +70,6 @@ export async function POST(request: NextRequest) {
     const successUrl = new URL('/', origin);
     successUrl.searchParams.set('brief', encodedBrief);
     
-    // Use NextResponse.redirect for external-style redirects, even within the app
     return NextResponse.redirect(successUrl.toString(), { headers: corsHeaders });
 
   } catch (error) {
