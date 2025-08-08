@@ -25,6 +25,7 @@ import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/gener
 import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
 import { generateImage } from '@/ai/flows/generate-image-flow';
+import { generateAudio } from '@/ai/flows/generate-audio-flow';
 
 interface GenerationProgress {
   total: number;
@@ -229,6 +230,39 @@ function IPBuilderPageContent() {
     });
   };
 
+  const handleGenerateAudio = async (item: GeneratedCopyItem) => {
+    const script = Array.isArray(item.marketingCopy) ? item.marketingCopy.join(' ') : String(item.marketingCopy);
+    if (!script) {
+        toast({ title: "No Script", description: "Cannot generate audio from empty content.", variant: "destructive" });
+        return;
+    }
+
+    setGeneratedCopy(prev => prev.map(copy => 
+        copy.value === item.value ? { ...copy, isGeneratingAudio: true } : copy
+    ));
+
+    try {
+        const audioDataUri = await generateAudio(script);
+        setGeneratedCopy(prev => prev.map(copy => 
+            copy.value === item.value 
+            ? { ...copy, generatedAudio: audioDataUri, isGeneratingAudio: false } 
+            : copy
+        ));
+        toast({ title: "Audio Generated", description: `Audio for ${item.label} is ready.` });
+    } catch (error) {
+        console.error(`Error generating audio for ${item.label}:`, error);
+        toast({
+            title: "Audio Generation Failed",
+            description: `Could not generate audio for ${item.label}.`,
+            variant: "destructive"
+        });
+        setGeneratedCopy(prev => prev.map(copy => 
+            copy.value === item.value ? { ...copy, isGeneratingAudio: false } : copy
+        ));
+    }
+  };
+
+
   const handleExportTxt = () => {
     if (generatedCopy && generatedCopy.length > 0) {
       exportTextFile(generatedCopy);
@@ -283,6 +317,7 @@ function IPBuilderPageContent() {
               onExportTxt={handleExportTxt}
               onExportPdf={handleExportPdf}
               onExportHtml={handleExportHtml}
+              onGenerateAudio={handleGenerateAudio}
             />
           )}
 

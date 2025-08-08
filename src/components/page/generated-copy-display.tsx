@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, Copy, FileText, Lightbulb } from 'lucide-react';
+import { Download, Copy, FileText, Lightbulb, Volume2, Loader2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
@@ -23,6 +23,8 @@ export interface GeneratedCopyItem {
   isError?: boolean;
   isGeneratingImage?: boolean;
   generatedImage?: string;
+  isGeneratingAudio?: boolean;
+  generatedAudio?: string;
 }
 
 interface GeneratedCopyDisplayProps {
@@ -31,6 +33,7 @@ interface GeneratedCopyDisplayProps {
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
+  onGenerateAudio: (item: GeneratedCopyItem) => void;
 }
 
 const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
@@ -39,6 +42,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   onExportTxt,
   onExportPdf,
   onExportHtml,
+  onGenerateAudio,
 }) => {
   if (!generatedCopy || generatedCopy.length === 0) {
     return null;
@@ -52,6 +56,10 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
         return 8;
     }
   };
+
+  const isAudioContent = (item: GeneratedCopyItem) => {
+    return ['radio script', 'tv script'].includes(item.value);
+  }
 
   return (
     <div className="space-y-8">
@@ -121,12 +129,36 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                             </div>
                         )}
                         
-                        {!isStructuredContent && (
-                          <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
-                            <Copy className="w-3 h-3 mr-2" />
-                            Copy {item.label}
-                          </Button>
-                        )}
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {!isStructuredContent && (
+                            <Button variant="outline" size="sm" onClick={() => onCopy(item.marketingCopy, item.label)} className="w-full sm:w-auto">
+                              <Copy className="w-3 h-3 mr-2" />
+                              Copy {item.label}
+                            </Button>
+                          )}
+
+                          {isAudioContent(item) && (
+                            <div className="w-full sm:w-auto">
+                                {!item.generatedAudio && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => onGenerateAudio(item)} 
+                                    disabled={item.isGeneratingAudio}
+                                    className="w-full"
+                                  >
+                                      {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
+                                      {item.isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
+                                  </Button>
+                                )}
+                                {item.generatedAudio && (
+                                  <audio controls src={item.generatedAudio} className="w-full">
+                                    Your browser does not support the audio element.
+                                  </audio>
+                                )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                    </AccordionContent>
                 </AccordionItem>
