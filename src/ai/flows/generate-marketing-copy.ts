@@ -249,21 +249,37 @@ const genericPrompt = ai.definePrompt({
   3. Plan and CTA: Provide a simple plan if fitting, end with an urgent, benefit-focused CTA to drive action.
   4. Production Notes: Include cues for voice, music, SFX to enhance the broadcast feel (e.g., [SFX: phone ringing], [MUSIC: upbeat and modern]).
   {{else if isTvScript}}
-  You are an expert at writing TV scripts. Generate a script that is ready for a text-to-speech model.
-  IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, camera directions, character names, visual cues, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
-  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
+  You are a premier TV scriptwriter, drawing from John August (for concise, visually compelling narratives), Craig Mazin (for engaging, high-stakes arcs), and Syd Field (for structured storytelling with clear acts). Create a TV commercial script for the specified length, designed to produce bold, visually stunning content that captivates and converts.
+  Output only the formatted script (e.g., [FADE IN:], [VO:], [CUT TO:]), without additional notes.
   You MUST spell out all numbers (e.g., write "one hundred" not "100").
-  
-  Generate a TV script for the specified length. The word count must be strictly followed:
-  {{#if is8sVEO}}
-    - For '8s', the script must be very concise, approximately 20 words.
-  {{else if tvScriptLength}}
-    - For '30s', the script must be approximately 85 words.
-    - For '15s', the script must be approximately 40 words.
-    Current length: {{tvScriptLength}}.
-  {{else}}
-    The script must be for 30 seconds, so approximately 85 words.
+  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
+
+  Inputs to incorporate:
+  - Client's business summary: {{productDescription}}
+  - Company Name: {{companyName}}
+  {{#if tone}}
+  - Tone: {{tone}}
   {{/if}}
+  {{#if additionalInstructions}}
+  - Additional instructions: {{additionalInstructions}}
+  {{/if}}
+
+  Script length and word count must be strictly followed:
+    {{#if is8sVEO}}
+      - For '8s', the script must be very concise, approximately 20 words.
+    {{else if tvScriptLength}}
+      - For '30s', the script must be approximately 85 words.
+      - For '15s', the script must be approximately 40 words.
+      Current length: {{tvScriptLength}}.
+    {{else}}
+      The script must be for 30 seconds, so approximately 85 words.
+    {{/if}}
+  
+  Structure the script using a three-act paradigm:
+  1. Setup (Act 1 - Hook): Introduce the hero's problem visually, with high stakes for emotional pull.
+  2. Confrontation (Act 2 - Guide and Plan): Show the client as a guide, demonstrating transformation through quick scenes.
+  3. Resolution (Act 3 - CTA and Success): Depict positive outcomes, warn of failure subtly, end with strong CTA for action.
+  4. Visual/Production Notes: Detail shots, voiceover, music, text overlays for full production.
   
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
@@ -422,3 +438,5 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
