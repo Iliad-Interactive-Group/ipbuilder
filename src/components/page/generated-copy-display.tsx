@@ -42,8 +42,7 @@ const EditableTextDisplay: React.FC<{
   item: GeneratedCopyItem;
   editedText: string | undefined;
   onEdit: (newText: string) => void;
-  isReadOnly: boolean;
-}> = ({ item, editedText, onEdit, isReadOnly }) => {
+}> = ({ item, editedText, onEdit }) => {
     
     const [currentText, setCurrentText] = useState(editedText || '');
 
@@ -72,7 +71,6 @@ const EditableTextDisplay: React.FC<{
         <Textarea 
             value={currentText} 
             onChange={handleTextChange}
-            readOnly={isReadOnly}
             rows={getRowsForContentType(item.value)} 
             className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
         />
@@ -107,7 +105,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Generated Marketing Copies</CardTitle>
-          <CardDescription>Review your AI-generated marketing copies below. Scripts for audio/video are editable.</CardDescription>
+          <CardDescription>Review your AI-generated marketing copies below. You can edit the text and regenerate audio for scripts.</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
@@ -145,7 +143,6 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                 item={item} 
                                 editedText={editedCopy[item.value]} 
                                 onEdit={(newText) => onEdit(item.value, newText)}
-                                isReadOnly={!isAudioContent(item)}
                            />
                         ) : null}
                         
@@ -230,3 +227,5 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 };
 
 export default GeneratedCopyDisplay;
+
+    

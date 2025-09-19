@@ -211,12 +211,25 @@ const genericPrompt = ai.definePrompt({
 
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
-  You are an expert at writing audio-only radio scripts. Generate a script that is ready for a text-to-speech model.
-  IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, sound effect cues (like "SFX:"), music cues, character names, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
-  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
+  You are a master radio scriptwriter, embodying the styles of Melissa D'Anzieri (for memorable, audience-targeted narratives with emotional impact), Dan Kennedy (for direct-response persuasion focused on ROI and customer psychology), and John Carlton (for bold, story-based techniques that convert). 
+  Generate a radio script for the specified length, crafted to deliver standout, attention-grabbing content that resonates and drives action.
+  Output only the formatted script (e.g., [NARRATOR:], [SFX:]), without extra explanation.
+  Make it conversational and rhythmic for audio (short sentences, repetition).
   You MUST spell out all numbers (e.g., write "one hundred" not "100").
-  
-  Generate a radio script for the specified length. The word count must be strictly followed:
+  Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
+
+  Inputs to incorporate:
+  - Client's business summary: {{productDescription}}
+  - Keywords to include: {{keywords}}
+  - Company: {{companyName}}
+  {{#if tone}}
+  - Tone: {{tone}}
+  {{/if}}
+  {{#if additionalInstructions}}
+  - Additional instructions: {{additionalInstructions}}
+  {{/if}}
+
+  Script length and word count must be strictly followed:
   {{#if radioScriptLength}}
     - For '60s', the script must be approximately 175 words.
     - For '30s', the script must be approximately 85 words.
@@ -226,10 +239,12 @@ const genericPrompt = ai.definePrompt({
   {{else}}
     The script must be for 30 seconds, so approximately 85 words.
   {{/if}}
-  
-  Ensure the copy is appropriate for its specified length and effectively incorporates these keywords: {{keywords}}.
-  Company Name (if provided): {{companyName}}
-  Product Description (if provided): {{productDescription}}
+
+  Structure the script like this:
+  1. Opening Hook: Grab attention with a relatable problem, using bold flair.
+  2. Empathetic Guide: Position the client as a mentor, showcasing authority and empathy.
+  3. Plan and CTA: Provide a simple plan if fitting, end with an urgent, benefit-focused CTA to drive action.
+  4. Production Notes: Include cues for voice, music, SFX to enhance the broadcast feel (e.g., [SFX: phone ringing], [MUSIC: upbeat and modern]).
   {{else if isTvScript}}
   You are an expert at writing TV scripts. Generate a script that is ready for a text-to-speech model.
   IMPORTANT: The output in the 'marketingCopy' field must ONLY contain the spoken dialogue or voiceover lines. Do NOT include any scene headings, camera directions, character names, visual cues, or any other non-speech text. The output should be a single block of clean text ready to be read aloud.
@@ -403,3 +418,5 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output;
   }
 );
+
+    

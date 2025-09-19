@@ -42,6 +42,14 @@ interface GenerationProgress {
   currentLabel: string;
 }
 
+// Function to strip production cues like [SFX: ...] or [MUSIC: ...] from a script
+const stripProductionCues = (script: string): string => {
+  // This regex looks for square brackets and removes them and their content.
+  // It handles multiline content within the brackets as well.
+  return script.replace(/\[[^\]]*\]/g, '').trim();
+};
+
+
 function IPBuilderPageContent() {
   const { toast } = useToast();
   const router = useRouter();
@@ -67,7 +75,7 @@ function IPBuilderPageContent() {
       tone: "_no_tone_selected_",
       socialMediaPlatform: "_no_platform_selected_",
       tvScriptLength: "_no_tv_length_",
-      radioScriptLength: "_no_radio_length_",
+      radioScriptLength: "30s",
       additionalInstructions: "",
     },
   });
@@ -119,7 +127,7 @@ function IPBuilderPageContent() {
       tone: "_no_tone_selected_",
       socialMediaPlatform: "_no_platform_selected_",
       tvScriptLength: "_no_tv_length_",
-      radioScriptLength: "_no_radio_length_",
+      radioScriptLength: "30s",
       additionalInstructions: "",
     });
     setGeneratedCopy([]);
@@ -263,10 +271,10 @@ function IPBuilderPageContent() {
 
   const handleGenerateAudio = async (item: GeneratedCopyItem) => {
     // Use the edited copy if it exists, otherwise use the original.
-    const script = editedCopy[item.value];
+    let scriptToProcess = editedCopy[item.value];
 
     // Ensure we have a valid script to process.
-    if (typeof script !== 'string' || !script.trim()) {
+    if (typeof scriptToProcess !== 'string' || !scriptToProcess.trim()) {
         toast({ 
             title: "Invalid Content for Audio", 
             description: "Cannot generate audio. The content is either empty or in a format that cannot be converted to speech (like a podcast outline).", 
@@ -274,13 +282,16 @@ function IPBuilderPageContent() {
         });
         return;
     }
+    
+    // Strip production cues before sending to the TTS engine
+    const cleanScript = stripProductionCues(scriptToProcess);
 
     setGeneratedCopy(prev => prev.map(copy => 
         copy.value === item.value ? { ...copy, isGeneratingAudio: true } : copy
     ));
 
     try {
-        const audioDataUri = await generateAudio(script);
+        const audioDataUri = await generateAudio(cleanScript);
         
         const updatedItem = { ...item, generatedAudio: audioDataUri, isGeneratingAudio: false };
 
