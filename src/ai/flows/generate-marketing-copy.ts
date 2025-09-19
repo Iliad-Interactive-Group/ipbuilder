@@ -80,7 +80,7 @@ const BlogPostStructureSchema = z.object({
     contentItems: z.array(z.object({
         paragraph: z.string().optional().describe("A paragraph of text. Use this for standard text blocks."),
         listItems: z.array(z.string()).optional().describe("A list of bullet points. Use this for itemized points. One of these, paragraph or listItems, must be provided."),
-    })).describe("An array of content items. Each item is either a paragraph or a list of bullet points. Aim for a total word count of approximately 2450 words for the entire post.")
+    })).describe("An array of content items. Each item is either a paragraph or a list of bullet points. Aim for a total word count of approximately 2350 words for the entire post.")
   })).describe("An array of sections, each with a heading and content.")
 });
 export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
@@ -154,24 +154,27 @@ const blogPostPrompt = ai.definePrompt({
     name: 'generateBlogPostPrompt',
     input: { schema: GenerateMarketingCopyInputSchema },
     output: { schema: z.object({ marketingCopy: BlogPostStructureSchema }) },
-    prompt: `You are an expert content strategist and writer. Your task is to generate a comprehensive, well-structured blog post as a JSON object that conforms to the provided schema. The total word count for the entire post should be approximately 2450 words.
+    prompt: `You are an elite blog post writer, channeling the expertise of Ann Handley (for reader-first, storytelling-driven content that's accessible and shareable), Seth Godin (for concise, thought-provoking ideas that challenge norms and inspire action), and Neil Patel (for SEO-optimized, data-backed posts that rank highly and convert readers). Your goal is to generate a high-quality, engaging blog post tailored to the client's business, designed to captivate and convert with standout, memorable content.
 
-    Base your post on the following information:
-    - Keywords: {{keywords}}
+    Inputs to incorporate:
+    - Client's business summary (Product Description): {{productDescription}}
     - Company Name: {{companyName}}
-    - Product Description: {{productDescription}}
-    
-    When crafting the blog post, please incorporate relevant information and insights about the company's core products or services, primarily drawing from the '{{productDescription}}' and using '{{companyName}}' for context.
-    This should involve:
-    *   Elaborating on the key features and benefits mentioned in the product description.
-    *   Discussing common problems the product/service solves for its target audience.
-    *   Potentially exploring related industry trends or use cases, if they can be logically inferred from the provided information and keywords ({{keywords}}).
-    The aim is to produce an informative and engaging piece that subtly showcases the value and expertise related to the company's offerings, without sounding like a direct advertisement.
+    - Tone: {{tone}}
+    - Keywords to include: {{keywords}}
+    - Additional instructions: {{additionalInstructions}}
 
-    Flesh out all the fields in the JSON schema to create a comprehensive and logical blog post. This is a text-based format, so do not generate an image suggestion.
-    - The title should be engaging and SEO-friendly.
-    - The content should be broken into multiple sections, each with a clear heading.
-    - Within each section, use a mix of paragraph and list content items to improve readability. For each content item, you must provide either a 'paragraph' (for standard text) or 'listItems' (for bullet points), but not both.
+    Length: Aim for an SEO friendly length of about 2350 words unless specified otherwise.
+    
+    Structure the blog post according to the provided JSON output schema. The post should follow this narrative flow:
+    
+    1.  **Hook (in the first section):** Start with a compelling story or provocative question to draw readers in, empathizing with their problems (practical, emotional, deeper values).
+    2.  **Body (spread across multiple sections):** Explore insights with an approachable narrative, backed by data or examples, positioning the client as a guide highlighting transformations. Use subheadings (the 'heading' field in the schema) to break up content and improve readability.
+    3.  **Practical Section:** Dedicate a section to offer actionable steps with naturally integrated keywords.
+    4.  **Conclusion (in the final section):** End with a memorable takeaway, a subtle warning of inaction, and a compelling call-to-action (CTA).
+    
+    Ensure the post is optimized for SEO (include keywords from the input, use clear subheadings, and include bulleted lists where appropriate), is highly readable (short paragraphs, active voice), and is aligned with the client's voice.
+    
+    Output only the structured JSON that conforms to the schema. Do not include any meta-commentary.
     `,
 });
 
@@ -411,12 +414,11 @@ const generateMarketingCopyFlow = ai.defineFlow(
     
     // For audio-based content, ensure no image suggestion is returned.
     if (promptData.isRadioScript || promptData.isTvScript) {
-      return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+      const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
+      return { marketingCopy: strippedCopy, imageSuggestion: undefined };
     }
 
     // For all other generic types, return the full output from the prompt
     return output;
   }
 );
-
-    
