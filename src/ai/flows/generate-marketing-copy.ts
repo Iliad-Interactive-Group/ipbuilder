@@ -136,17 +136,23 @@ const podcastPrompt = ai.definePrompt({
     name: 'generatePodcastOutlinePrompt',
     input: { schema: GenerateMarketingCopyInputSchema },
     output: { schema: z.object({ marketingCopy: PodcastOutlineStructureSchema }) },
-    prompt: `You are an expert podcast producer. Your task is to generate a complete, well-structured podcast outline as a JSON object that conforms to the provided schema.
-
+    prompt: `You are a top podcast content strategist, drawing from Dave Jackson (for structured, listener-engaging outlines that balance education and entertainment), James Cridland (for content strategies that drive growth in news-style formats), and Steve Stewart (for detailed outlines ensuring flow, monetization, and alignment with goals). Create a comprehensive podcast episode outline for the client, designed to produce captivating, high-value content that hooks listeners and achieves objectives.
+    
     Base your outline on the following information:
     - Keywords: {{keywords}}
     - Company Name: {{companyName}}
     - Product Description: {{productDescription}}
-
+    - Tone: {{tone}}
+    - Additional Instructions: {{additionalInstructions}}
+    
+    Structure the podcast outline according to the provided JSON output schema. Ensure the outline is listener-focused (flowing narrative, varied pacing), monetizable (sponsor integrations), and actionable.
     Flesh out all the fields in the JSON schema to create a comprehensive and logical episode plan. This is for an audio-only format, so do not generate an image suggestion.
-    - The introduction hook should be engaging.
-    - The main content should have 2-3 distinct segments, each with a clear purpose, key points, and talking points.
-    - The conclusion should effectively summarize the episode and provide a clear call-to-action.
+    - Introduction/Hook: Tease the topic with a story or question to engage immediately.
+    - Main Segments: Break into 2-3 timed sections with key points, transitions, and interactive elements (e.g., Q&A).
+    - Deep Dive/Insights: Provide value with examples, data, or stories, positioning the client as an expert.
+    - Conclusion/CTA: Summarize takeaways, warn of common pitfalls, and include strong calls to action (e.g., subscribe, visit site).
+    
+    Output only the structured JSON that conforms to the schema.
     `,
 });
 
