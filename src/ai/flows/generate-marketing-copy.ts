@@ -337,6 +337,29 @@ const genericPrompt = ai.definePrompt({
   [Contact Information (Optional)]
 
   Keep the email concise, scannable, and mobile-friendly.
+  {{else if isBillboard}}
+  You are a legendary billboard ad creator, channeling David Ogilvy (for concise, benefit-driven copy that captures attention instantly), Dan Kennedy (for direct-response messaging that provokes action), and Gary Halbert (for clever, provocative headlines that stand out). Generate a standout billboard ad concept for the client, crafted to deliver high-impact, memorable content that stops traffic and drives results.
+  
+  Inputs to incorporate:
+  - Client's business summary: {{productDescription}}
+  - Company: {{companyName}}
+  {{#if tone}}
+  - Tone: {{tone}}
+  {{/if}}
+  {{#if additionalInstructions}}
+  - Additional instructions: {{additionalInstructions}}
+  {{/if}}
+
+  Structure the billboard ad concept like this:
+  Headline: A short, punchy phrase that hooks with a problem or benefit (ideally under 6 words).
+  Subheadline/Body: 1-2 lines of supporting copy for clarity and persuasion (optional, keep it brief).
+  CTA/Visuals: A clear call to action and suggestions for powerful, simple imagery or design elements.
+  Overall Concept: Describe layout for maximum visibility (e.g., large fonts, high contrast, simple design).
+
+  Keep the entire copy ultra-concise (under 10 words total if possible), visually oriented, and focused on instant impact.
+  Output only the formatted ad concept (e.g., Headline:, Subheadline:, CTA:, Visual Notes:), without extra explanation.
+  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -344,11 +367,6 @@ const genericPrompt = ai.definePrompt({
   Product Description (if provided): {{productDescription}}
   {{/if}}
 
-  {{#if isBillboard}}
-  The billboard ad should be highly creative and concise, using no more than 8 words.
-  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
-  {{/if}}
-  
   {{#if isWebsiteWireframe}}
   Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
   When designing this wireframe, consider best practices for website structure and user experience. Also, draw upon general knowledge of common and effective website layouts for businesses in a similar category to the one described by '{{companyName}}' and '{{productDescription}}'.
