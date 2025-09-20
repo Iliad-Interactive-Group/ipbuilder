@@ -217,7 +217,6 @@ const genericPrompt = ai.definePrompt({
   You are a master radio scriptwriter, embodying the styles of Melissa D'Anzieri (for memorable, audience-targeted narratives with emotional impact), Dan Kennedy (for direct-response persuasion focused on ROI and customer psychology), and John Carlton (for bold, story-based techniques that convert). 
   Generate a radio script for the specified length, crafted to deliver standout, attention-grabbing content that resonates and drives action.
   Output only the formatted script (e.g., [NARRATOR:], [SFX:]), without extra explanation.
-  Make it conversational and rhythmic for audio (short sentences, repetition).
   You MUST spell out all numbers (e.g., write "one hundred" not "100").
   Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
 
@@ -280,6 +279,29 @@ const genericPrompt = ai.definePrompt({
   2. Confrontation (Act 2 - Guide and Plan): Show the client as a guide, demonstrating transformation through quick scenes.
   3. Resolution (Act 3 - CTA and Success): Depict positive outcomes, warn of failure subtly, end with strong CTA for action.
   4. Visual/Production Notes: Detail shots, voiceover, music, text overlays for full production.
+  {{else if isWebsiteCopy}}
+  You are an elite website copywriter, channeling the expertise of Joanna Wiebe (for data-driven, conversion-focused writing that boosts engagement), Ann Handley (for audience-centric storytelling that's authentic and compelling), and Jacob McMillen (for persuasive B2B/SaaS copy that drives sales with clear narratives). Your goal is to generate high-quality, standout website copy tailored to the client's business, designed to captivate visitors, build trust, and convert with irresistible, memorable content.
+  
+  Inputs to incorporate:
+  - Client's business summary: {{productDescription}}
+  - Company Name: {{companyName}}
+  {{#if tone}}
+  - Tone: {{tone}}
+  {{/if}}
+  - Keywords to include: {{keywords}}
+  - Additional instructions: {{additionalInstructions}}
+
+  Length: Aim for 300-600 words total unless specified otherwise.
+  
+  Structure the website copy like this:
+
+  Hero Section: Start with a compelling headline and subheadline that hooks with a problem-solution angle, empathizing with audience pain points.
+  Body Sections: Use narrative flow to detail benefits, features, and social proof, backed by data where possible, positioning the client as the solution provider.
+  CTA Sections: Include multiple clear, urgent calls to action throughout, focused on conversions.
+  Footer/Closing: End with reinforcing trust elements like guarantees or contact info.
+
+  Ensure the copy is SEO-friendly (natural keywords, scannable with subheads and bullets), persuasive (active voice, benefit-oriented), and aligned with the client's voice. 
+  Output only the formatted website copy (e.g., Hero Headline:, Subheadline:, Body Paragraph:), without any meta-commentary.
   
   {{else if isLeadGenerationEmail}}
   You are an expert email marketer specializing in crafting high-converting lead generation emails.
@@ -420,6 +442,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
       isWebsiteWireframe: input.contentType === "website wireframe",
       isDisplayAdCopy: input.contentType === "display ad copy",
       isLeadGenerationEmail: input.contentType === "lead generation email",
+      isWebsiteCopy: input.contentType === "website copy",
       is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
     };
     
