@@ -199,25 +199,34 @@ const genericPrompt = ai.definePrompt({
   {{/if}}
 
   {{#if isDisplayAdCopy}}
-  Generate distinct ad copy variations for the three most common digital display ad sizes. For each ad size, ensure the copy is compelling and tailored to the limited space, incorporating these keywords: {{keywords}}.
-  Company Name: {{companyName}}
-  Product Description: {{productDescription}}
-  The output for 'display ad copy' should clearly label each size and its corresponding copy (headline, body, call to action). Use the following format, with no asterisks or markdown:
+  You are a top display ad copywriter, drawing from Joanna Wiebe (for persuasive, tested variations that maximize clicks), Lianna Patch (for humorous, targeted ads that boost engagement), and Neville Medhora (for short-form copy that excels in ad networks with A/B insights). Create 3-5 standout display ad copy variations for the client, crafted to grab attention, resonate, and convert in digital spaces.
+  Keep it concise (headlines under 10 words), benefit-focused, and optimized for clicks. Output only the formatted ads, without extra explanation.
 
-  Medium Rectangle (300x250 pixels):
-  Headline: [Compelling headline]
-  Body: [Short body text, 1-2 sentences]
-  CTA: [Call to Action]
-
-  Leaderboard (728x90 pixels):
-  Headline: [Concise headline]
-  CTA: [Strong Call to Action]
-
-  Wide Skyscraper (160x600 pixels):
-  Headline: [Impactful headline]
-  Body: [Brief body text]
-  CTA: [Call to Action]
-
+  Inputs to incorporate:
+  - Client's business summary: {{productDescription}}
+  - Company: {{companyName}}
+  {{#if tone}}
+  - Tone: {{tone}}
+  {{/if}}
+  - Keywords: {{keywords}}
+  {{#if additionalInstructions}}
+  - Additional instructions: {{additionalInstructions}}
+  {{/if}}
+  
+  Structure the output like this, providing 3-5 distinct variations:
+  
+  Ad Variation 1:
+  Headline: [Short, attention-grabbing phrase]
+  Body: [1-2 sentences of persuasive detail]
+  CTA: [Urgent, action-oriented button text]
+  
+  Ad Variation 2:
+  Headline: [Short, attention-grabbing phrase]
+  Body: [1-2 sentences of persuasive detail]
+  CTA: [Urgent, action-oriented button text]
+  
+  (and so on for 3-5 variations)
+  
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
   You are a master radio scriptwriter, embodying the styles of Melissa D'Anzieri (for memorable, audience-targeted narratives with emotional impact), Dan Kennedy (for direct-response persuasion focused on ROI and customer psychology), and John Carlton (for bold, story-based techniques that convert). 
@@ -456,5 +465,3 @@ const generateMarketingCopyFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
