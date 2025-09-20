@@ -39,7 +39,11 @@ const GenerateMarketingCopyInputSchema = z.object({
   radioScriptLength: z
     .string()
     .optional()
-    .describe("The desired length for the Radio script (e.g., '10s', '15s', '30s', '60s'). Defaults to 30s if not specified.")
+    .describe("The desired length for the Radio script (e.g., '10s', '15s', '30s', '60s'). Defaults to 30s if not specified."),
+  emailType: z
+    .string()
+    .optional()
+    .describe("The type of email to generate (e.g., cold outreach, nurture, promotional).")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -70,6 +74,11 @@ const PodcastOutlineStructureSchema = z.object({
     recap: z.string().describe("A summary of the 2-3 main takeaways from the episode."),
     teaser: z.string().describe("A brief preview of the topic for the next episode."),
   }),
+  productionNotes: z.object({
+      music: z.string().optional().describe("Suggestions for intro/outro and background music."),
+      sfx: z.string().optional().describe("Ideas for sound effects to enhance storytelling."),
+      adSpots: z.string().optional().describe("Placement suggestions for sponsor messages or internal promos."),
+  }).optional().describe("Notes on production elements.")
 });
 export type PodcastOutlineStructure = z.infer<typeof PodcastOutlineStructureSchema>;
 
@@ -147,12 +156,14 @@ const podcastPrompt = ai.definePrompt({
     
     Structure the podcast outline according to the provided JSON output schema. Ensure the outline is listener-focused (flowing narrative, varied pacing), monetizable (sponsor integrations), and actionable.
     Flesh out all the fields in the JSON schema to create a comprehensive and logical episode plan. This is for an audio-only format, so do not generate an image suggestion.
-    - Introduction/Hook: Tease the topic with a story or question to engage immediately.
-    - Main Segments: Break into 2-3 timed sections with key points, transitions, and interactive elements (e.g., Q&A).
-    - Deep Dive/Insights: Provide value with examples, data, or stories, positioning the client as an expert.
-    - Conclusion/CTA: Summarize takeaways, warn of common pitfalls, and include strong calls to action (e.g., subscribe, visit site).
     
-    Output only the structured JSON that conforms to the schema.
+    Introduction/Hook: Tease the topic with a story or question to engage immediately.
+    Main Segments: Break into 3-5 timed sections with key points, transitions, and interactive elements (e.g., Q&A).
+    Deep Dive/Insights: Provide value with examples, data, or stories, positioning the client as an expert.
+    Conclusion/CTA: Summarize takeaways, warn of common pitfalls, and include strong calls to action (e.g., subscribe, visit site).
+    Production Notes: Suggest music, sound effects, ad spots, and timing.
+
+    Ensure the outline is listener-focused (flowing narrative, varied pacing), monetizable (sponsor integrations), and actionable. Output only the formatted outline (e.g., Episode Title:, Segment 1 (0:00-5:00):, Production Notes:), without any meta-commentary.
     `,
 });
 
@@ -173,13 +184,12 @@ const blogPostPrompt = ai.definePrompt({
     
     Structure the blog post according to the provided JSON output schema. The post should follow this narrative flow:
     
-    1.  **Hook (in the first section):** Start with a compelling story or provocative question to draw readers in, empathizing with their problems (practical, emotional, deeper values).
-    2.  **Body (spread across multiple sections):** Explore insights with an approachable narrative, backed by data or examples, positioning the client as a guide highlighting transformations. Use subheadings (the 'heading' field in the schema) to break up content and improve readability.
-    3.  **Practical Section:** Dedicate a section to offer actionable steps with naturally integrated keywords.
-    4.  **Conclusion (in the final section):** End with a memorable takeaway, a subtle warning of inaction, and a compelling call-to-action (CTA).
+    Hook: Start with a compelling story or provocative question to draw readers in, empathizing with their problems (practical, emotional, deeper values).
+    Body: Explore insights with an approachable narrative, backed by data or examples, positioning the client as a guide highlighting transformations.
+    Practical Section: Offer actionable steps with naturally integrated keywords, ending with strong CTAs for engagement.
+    Conclusion: End with a memorable takeaway, warning of inaction subtly, and a compelling CTA.
     
-    Ensure the post is optimized for SEO (include keywords from the input, use clear subheadings, and include bulleted lists where appropriate), is highly readable (short paragraphs, active voice), and is aligned with the client's voice.
-    
+    Ensure the post is optimized for SEO (include relevant keywords, subheadings, bullet points), readable (short paragraphs, active voice), and aligned with the client's voice.
     Output only the structured JSON that conforms to the schema. Do not include any meta-commentary.
     `,
 });
@@ -213,20 +223,13 @@ const genericPrompt = ai.definePrompt({
   - Additional instructions: {{additionalInstructions}}
   {{/if}}
   
-  Structure the output like this, providing 3-5 distinct variations:
+  Structure the display ad copy like this, providing 3-5 distinct variations:
   
-  Ad Variation 1:
-  Headline: [Short, attention-grabbing phrase]
-  Body: [1-2 sentences of persuasive detail]
-  CTA: [Urgent, action-oriented button text]
-  
-  Ad Variation 2:
-  Headline: [Short, attention-grabbing phrase]
-  Body: [1-2 sentences of persuasive detail]
-  CTA: [Urgent, action-oriented button text]
-  
-  (and so on for 3-5 variations)
-  
+  Headline: Short, attention-grabbing phrases.
+  Body: 1-2 sentences of persuasive detail.
+  CTA: Urgent, action-oriented button text.
+  Visual Notes: Suggest imagery or layout for the ad.
+
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
   {{else if isRadioScript}}
   You are a master radio scriptwriter, embodying the styles of Melissa D'Anzieri (for memorable, audience-targeted narratives with emotional impact), Dan Kennedy (for direct-response persuasion focused on ROI and customer psychology), and John Carlton (for bold, story-based techniques that convert). 
@@ -290,10 +293,11 @@ const genericPrompt = ai.definePrompt({
     {{/if}}
   
   Structure the script using a three-act paradigm:
-  1. Setup (Act 1 - Hook): Introduce the hero's problem visually, with high stakes for emotional pull.
-  2. Confrontation (Act 2 - Guide and Plan): Show the client as a guide, demonstrating transformation through quick scenes.
-  3. Resolution (Act 3 - CTA and Success): Depict positive outcomes, warn of failure subtly, end with strong CTA for action.
-  4. Visual/Production Notes: Detail shots, voiceover, music, text overlays for full production.
+
+  Setup (Act 1 - Hook): Introduce the hero's problem visually, with high stakes for emotional pull.
+  Confrontation (Act 2 - Guide and Plan): Show the client as a guide, demonstrating transformation through quick scenes.
+  Resolution (Act 3 - CTA and Success): Depict positive outcomes, warn of failure subtly, end with strong CTA for action.
+  Visual/Production Notes: Detail shots, voiceover, music, text overlays for full production.
   {{else if isWebsiteCopy}}
   You are an elite website copywriter, channeling the expertise of Joanna Wiebe (for data-driven, conversion-focused writing that boosts engagement), Ann Handley (for audience-centric storytelling that's authentic and compelling), and Jacob McMillen (for persuasive B2B/SaaS copy that drives sales with clear narratives). Your goal is to generate high-quality, standout website copy tailored to the client's business, designed to captivate visitors, build trust, and convert with irresistible, memorable content.
   
@@ -319,33 +323,29 @@ const genericPrompt = ai.definePrompt({
   Output only the formatted website copy (e.g., Hero Headline:, Subheadline:, Body Paragraph:), without any meta-commentary.
   
   {{else if isLeadGenerationEmail}}
-  You are an expert email marketer specializing in crafting high-converting lead generation emails.
-  Generate a compelling email designed to capture leads for {{companyName}} based on their {{productDescription}} and these keywords: {{keywords}}.
-  The email should follow industry best practices and include the following distinct sections, clearly labeled using plain text, not markdown:
+  You are an expert lead gen email strategist, channeling Ian Brodie (for trust-building sequences that nurture prospects), Alex Berman (for personalized, high-response cold emails in B2B), and Jay Feldman (for scalable strategies that integrate with funnels). Generate a high-impact lead generation email (or sequence) for the client, designed to engage, provide value, and convert leads with compelling, results-driven content.
+  
+  Inputs to incorporate:
+  - Client's business summary: {{productDescription}}
+  - Company: {{companyName}}
+  {{#if tone}}
+  - Tone: {{tone}}
+  {{/if}}
+  - Keywords to include: {{keywords}}
+  - Email Type: {{emailType}}
+  - Additional instructions: {{additionalInstructions}}
 
-  Subject Line:
-  [A concise and attention-grabbing subject line (max 60 characters recommended)]
+  Length: Aim for 150-300 words unless specified.
 
-  Email Body:
-  Hi [Name],
+  Structure the email like this:
 
-  [Personalized and engaging opening paragraph. Clearly articulate the value proposition related to {{productDescription}}. Highlight key benefits and address potential pain points of the target audience. Use the keywords: "{{keywords}}" naturally throughout the body.]
+  Subject Line: Attention-grabbing and relevant.
+  Opening/Greeting: Personalize and hook with a problem or insight.
+  Body: Build value with stories, tips, or offers, positioning the client as an expert.
+  CTA/Close: Clear call to action, with subtle urgency.
+  Signature: Professional sign-off with contact info.
 
-  [Further paragraphs elaborating on benefits, use cases, or social proof, if applicable.]
-
-  Call-to-Action (CTA):
-  [A clear, strong, and singular call-to-action phrase that encourages the recipient to take the next step. For example: "Learn More", "Request a Demo", "Download Our Free Guide", "Get Started Today".]
-  [Optional: Link for the CTA button/text, e.g., (Link: [Your CTA Link Here]) ]
-
-  Closing:
-  [A professional closing, e.g., Best regards, Sincerely,]
-
-  [Your Name/Company Name]
-  {{companyName}}
-  [Website (Optional)]
-  [Contact Information (Optional)]
-
-  Keep the email concise, scannable, and mobile-friendly.
+  Ensure it's personalized, mobile-friendly (short paragraphs), and compliance-ready (e.g., unsubscribe note). Output only the formatted email (e.g., Subject:, Greeting:, Body Paragraphs:, CTA:, Signature:), without any meta-commentary.
   {{else if isBillboard}}
   You are a legendary billboard ad creator, channeling David Ogilvy (for concise, benefit-driven copy that captures attention instantly), Dan Kennedy (for direct-response messaging that provokes action), and Gary Halbert (for clever, provocative headlines that stand out). Generate a standout billboard ad concept for the client, crafted to deliver high-impact, memorable content that stops traffic and drives results.
   
@@ -359,14 +359,14 @@ const genericPrompt = ai.definePrompt({
   - Additional instructions: {{additionalInstructions}}
   {{/if}}
 
-  Structure the billboard ad concept like this:
-  Headline: A short, punchy phrase that hooks with a problem or benefit (ideally under 6 words).
-  Subheadline/Body: 1-2 lines of supporting copy for clarity and persuasion (optional, keep it brief).
-  CTA/Visuals: A clear call to action and suggestions for powerful, simple imagery or design elements.
-  Overall Concept: Describe layout for maximum visibility (e.g., large fonts, high contrast, simple design).
+  Structure the billboard ad like this:
+  Headline: A short, punchy phrase that hooks with a problem or benefit.
+  Subheadline/Body: 1-2 lines of supporting copy for clarity and persuasion.
+  CTA/Visuals: A clear call to action and suggestions for imagery or design elements.
+  Overall Concept: Describe layout for maximum visibility (e.g., large fonts, high contrast).
 
-  Keep the entire copy ultra-concise (under 10 words total if possible), visually oriented, and focused on instant impact.
-  Output only the formatted ad concept (e.g., Headline:, Subheadline:, CTA:, Visual Notes:), without extra explanation.
+  Keep it ultra-concise (under 10 words ideally), visually oriented, and focused on instant impact.
+  Output only the formatted ad (e.g., Headline:, Subheadline:, CTA:, Visual Notes:), without extra explanation.
   You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
 
   {{else if isWebsiteWireframe}}

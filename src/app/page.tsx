@@ -76,6 +76,7 @@ function IPBuilderPageContent() {
       socialMediaPlatform: "_no_platform_selected_",
       tvScriptLength: "_no_tv_length_",
       radioScriptLength: "30s",
+      emailType: "_no_email_type_",
       additionalInstructions: "",
     },
   });
@@ -128,6 +129,7 @@ function IPBuilderPageContent() {
       socialMediaPlatform: "_no_platform_selected_",
       tvScriptLength: "_no_tv_length_",
       radioScriptLength: "30s",
+      emailType: "_no_email_type_",
       additionalInstructions: "",
     });
     setGeneratedCopy([]);
@@ -164,6 +166,7 @@ function IPBuilderPageContent() {
     let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
     let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
     let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
+    let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
 
     const generatePromises = data.contentType.map(async (typeValue, index) => {
       try {
@@ -189,6 +192,9 @@ function IPBuilderPageContent() {
         }
         if (typeValue === "radio script") {
             marketingInput.radioScriptLength = radioScriptLengthForAI;
+        }
+        if (typeValue === "lead generation email") {
+            marketingInput.emailType = emailTypeForAI;
         }
 
         const result: GenerateMarketingCopyOutput = await generateMarketingCopy(marketingInput);
@@ -439,5 +445,3 @@ export default function IPBuilderPage() {
         </Suspense>
     )
 }
-
-    

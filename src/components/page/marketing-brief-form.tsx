@@ -59,6 +59,13 @@ const RADIO_SCRIPT_LENGTHS = [
 ];
 const NO_RADIO_LENGTH_SELECTED_VALUE = "_no_radio_length_";
 
+const EMAIL_TYPES = [
+    { value: "cold_outreach", label: "Cold Outreach" },
+    { value: "nurture", label: "Nurture" },
+    { value: "promotional", label: "Promotional" },
+];
+const NO_EMAIL_TYPE_SELECTED_VALUE = "_no_email_type_";
+
 
 const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
 const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
@@ -73,6 +80,7 @@ export const formSchema = z.object({
   socialMediaPlatform: z.string().optional(),
   tvScriptLength: z.string().optional(),
   radioScriptLength: z.string().optional(),
+  emailType: z.string().optional(),
   additionalInstructions: z.string().optional(),
 });
 
@@ -114,6 +122,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
   const showSocialMediaPlatformSelector = selectedContentTypes?.includes('social media post');
   const showTvScriptLengthSelector = selectedContentTypes?.includes('tv script');
   const showRadioScriptLengthSelector = selectedContentTypes?.includes('radio script');
+  const showEmailTypeSelector = selectedContentTypes?.includes('lead generation email');
 
   const handleSuggestKeywords = async () => {
     const companyName = form.getValues("companyName");
@@ -153,6 +162,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
         socialMediaPlatform: form.getValues("socialMediaPlatform") || NO_PLATFORM_SELECTED_VALUE,
         tvScriptLength: form.getValues("tvScriptLength") || NO_TV_LENGTH_SELECTED_VALUE,
         radioScriptLength: form.getValues("radioScriptLength") || NO_RADIO_LENGTH_SELECTED_VALUE,
+        emailType: form.getValues("emailType") || NO_EMAIL_TYPE_SELECTED_VALUE,
         additionalInstructions: form.getValues("additionalInstructions") || "",
       };
       localStorage.setItem(LOCAL_STORAGE_BRIEF_KEY, JSON.stringify(briefData));
@@ -178,6 +188,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
             socialMediaPlatform: savedBrief.socialMediaPlatform || NO_PLATFORM_SELECTED_VALUE,
             tvScriptLength: savedBrief.tvScriptLength || NO_TV_LENGTH_SELECTED_VALUE,
             radioScriptLength: savedBrief.radioScriptLength || NO_RADIO_LENGTH_SELECTED_VALUE,
+            emailType: savedBrief.emailType || NO_EMAIL_TYPE_SELECTED_VALUE,
             additionalInstructions: savedBrief.additionalInstructions || "",
         });
         toast({ title: "Brief Loaded", description: "Your saved marketing brief has been loaded into the form."});
@@ -418,6 +429,37 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                     </Select>
                     <FormDescription>
                       Choose the desired length for the radio script.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showEmailTypeSelector && (
+              <FormField
+                control={form.control}
+                name="emailType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Mail className="w-4 h-4 mr-2 text-muted-foreground"/>Email Type (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={NO_EMAIL_TYPE_SELECTED_VALUE}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select email type (optional, defaults to general)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={NO_EMAIL_TYPE_SELECTED_VALUE}>Default / General</SelectItem>
+                        {EMAIL_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Specify the type of lead generation email you need.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
