@@ -360,57 +360,28 @@ const genericPrompt = ai.definePrompt({
   Output only the formatted ad concept (e.g., Headline:, Subheadline:, CTA:, Visual Notes:), without extra explanation.
   You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
 
+  {{else if isWebsiteWireframe}}
+  You are a premier UX/UI strategist, embodying Don Norman (for intuitive, user-centered design principles), Jakob Nielsen (for usability-optimized navigation and conversion flows), and Aurélien Salomon (for minimalist, high-fidelity wireframes that enhance experiences). Generate a detailed textual description of a website wireframe for the client, designed to outline standout, user-friendly structures that engage and convert.
+
+  Inputs to incorporate:
+  - Company: {{companyName}}
+  - Product/Business Summary: {{productDescription}}
+  - Tone: {{tone}}
+  - Keywords: {{keywords}}
+  - Additional Instructions: {{additionalInstructions}}
+
+  Structure the wireframe description like this:
+  Overall Layout: Describe header, footer, navigation (e.g., menu items, search bar).
+  Page-Specific Sections: Break down each page (e.g., Homepage, About, Product) into zones (hero, content blocks, CTAs) with placement and functionality notes.
+  User Flow: Outline interactions, accessibility features, and conversion paths.
+  Design Notes: Suggest hierarchy, spacing, and usability best practices.
+
+  Ensure it's functional (clear paths to goals), accessible, and described vividly for easy visualization. Output only the formatted wireframe (e.g., Homepage:, Header:, Hero Section:, User Flow Notes:), without any meta-commentary.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
   Company Name (if provided): {{companyName}}
   Product Description (if provided): {{productDescription}}
-  {{/if}}
-
-  {{#if isWebsiteWireframe}}
-  Generate a textual wireframe for a minimum three-page website (e.g., Homepage, About Us, Services/Product Page).
-  When designing this wireframe, consider best practices for website structure and user experience. Also, draw upon general knowledge of common and effective website layouts for businesses in a similar category to the one described by '{{companyName}}' and '{{productDescription}}'.
-
-  For each page, outline the key sections and elements. Use plain text for all headers and labels (e.g., "Homepage", "Navbar:", "Hero Section:"). Do not use markdown like asterisks. Use indentation and newlines to create a clear hierarchy. For example:
-
-  Homepage
-    Navbar: Logo ({{companyName}}), Home, About Us, Services, Contact Us
-    Hero Section:
-      Headline: [Compelling headline based on {{productDescription}} and {{keywords}}]
-      Sub-headline: [Brief explanation or benefit]
-      CTA Button: "Learn More" or "Get Started"
-      Background Image: Placeholder for a relevant, high-quality image
-    Services/Products Overview (using {{keywords}}):
-      Section Title: Our Core Offerings
-      Service 1: [Name based on keyword 1] - [Short, benefit-driven description]
-      Service 2: [Name based on keyword 2] - [Short, benefit-driven description]
-      Service 3: [Name based on keyword 3] - [Short, benefit-driven description]
-    About Us Snippet:
-      Text: Brief introduction to {{companyName}}.
-      Link: "Read More About Us" (to About Us page)
-    Call to Action (Main):
-      Headline: Ready to experience [key benefit]?
-      Button: "Contact Us Today"
-    Footer: Copyright {{companyName}} {{currentYear}}, Social Media Links, Privacy Policy
-
-  About Us Page
-    Navbar: (Consistent with Homepage)
-    Page Title: About {{companyName}}
-    Our Mission/Vision: [Detailed text about company mission and values]
-    Our Story/History: [Brief history of {{companyName}}]
-    Our Team (Optional): Placeholder for "Meet Our Team"
-
-  Services/Product Page
-    Navbar: (Consistent with Homepage)
-    Page Title: Our Services
-    Service/Product 1 (based on {{keywords}}):
-      Headline: [Detailed name of Service/Product 1]
-      Image/Icon Placeholder
-      Detailed Description: [Comprehensive description of features and benefits]
-      Specific CTA: "Request a Demo"
-    (Repeat for other key services/products)
-
-  Ensure the wireframe is described clearly and provides a solid foundation for design and development.
   {{/if}}
 
 
