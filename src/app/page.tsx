@@ -4,6 +4,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateAudio } from '@/ai/flows/generate-audio-flow';
+import { Terminal } from 'lucide-react';
 
 interface GenerationProgress {
   total: number;
@@ -357,8 +359,19 @@ function IPBuilderPageContent() {
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
-        <header className="mb-6 text-center">
-          <AppLogo />
+        <header className="mb-6 text-center flex justify-between items-center">
+          <div className="w-1/3"></div>
+          <div className="w-1/3 flex justify-center">
+            <AppLogo />
+          </div>
+          <div className="w-1/3 flex justify-end">
+             <Link href="/dev-tools" passHref>
+                <Button variant="outline" size="sm">
+                  <Terminal className="mr-2 h-4 w-4" />
+                  Dev Tools
+                </Button>
+              </Link>
+          </div>
         </header>
 
         <div className="space-y-8">
