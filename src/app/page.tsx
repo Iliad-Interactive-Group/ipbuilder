@@ -34,6 +34,7 @@ import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/compon
 import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
+import { isVariantsArray } from '@/lib/variant-utils';
 import { Terminal } from 'lucide-react';
 
 interface GenerationProgress {
@@ -256,9 +257,9 @@ function IPBuilderPageContent() {
               initialEdits[item.value] = item.marketingCopy;
           } else if (Array.isArray(item.marketingCopy)) {
               // Check if it's an array of variant objects
-              if (item.marketingCopy.length > 0 && typeof item.marketingCopy[0] === 'object' && 'variant' in item.marketingCopy[0]) {
+              if (isVariantsArray(item.marketingCopy)) {
                   // For variants, join all variant copies
-                  initialEdits[item.value] = item.marketingCopy.map((v: any) => `=== Variant ${v.variant} ===\n${v.copy}`).join('\n\n');
+                  initialEdits[item.value] = item.marketingCopy.map((v) => `=== Variant ${v.variant} ===\n${v.copy}`).join('\n\n');
               } else {
                   // For regular arrays (like social media posts)
                   initialEdits[item.value] = item.marketingCopy.join('\n\n');

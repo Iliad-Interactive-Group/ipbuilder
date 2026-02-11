@@ -14,12 +14,13 @@ import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/gene
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
+import { isVariantsArray, VariantCopy } from '@/lib/variant-utils';
 
 
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | Array<{variant: number, copy: any}>;
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | VariantCopy[];
   imageSuggestion?: string;
   isError?: boolean;
   isGeneratingImage?: boolean;
@@ -100,14 +101,6 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   const isEditableContent = (item: GeneratedCopyItem) => {
     return typeof item.marketingCopy === 'string' || Array.isArray(item.marketingCopy);
   };
-  
-  const isVariantsArray = (marketingCopy: any): marketingCopy is Array<{variant: number, copy: any}> => {
-    return Array.isArray(marketingCopy) && 
-           marketingCopy.length > 0 && 
-           typeof marketingCopy[0] === 'object' && 
-           'variant' in marketingCopy[0] && 
-           'copy' in marketingCopy[0];
-  };
 
   return (
     <div className="space-y-8">
@@ -131,7 +124,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                          <span className="flex items-center">
                           <Icon className="w-5 h-5 mr-3" />
                           {item.label}
-                          {hasVariants && <span className="ml-2 text-sm text-muted-foreground">({(item.marketingCopy as Array<{variant: number, copy: any}>).length} variations)</span>}
+                          {hasVariants && <span className="ml-2 text-sm text-muted-foreground">({(item.marketingCopy as VariantCopy[]).length} variations)</span>}
                         </span>
                      </div>
                    </AccordionTrigger>
@@ -151,14 +144,14 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
                         ) : hasVariants ? (
                            <Tabs defaultValue="1" className="w-full">
-                             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as Array<{variant: number, copy: any}>).length}, 1fr)` }}>
-                               {(item.marketingCopy as Array<{variant: number, copy: any}>).map((v: any) => (
+                             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as VariantCopy[]).length}, 1fr)` }}>
+                               {(item.marketingCopy as VariantCopy[]).map((v) => (
                                  <TabsTrigger key={v.variant} value={v.variant.toString()}>
                                    Variant {v.variant}
                                  </TabsTrigger>
                                ))}
                              </TabsList>
-                             {(item.marketingCopy as Array<{variant: number, copy: any}>).map((v: any) => (
+                             {(item.marketingCopy as VariantCopy[]).map((v) => (
                                <TabsContent key={v.variant} value={v.variant.toString()}>
                                  <Textarea 
                                    value={v.copy} 

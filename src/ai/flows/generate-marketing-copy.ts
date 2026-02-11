@@ -101,14 +101,15 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
-    z.string(),
-    z.array(z.string()),
-    z.any(), // For complex structures like PodcastOutlineStructure or BlogPostStructure
+    z.string().describe('A single string of marketing copy'),
+    z.array(z.string()).describe('An array of marketing copy strings'),
+    PodcastOutlineStructureSchema,
+    BlogPostStructureSchema,
     z.array(z.object({
       variant: z.number().describe('The variant number'),
-      copy: z.any().describe('The marketing copy for this variant')
-    }))
-  ]).describe('The generated marketing copy. Can be a single string, an array of strings, a structured JSON object, or an array of variant objects.'),
+      copy: z.string().describe('The marketing copy for this variant')
+    })).describe('Array of variant objects for multi-variant generation')
+  ]).describe('The generated marketing copy in various formats'),
   imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards. This should NOT be generated for audio-only or script-based content like radio or TV scripts.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
