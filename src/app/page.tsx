@@ -170,7 +170,7 @@ function IPBuilderPageContent() {
     let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
     let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
 
-    const generatePromises = data.contentType.map(async (typeValue: string, _index: number) => {
+    const generatePromises = data.contentType.map(async (typeValue: string) => {
       try {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;

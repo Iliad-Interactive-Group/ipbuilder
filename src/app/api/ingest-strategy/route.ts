@@ -99,14 +99,16 @@ export async function POST(request: NextRequest) {
         }
 
         // Sanitize and validate inputs (basic length checks)
-        const MAX_FIELD_LENGTH = 10000; // reasonable max length
-        if (companyName.length > MAX_FIELD_LENGTH) {
+        // Max length of 10,000 characters to prevent excessively large payloads
+        // while still supporting comprehensive product descriptions and keywords
+        const MAX_INPUT_FIELD_LENGTH = 10000;
+        if (companyName.length > MAX_INPUT_FIELD_LENGTH) {
             throw new Error("companyName exceeds maximum allowed length.");
         }
-        if (productDescription.length > MAX_FIELD_LENGTH) {
+        if (productDescription.length > MAX_INPUT_FIELD_LENGTH) {
             throw new Error("productServiceDescription exceeds maximum allowed length.");
         }
-        if (keywords.length > MAX_FIELD_LENGTH) {
+        if (keywords.length > MAX_INPUT_FIELD_LENGTH) {
             throw new Error("keywords exceeds maximum allowed length.");
         }
 
