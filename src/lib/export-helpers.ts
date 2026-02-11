@@ -117,7 +117,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
         };
 
         doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         const labelLineHeight = 14 * lineHeightFactor;
         const contentTypeLabel = `Content Type: ${copy.label}`;
         const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
@@ -127,7 +127,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
 
         if (copy.imageSuggestion) {
             doc.setFontSize(10);
-            doc.setFont(undefined, 'italic');
+            doc.setFont('helvetica', 'italic');
             const suggestionLineHeight = 10 * lineHeightFactor;
             const suggestionText = `Image Suggestion: ${copy.imageSuggestion}`;
             const suggestionLines = doc.splitTextToSize(suggestionText, maxLineWidth);
@@ -137,7 +137,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
         }
 
         doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         const textLineHeight = 10 * lineHeightFactor;
         
         const marketingText = getItemText(copy, editedCopy);

@@ -35,9 +35,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await firebaseSignOut(auth);
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
       router.push('/login'); 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error signing out: ", error);
-      toast({ title: "Sign Out Error", description: error.message || "Could not sign out.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "Could not sign out.";
+      toast({ title: "Sign Out Error", description: errorMessage, variant: "destructive" });
     }
   };
 

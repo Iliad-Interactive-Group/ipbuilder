@@ -136,7 +136,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
     try {
       const result = await suggestKeywords({ companyName, productDescription });
       if (result.suggestedKeywords && result.suggestedKeywords.length > 0) {
-        const currentKeywords = form.getValues("keywords").split(',').map(k => k.trim()).filter(k => k);
+        const currentKeywords = form.getValues("keywords").split(',').map((k: string) => k.trim()).filter((k: string) => k);
         const newKeywords = result.suggestedKeywords.filter(sk => !currentKeywords.includes(sk));
         const updatedKeywords = [...currentKeywords, ...newKeywords].join(', ');
         form.setValue("keywords", updatedKeywords);
