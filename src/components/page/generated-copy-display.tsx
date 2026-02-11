@@ -128,10 +128,10 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                 <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
                    <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
                      <div className="flex items-center justify-between w-full">
-                        <span className="flex items-center">
+                         <span className="flex items-center">
                           <Icon className="w-5 h-5 mr-3" />
                           {item.label}
-                          {hasVariants && <span className="ml-2 text-sm text-muted-foreground">({item.marketingCopy.length} variations)</span>}
+                          {hasVariants && <span className="ml-2 text-sm text-muted-foreground">({(item.marketingCopy as Array<{variant: number, copy: any}>).length} variations)</span>}
                         </span>
                      </div>
                    </AccordionTrigger>
@@ -151,14 +151,14 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
                         ) : hasVariants ? (
                            <Tabs defaultValue="1" className="w-full">
-                             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${item.marketingCopy.length}, 1fr)` }}>
-                               {item.marketingCopy.map((v: any) => (
+                             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as Array<{variant: number, copy: any}>).length}, 1fr)` }}>
+                               {(item.marketingCopy as Array<{variant: number, copy: any}>).map((v: any) => (
                                  <TabsTrigger key={v.variant} value={v.variant.toString()}>
                                    Variant {v.variant}
                                  </TabsTrigger>
                                ))}
                              </TabsList>
-                             {item.marketingCopy.map((v: any) => (
+                             {(item.marketingCopy as Array<{variant: number, copy: any}>).map((v: any) => (
                                <TabsContent key={v.variant} value={v.variant.toString()}>
                                  <Textarea 
                                    value={v.copy} 
