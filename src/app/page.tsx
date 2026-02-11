@@ -26,7 +26,7 @@ import { Loader2 } from 'lucide-react';
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
-import type { GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
+import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 import DataInputCard from '@/components/page/data-input-card';
@@ -97,7 +97,7 @@ function IPBuilderPageContent() {
         form.setValue("productDescription", briefDataFromUrl.productDescription || "");
         form.setValue("keywords", (briefDataFromUrl.keywords || []).join(', '));
         toast({ title: "Marketing Brief Loaded", description: "The brief has been autofilled from the integrated app." });
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Failed to parse brief from URL", e);
         toast({ title: "Brief Load Error", description: "Could not read the marketing brief from the URL.", variant: "destructive" });
       } finally {
@@ -139,8 +139,8 @@ function IPBuilderPageContent() {
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
   
-  const handleCopy = (textToCopy: any, label: string) => {
-    if (typeof textToCopy === 'object' && textToCopy !== null) {
+  const handleCopy = (textToCopy: string | string[] | Record<string, unknown>, label: string) => {
+    if (typeof textToCopy === 'object' && textToCopy !== null && !Array.isArray(textToCopy)) {
       toast({ title: "Copy Failed", description: `Cannot copy complex object for ${label}. Please use export instead.`, variant: "destructive" });
       return;
     }
@@ -170,18 +170,22 @@ function IPBuilderPageContent() {
     let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
     let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
 
-    const generatePromises = data.contentType.map(async (typeValue, index) => {
+    const generatePromises = data.contentType.map(async (typeValue: string, _index: number) => {
       try {
         const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
         const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
         
-        setGenerationProgress(prev => ({ ...prev!, current: prev!.current + 1, currentLabel }));
+        setGenerationProgress((prev: GenerationProgress | null) => ({ 
+          total: prev?.total || 0, 
+          current: (prev?.current || 0) + 1, 
+          currentLabel 
+        }));
 
-        const marketingInput: any = { 
+        const marketingInput: GenerateMarketingCopyInput = { 
           keywords: data.keywords,
           contentType: typeValue,
-          tone: toneForAI || "",
-          additionalInstructions: data.additionalInstructions || "",
+          tone: toneForAI || undefined,
+          additionalInstructions: data.additionalInstructions || undefined,
           companyName: data.companyName,
           productDescription: data.productDescription,
         };
@@ -221,11 +225,8 @@ function IPBuilderPageContent() {
       }
     });
 
-    const initialResults: GeneratedCopyItem[] = [];
-    for (const promise of generatePromises) {
-        const result = await promise;
-        if (result) initialResults.push(result);
-    }
+    // Use Promise.all to run all generations in parallel for better performance
+    const initialResults = await Promise.all(generatePromises);
     
     // Set the initial copy (unedited)
     setGeneratedCopy(initialResults);
@@ -250,7 +251,7 @@ function IPBuilderPageContent() {
         if (item.imageSuggestion) {
             generateImage(item.imageSuggestion)
                 .then(imageDataUri => {
-                    setGeneratedCopy(prevCopies => 
+                    setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
                         prevCopies.map(copy => 
                             copy.value === item.value 
                             ? { ...copy, generatedImage: imageDataUri, isGeneratingImage: false } 
@@ -265,7 +266,7 @@ function IPBuilderPageContent() {
                         description: `Could not generate the image for ${item.label}.`,
                         variant: "destructive"
                     });
-                    setGeneratedCopy(prevCopies => 
+                    setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
                         prevCopies.map(copy => 
                             copy.value === item.value 
                             ? { ...copy, isGeneratingImage: false } // Stop loading on error

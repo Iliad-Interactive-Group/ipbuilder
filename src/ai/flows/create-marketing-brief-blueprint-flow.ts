@@ -94,7 +94,7 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
     inputSchema: CreateMarketingBriefBlueprintInputSchema,
     outputSchema: MarketingBriefBlueprintSchema,
   },
-  async input => {
+  async (input: CreateMarketingBriefBlueprintInput) => {
     const {output} = await prompt(input);
     if (!output) {
       throw new Error('The AI model did not return the expected blueprint output.');
