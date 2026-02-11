@@ -2,8 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
-// CORS configuration: restrict to specific origins in production
-// Use environment variable ALLOWED_ORIGINS (comma-separated) or default to '*' for development
+/**
+ * Gets the allowed CORS origins from environment variables.
+ * In production, requires explicit configuration. In development, defaults to wildcard.
+ * 
+ * @returns Comma-separated string of allowed origins or '*' for wildcard
+ */
 const getAllowedOrigins = (): string => {
     const allowedOrigins = process.env.ALLOWED_ORIGINS;
     if (allowedOrigins && allowedOrigins.trim().length > 0) {
@@ -13,6 +17,12 @@ const getAllowedOrigins = (): string => {
     return process.env.NODE_ENV === 'production' ? '' : '*';
 };
 
+/**
+ * Generates appropriate CORS headers based on request origin and configuration.
+ * 
+ * @param origin - The origin header from the incoming request
+ * @returns Object containing CORS headers
+ */
 const getCorsHeaders = (origin: string | null): Record<string, string> => {
     const allowedOrigins = getAllowedOrigins();
     
