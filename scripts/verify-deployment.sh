@@ -182,8 +182,11 @@ fi
 # Test sample-snapshot
 echo "  - Testing /api/sample-snapshot..."
 SAMPLE_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$SERVICE_URL/api/sample-snapshot")
-if [ "$SAMPLE_STATUS" = "400" ] || [ "$SAMPLE_STATUS" = "503" ]; then
-    print_status 0 "  /api/sample-snapshot is accessible (expected 400/503 without data)"
+if [ "$SAMPLE_STATUS" = "400" ]; then
+    print_status 0 "  /api/sample-snapshot is accessible (400 = missing data, as expected)"
+elif [ "$SAMPLE_STATUS" = "503" ]; then
+    print_status 0 "  /api/sample-snapshot is accessible but disabled in production (503)"
+    print_info "  This is expected if the endpoint was migrated to disable filesystem writes"
 else
     print_status 1 "  /api/sample-snapshot returned unexpected status: $SAMPLE_STATUS"
 fi
