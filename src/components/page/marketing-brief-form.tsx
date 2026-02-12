@@ -82,6 +82,7 @@ export const formSchema = z.object({
   radioScriptLength: z.string().optional(),
   emailType: z.string().optional(),
   additionalInstructions: z.string().optional(),
+  numberOfVariations: z.number().optional(),
 });
 
 export type MarketingBriefFormData = z.infer<typeof formSchema>;
@@ -123,6 +124,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
   const showTvScriptLengthSelector = selectedContentTypes?.includes('tv script');
   const showRadioScriptLengthSelector = selectedContentTypes?.includes('radio script');
   const showEmailTypeSelector = selectedContentTypes?.includes('lead generation email');
+  const showVariationsSelector = selectedContentTypes?.some((ct: string) => ['radio script', 'tv script'].includes(ct));
 
   const handleSuggestKeywords = async () => {
     const companyName = form.getValues("companyName");
@@ -460,6 +462,38 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                     </Select>
                     <FormDescription>
                       Specify the type of lead generation email you need.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showVariationsSelector && (
+              <FormField
+                control={form.control}
+                name="numberOfVariations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Wand2 className="w-4 h-4 mr-2 text-muted-foreground"/>Number of Variations (Optional)</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === "1" ? undefined : parseInt(value))} 
+                      value={field.value?.toString() || "1"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="1 variation (default)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">1 variation (default)</SelectItem>
+                        <SelectItem value="2">2 variations</SelectItem>
+                        <SelectItem value="3">3 variations</SelectItem>
+                        <SelectItem value="4">4 variations</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Generate multiple unique variations for radio and TV scripts.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

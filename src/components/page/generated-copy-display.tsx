@@ -7,18 +7,20 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
+import { isVariantsArray, VariantCopy } from '@/lib/variant-utils';
 
 
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure;
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | VariantCopy[];
   imageSuggestion?: string;
   isError?: boolean;
   isGeneratingImage?: boolean;
@@ -112,15 +114,17 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
             {generatedCopy.map((item) => {
               const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy;
               const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy;
+              const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
               
               return (
                 <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
                    <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
                      <div className="flex items-center justify-between w-full">
-                        <span className="flex items-center">
+                         <span className="flex items-center">
                           <Icon className="w-5 h-5 mr-3" />
                           {item.label}
+                          {hasVariants && <span className="ml-2 text-sm text-muted-foreground">({(item.marketingCopy as VariantCopy[]).length} variations)</span>}
                         </span>
                      </div>
                    </AccordionTrigger>
@@ -138,6 +142,26 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                            <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
                         ) : isBlogPost ? (
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
+                        ) : hasVariants ? (
+                           <Tabs defaultValue="1" className="w-full">
+                             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as VariantCopy[]).length}, 1fr)` }}>
+                               {(item.marketingCopy as VariantCopy[]).map((v) => (
+                                 <TabsTrigger key={v.variant} value={v.variant.toString()}>
+                                   Variant {v.variant}
+                                 </TabsTrigger>
+                               ))}
+                             </TabsList>
+                             {(item.marketingCopy as VariantCopy[]).map((v) => (
+                               <TabsContent key={v.variant} value={v.variant.toString()}>
+                                 <Textarea 
+                                   value={v.copy} 
+                                   readOnly
+                                   rows={8} 
+                                   className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
+                                 />
+                               </TabsContent>
+                             ))}
+                           </Tabs>
                         ) : isEditableContent(item) ? (
                            <EditableTextDisplay 
                                 item={item} 
