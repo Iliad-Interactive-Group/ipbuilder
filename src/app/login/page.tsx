@@ -31,6 +31,12 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+      setError('Authentication is not configured. Please contact support.');
+      toast({ title: "Configuration Error", description: "Authentication is not configured.", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {

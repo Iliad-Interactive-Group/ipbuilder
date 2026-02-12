@@ -31,6 +31,14 @@ RUN npm ci
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
+# Set dummy Firebase config for build time (will be overridden at runtime)
+ENV NEXT_PUBLIC_FIREBASE_API_KEY="build-time-placeholder"
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="build-time-placeholder.firebaseapp.com"
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID="build-time-placeholder"
+ENV NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="build-time-placeholder.appspot.com"
+ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="000000000000"
+ENV NEXT_PUBLIC_FIREBASE_APP_ID="1:000000000000:web:0000000000000000000000"
+
 # Build the Next.js application
 RUN npm run build
 

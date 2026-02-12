@@ -23,6 +23,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!auth) {
+      // If auth is not initialized (during build), set loading to false
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -31,6 +36,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOutUser = async () => {
+    if (!auth) {
+      toast({ title: "Configuration Error", description: "Authentication is not configured.", variant: "destructive" });
+      return;
+    }
     try {
       await firebaseSignOut(auth);
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
