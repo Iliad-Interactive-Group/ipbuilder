@@ -1,11 +1,24 @@
 # Cloud Build configuration for IPBuilder deployment to Cloud Run
 # This file automates the build and deployment process when code is pushed to GitHub
+# NOTE: Firebase client config (NEXT_PUBLIC_*) is embedded at build time - update build args if changed
 
 steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: 
       - 'build'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyC1s1TG1oeBiA74fBUa_7SJtbYxFW-NzBI'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=ipbuilderai.firebaseapp.com'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=ipbuilderai'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=ipbuilderai.firebasestorage.app'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=162501725307'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_APP_ID=1:162501725307:web:a741a3dd67f2074c2366de'
       - '-t'
       - 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ipbuilder/ipbuilder:$COMMIT_SHA'
       - '-t'
