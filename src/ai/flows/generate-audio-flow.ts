@@ -7,7 +7,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 import wav from 'wav';
 
 const GenerateAudioInputSchema = z.string().describe('The text script to convert to speech.');

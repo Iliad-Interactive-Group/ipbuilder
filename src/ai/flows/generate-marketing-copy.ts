@@ -10,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GenerateMarketingCopyInputSchema = z.object({
   keywords: z
@@ -43,7 +43,11 @@ const GenerateMarketingCopyInputSchema = z.object({
   emailType: z
     .string()
     .optional()
-    .describe("The type of email to generate (e.g., cold outreach, nurture, promotional).")
+    .describe("The type of email to generate (e.g., cold outreach, nurture, promotional)."),
+  numberOfVariations: z
+    .number()
+    .optional()
+    .describe("The number of variations to generate (2-4). Only applicable for certain content types like 'radio script' and 'tv script'.")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -96,7 +100,16 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 
 const GenerateMarketingCopyOutputSchema = z.object({
-  marketingCopy: z.any().describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script" or "tv script", the response should be a clean, voice-ready script containing ONLY the dialogue or voiceover lines, with no scene headings, SFX, or other non-speech text. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
+  marketingCopy: z.union([
+    z.string().describe('A single string of marketing copy'),
+    z.array(z.string()).describe('An array of marketing copy strings'),
+    PodcastOutlineStructureSchema,
+    BlogPostStructureSchema,
+    z.array(z.object({
+      variant: z.number().describe('The variant number'),
+      copy: z.string().describe('The marketing copy for this variant')
+    })).describe('Array of variant objects for multi-variant generation')
+  ]).describe('The generated marketing copy in various formats'),
   imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards. This should NOT be generated for audio-only or script-based content like radio or TV scripts.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
@@ -407,6 +420,49 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async (input: GenerateMarketingCopyInput) => {
+    // Check if multiple variations are requested
+    const numberOfVariations = input.numberOfVariations || 1;
+    const supportsVariations = ['radio script', 'tv script'].includes(input.contentType);
+    
+    // If variations are requested for supported content types, generate them
+    if (numberOfVariations > 1 && supportsVariations) {
+      const variants = [];
+      
+      for (let i = 1; i <= numberOfVariations; i++) {
+        // For all other content types, use the generic prompt
+        const promptData = {
+          ...input,
+          currentYear: new Date().getFullYear().toString(),
+          isRadioScript: input.contentType === "radio script",
+          isTvScript: input.contentType === "tv script",
+          isBillboard: input.contentType === "billboard",
+          isWebsiteWireframe: input.contentType === "website wireframe",
+          isDisplayAdCopy: input.contentType === "display ad copy",
+          isLeadGenerationEmail: input.contentType === "lead generation email",
+          isWebsiteCopy: input.contentType === "website copy",
+          is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
+        };
+        
+        const {output} = await genericPrompt(promptData);
+        if (!output) {
+          throw new Error(`The AI failed to generate variant ${i}.`);
+        }
+        
+        // Strip production cues for scripts
+        const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
+        
+        variants.push({
+          variant: i,
+          copy: strippedCopy
+        });
+      }
+      
+      return { 
+        marketingCopy: variants,
+        imageSuggestion: undefined // No image for scripts
+      };
+    }
+    
     // Isolate social media post generation as it has a unique output structure (array)
     if (input.contentType === "social media post") {
         const {output} = await socialMediaPrompt(input);

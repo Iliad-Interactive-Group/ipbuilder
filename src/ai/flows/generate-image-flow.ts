@@ -7,7 +7,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GenerateImageInputSchema = z.string().describe('The text prompt for image generation.');
 const GenerateImageOutputSchema = z.string().describe('The generated image as a data URI.');
