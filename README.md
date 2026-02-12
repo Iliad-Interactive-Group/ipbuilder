@@ -2,6 +2,7 @@
 
 An AI-powered SaaS application for generating marketing content across multiple formats, built with Next.js, Firebase, and Google Genkit.
 
+**Production URL**: [https://ipbuilder.homerdev.com](https://ipbuilder.homerdev.com)
 ## Project Vision
 
 The mission is to transform this application from a powerful starter kit into a world-class, standalone creative tool. This platform empowers marketers, creators, and strategists by integrating cutting-edge AI to generate high-quality, strategic content across a wide range of advertising verticals.
@@ -101,6 +102,37 @@ ALLOWED_ORIGINS=https://app.example.com,https://dashboard.example.com
 - **Authentication**: Firebase Auth
 - **Forms**: React Hook Form + Zod validation
 - **Export**: jsPDF for PDF generation
+- **Hosting**: Google Cloud Run with auto-deploy from GitHub
+- **Domain**: ipbuilder.homerdev.com
+
+## Deployment
+
+IPBuilder is deployed on Google Cloud Run with automatic deployments on every push to the `main` branch.
+
+### Quick Deploy
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for comprehensive deployment instructions including:
+- Cloud Run setup and configuration
+- Domain mapping to ipbuilder.homerdev.com
+- Auto-deploy via GitHub Actions or Cloud Build
+- Environment variables and secrets management
+- Backend compatibility analysis
+- Troubleshooting guide
+
+### Quick Reference
+
+```bash
+# Build Docker image locally
+docker build -t ipbuilder .
+
+# Deploy to Cloud Run
+gcloud run deploy ipbuilder --source . --region=us-central1
+
+# View logs
+gcloud run services logs tail ipbuilder --region=us-central1
+```
+
+See [CLOUD_RUN_QUICK_REFERENCE.md](docs/CLOUD_RUN_QUICK_REFERENCE.md) for more commands.
 
 ### Key Architectural Changes
 
@@ -141,6 +173,19 @@ To prevent server-side modules from leaking into client bundles:
 - Removed `--turbopack` flag from dev script to ensure proper Webpack configuration
 
 ## API Endpoints
+
+### `GET /api/health`
+
+Health check endpoint for monitoring and Cloud Run health checks.
+
+**Response**: 
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "service": "ipbuilder"
+}
+```
 
 ### `POST /api/ingest-strategy`
 

@@ -29,6 +29,8 @@ import { generateMarketingCopyAction, generateImageAction, generateAudioAction }
 import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
+import ProtectedRoute from '@/components/protected-route';
+import UserMenu from '@/components/user-menu';
 import DataInputCard from '@/components/page/data-input-card';
 import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/components/page/marketing-brief-form';
 import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
@@ -392,13 +394,14 @@ function IPBuilderPageContent() {
           <div className="w-1/3 flex justify-center">
             <AppLogo />
           </div>
-          <div className="w-1/3 flex justify-end">
+          <div className="w-1/3 flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
                 <Button variant="outline" size="sm">
                   <Terminal className="mr-2 h-4 w-4" />
                   Dev Tools
                 </Button>
               </Link>
+              <UserMenu />
           </div>
         </header>
 
@@ -481,8 +484,10 @@ function IPBuilderPageContent() {
 
 export default function IPBuilderPage() {
     return (
-        <Suspense>
-            <IPBuilderPageContent />
-        </Suspense>
+        <ProtectedRoute>
+            <Suspense>
+                <IPBuilderPageContent />
+            </Suspense>
+        </ProtectedRoute>
     )
 }
