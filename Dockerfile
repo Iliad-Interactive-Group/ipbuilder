@@ -32,7 +32,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Set dummy Firebase config for build time (will be overridden at runtime)
-# IMPORTANT: The value "build-time-placeholder" must match the check in src/firebase/client.ts:16
+# IMPORTANT: The value "build-time-placeholder" must match the check in src/firebase/client.ts:18
 # to ensure Firebase is not initialized during build with invalid credentials
 ENV NEXT_PUBLIC_FIREBASE_API_KEY="build-time-placeholder"
 ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="build-time-placeholder.firebaseapp.com"

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/firebase/client';
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const signOutUser = async () => {
+  const signOutUser = useCallback(async () => {
     if (!auth) {
       toast({ title: "Configuration Error", description: "Authentication is not configured.", variant: "destructive" });
       return;
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const errorMessage = error instanceof Error ? error.message : "Could not sign out.";
       toast({ title: "Sign Out Error", description: errorMessage, variant: "destructive" });
     }
-  };
+  }, [router, toast]);
 
   return (
     <AuthContext.Provider value={{ user, loading, signOutUser }}>

@@ -187,6 +187,9 @@ if [ "$SAMPLE_STATUS" = "400" ]; then
 elif [ "$SAMPLE_STATUS" = "503" ]; then
     print_status 0 "  /api/sample-snapshot is accessible but disabled in production (503)"
     print_info "  This is expected if the endpoint was migrated to disable filesystem writes"
+elif [ "$SAMPLE_STATUS" = "404" ]; then
+    print_status 1 "  /api/sample-snapshot not found (404)"
+    print_info "  The endpoint may have been removed or the route changed"
 else
     print_status 1 "  /api/sample-snapshot returned unexpected status: $SAMPLE_STATUS"
 fi

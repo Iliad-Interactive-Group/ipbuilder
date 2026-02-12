@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 // Only initialize Firebase if we have a valid API key (not during build time with placeholders)
-// IMPORTANT: The value "build-time-placeholder" must match the placeholder in Dockerfile:35
+// IMPORTANT: The value "build-time-placeholder" must match the placeholder in Dockerfile:38
 // to prevent Firebase initialization during Docker build
 let app;
 if (!getApps().length && firebaseConfig.apiKey && firebaseConfig.apiKey !== 'build-time-placeholder') {
