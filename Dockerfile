@@ -1,31 +1,19 @@
 # Multi-stage Dockerfile for IPBuilder on Google Cloud Run
 # Optimized for production deployment with minimal image size
 
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
+# Stage 1: Builder
+FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
-
-# Stage 2: Builder
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Copy package files for dev dependencies
-COPY package.json package-lock.json ./
-
-# Install all dependencies (including dev dependencies for build)
+# Install all dependencies (needed for build)
 RUN npm ci
+
+# Copy source files
+COPY . .
 
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -44,7 +32,7 @@ ENV NEXT_PUBLIC_FIREBASE_APP_ID="1:000000000000:web:0000000000000000000000"
 # Build the Next.js application
 RUN npm run build
 
-# Stage 3: Runner
+# Stage 2: Runner
 FROM node:20-alpine AS runner
 WORKDIR /app
 
