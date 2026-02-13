@@ -198,7 +198,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                     />
                                 ) : (
                                     <div className="p-4 bg-destructive/10 text-destructive text-center text-sm rounded-md">
-                                        Image generation failed.
+                                        Failed to generate image. Please try again or check your internet connection.
                                     </div>
                                 )}
                             </div>
@@ -250,7 +250,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                     </Tabs>
                                 ) : (
                                     <div className="p-4 bg-destructive/10 text-destructive text-center text-sm rounded-md">
-                                        Image generation failed.
+                                        Failed to generate image variations. Please try again or check your internet connection.
                                     </div>
                                 )}
                             </div>

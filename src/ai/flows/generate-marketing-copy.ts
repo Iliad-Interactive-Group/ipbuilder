@@ -59,7 +59,7 @@ const GenerateMarketingCopyInputSchema = z.object({
   voiceName: z
     .string()
     .optional()
-    .describe("The specific voice name for audio generation. See Gemini TTS documentation for available voices.")
+    .describe("The specific voice name for audio generation. Available voices include male (Puck, Charon, Fenrir, Orus, Enceladus, Iapetus, Umbriel, Algieba, Algenib, Rasalgethi, Alnilam, Schedar, Achird, Zubenelgenubi, Sadachbia, Sadaltager) and female (Zephyr, Kore, Leda, Aoede, Callirrhoe, Autonoe, Despina, Erinome, Laomedeia, Achernar, Gacrux, Pulcherrima, Vindemiatrix, Sulafat) options. See UI form for full list with descriptions.")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
