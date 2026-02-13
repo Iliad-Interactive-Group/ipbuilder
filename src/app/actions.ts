@@ -33,6 +33,6 @@ export async function generateImageAction(prompt: string): Promise<string> {
 /**
  * Server action for generating audio
  */
-export async function generateAudioAction(script: string): Promise<string> {
-  return await generateAudio(script);
+export async function generateAudioAction(input: { script: string; voiceName?: string }): Promise<string> {
+  return await generateAudio(input);
 }
