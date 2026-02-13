@@ -2,6 +2,11 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
+// Firebase Configuration
+// SECURITY NOTE: Firebase API keys are intentionally client-accessible.
+// These keys identify your Firebase project but do not grant access to resources.
+// Security is enforced through Firebase Security Rules, not by hiding the API key.
+// See: https://firebase.google.com/docs/projects/api-keys
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
