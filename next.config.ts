@@ -34,9 +34,10 @@ const nextConfig: NextConfig = {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
-          // NOTE: X-XSS-Protection is deprecated but included for legacy browser support.
-          // Modern browsers should rely on Content-Security-Policy instead.
-          // Consider removing this header if you don't need to support older browsers.
+          // NOTE: X-XSS-Protection is deprecated for modern browsers (Chrome, Firefox, Edge)
+          // but included for legacy browser support (Internet Explorer 8-11, older Safari versions).
+          // Modern browsers rely on Content-Security-Policy instead.
+          // Consider removing this header after legacy browser support is no longer required.
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',

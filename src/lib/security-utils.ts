@@ -66,6 +66,8 @@ export function redactSensitiveData<T extends Record<string, unknown> | unknown[
 
 /**
  * Helper function to redact arguments before logging
+ * @param args - Array of arguments to redact before logging
+ * @returns Array with sensitive data redacted
  * @internal
  */
 function redactLogArgs(args: unknown[]): unknown[] {
