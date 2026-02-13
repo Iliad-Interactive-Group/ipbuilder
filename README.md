@@ -3,6 +3,8 @@
 An AI-powered SaaS application for generating marketing content across multiple formats, built with Next.js, Firebase, and Google Genkit.
 
 **Production URL**: [https://ipbuilder.homerdev.com](https://ipbuilder.homerdev.com)
+
+🔐 **Secured with Google Secret Manager** for persistent environment variable management across deployments.
 ## Project Vision
 
 The mission is to transform this application from a powerful starter kit into a world-class, standalone creative tool. This platform empowers marketers, creators, and strategists by integrating cutting-edge AI to generate high-quality, strategic content across a wide range of advertising verticals.
