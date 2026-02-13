@@ -5,10 +5,10 @@
 
 /**
  * Redacts sensitive values from objects before logging
- * @param obj - Object that may contain sensitive data
- * @returns Object with sensitive fields redacted
+ * @param obj - Object or array that may contain sensitive data
+ * @returns Object or array with sensitive fields redacted
  */
-export function redactSensitiveData<T extends Record<string, unknown>>(obj: T): T {
+export function redactSensitiveData<T extends Record<string, unknown> | unknown[]>(obj: T): T {
   const sensitiveKeys = [
     'apikey',
     'api_key',
@@ -23,12 +23,25 @@ export function redactSensitiveData<T extends Record<string, unknown>>(obj: T): 
     'genai',
   ];
 
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map((item) => {
+      if (typeof item === 'object' && item !== null) {
+        return redactSensitiveData(item as Record<string, unknown>);
+      }
+      return item;
+    }) as T;
+  }
+
+  // Handle objects
   const redacted = { ...obj } as Record<string, unknown>;
 
   Object.keys(redacted).forEach((key) => {
     const lowerKey = key.toLowerCase();
     if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
       redacted[key] = '[REDACTED]';
+    } else if (Array.isArray(redacted[key])) {
+      redacted[key] = redactSensitiveData(redacted[key] as unknown[]);
     } else if (typeof redacted[key] === 'object' && redacted[key] !== null) {
       redacted[key] = redactSensitiveData(redacted[key] as Record<string, unknown>);
     }
@@ -43,21 +56,36 @@ export function redactSensitiveData<T extends Record<string, unknown>>(obj: T): 
  */
 export const safeLog = {
   log: (...args: unknown[]) => {
-    const redactedArgs = args.map((arg) =>
-      typeof arg === 'object' && arg !== null ? redactSensitiveData(arg as Record<string, unknown>) : arg
-    );
+    const redactedArgs = args.map((arg) => {
+      if (Array.isArray(arg)) {
+        return redactSensitiveData(arg);
+      } else if (typeof arg === 'object' && arg !== null) {
+        return redactSensitiveData(arg as Record<string, unknown>);
+      }
+      return arg;
+    });
     console.log(...redactedArgs);
   },
   error: (...args: unknown[]) => {
-    const redactedArgs = args.map((arg) =>
-      typeof arg === 'object' && arg !== null ? redactSensitiveData(arg as Record<string, unknown>) : arg
-    );
+    const redactedArgs = args.map((arg) => {
+      if (Array.isArray(arg)) {
+        return redactSensitiveData(arg);
+      } else if (typeof arg === 'object' && arg !== null) {
+        return redactSensitiveData(arg as Record<string, unknown>);
+      }
+      return arg;
+    });
     console.error(...redactedArgs);
   },
   warn: (...args: unknown[]) => {
-    const redactedArgs = args.map((arg) =>
-      typeof arg === 'object' && arg !== null ? redactSensitiveData(arg as Record<string, unknown>) : arg
-    );
+    const redactedArgs = args.map((arg) => {
+      if (Array.isArray(arg)) {
+        return redactSensitiveData(arg);
+      } else if (typeof arg === 'object' && arg !== null) {
+        return redactSensitiveData(arg as Record<string, unknown>);
+      }
+      return arg;
+    });
     console.warn(...redactedArgs);
   },
 };
@@ -65,6 +93,7 @@ export const safeLog = {
 /**
  * Validates that critical environment variables are set
  * Throws error in production if required keys are missing
+ * Logs warnings in development for missing keys
  */
 export function validateEnvironmentVariables(): void {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -79,20 +108,31 @@ export function validateEnvironmentVariables(): void {
     'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
   ];
 
-  if (isProduction) {
-    // Check server-only variables
-    serverOnlyVars.forEach((varName) => {
-      if (!process.env[varName]) {
-        throw new Error(`Missing required server-side environment variable: ${varName}`);
-      }
-    });
+  const missingVars: string[] = [];
 
-    // Check client variables
-    clientVars.forEach((varName) => {
-      if (!process.env[varName]) {
-        throw new Error(`Missing required client-side environment variable: ${varName}`);
-      }
-    });
+  // Check server-only variables
+  serverOnlyVars.forEach((varName) => {
+    if (!process.env[varName]) {
+      missingVars.push(varName);
+    }
+  });
+
+  // Check client variables
+  clientVars.forEach((varName) => {
+    if (!process.env[varName]) {
+      missingVars.push(varName);
+    }
+  });
+
+  if (missingVars.length > 0) {
+    const message = `Missing environment variables: ${missingVars.join(', ')}`;
+    
+    if (isProduction) {
+      throw new Error(message);
+    } else {
+      console.warn(`⚠️  Development Warning: ${message}`);
+      console.warn('   Set these in .env.local for full functionality');
+    }
   }
 }
 
