@@ -83,6 +83,9 @@ function IPBuilderPageContent() {
       emailType: "_no_email_type_",
       additionalInstructions: "",
       numberOfVariations: undefined,
+      numberOfImageVariations: undefined,
+      voiceGender: undefined,
+      voiceName: undefined,
     },
   });
 
@@ -136,6 +139,10 @@ function IPBuilderPageContent() {
       radioScriptLength: "30s",
       emailType: "_no_email_type_",
       additionalInstructions: "",
+      numberOfVariations: undefined,
+      numberOfImageVariations: undefined,
+      voiceGender: undefined,
+      voiceName: undefined,
     });
     setGeneratedCopy([]);
     setEditedCopy({});
@@ -208,6 +215,14 @@ function IPBuilderPageContent() {
           if (typeValue === "social media post" && platformForAI) {
               marketingInput.socialMediaPlatform = platformForAI;
           }
+          
+          // Add image variations for visual content types
+          if (['social media post', 'display ad copy', 'billboard'].includes(typeValue)) {
+            if (data.numberOfImageVariations && data.numberOfImageVariations > 1) {
+              marketingInput.numberOfImageVariations = data.numberOfImageVariations;
+            }
+          }
+          
           if (typeValue === "tv script") {
               marketingInput.tvScriptLength = tvScriptLengthForAI;
               if (data.numberOfVariations && data.numberOfVariations > 1) {
@@ -231,7 +246,8 @@ function IPBuilderPageContent() {
             label: currentLabel,
             marketingCopy: result.marketingCopy,
             imageSuggestion: result.imageSuggestion,
-            isGeneratingImage: !!result.imageSuggestion,
+            imageSuggestions: result.imageSuggestions,
+            isGeneratingImage: !!(result.imageSuggestion || result.imageSuggestions),
           };
         } catch (error) {
           console.error(`Error generating copy for ${typeValue}:`, error);
@@ -276,6 +292,7 @@ function IPBuilderPageContent() {
 
       // Now, generate images for items that have a suggestion
       initialResults.forEach(item => {
+          // Handle single image
           if (item.imageSuggestion) {
               generateImageAction(item.imageSuggestion)
                   .then(imageDataUri => {
@@ -302,7 +319,40 @@ function IPBuilderPageContent() {
                         )
                     );
                 });
-        }
+          }
+          
+          // Handle multiple images
+          if (item.imageSuggestions && item.imageSuggestions.length > 0) {
+              const imagePromises = item.imageSuggestions.map(suggestion => 
+                  generateImageAction(suggestion)
+              );
+              
+              Promise.all(imagePromises)
+                  .then(imageDataUris => {
+                      setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
+                          prevCopies.map(copy => 
+                              copy.value === item.value 
+                              ? { ...copy, generatedImages: imageDataUris, isGeneratingImage: false } 
+                              : copy
+                          )
+                      );
+                  })
+                  .catch(error => {
+                    console.error(`Error generating images for ${item.label}:`, error);
+                    toast({
+                        title: "Image Generation Failed",
+                        description: `Could not generate images for ${item.label}.`,
+                        variant: "destructive"
+                    });
+                    setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
+                        prevCopies.map(copy => 
+                            copy.value === item.value 
+                            ? { ...copy, isGeneratingImage: false } 
+                            : copy
+                        )
+                    );
+                });
+          }
       });
     });
   };
@@ -323,13 +373,19 @@ function IPBuilderPageContent() {
     
     // Strip production cues before sending to the TTS engine
     const cleanScript = stripProductionCues(scriptToProcess);
+    
+    // Get the selected voice name from form data if available
+    const voiceName = form.getValues('voiceName');
 
     setGeneratedCopy(prev => prev.map(copy => 
         copy.value === item.value ? { ...copy, isGeneratingAudio: true } : copy
     ));
 
     try {
-        const audioDataUri = await generateAudioAction(cleanScript);
+        const audioDataUri = await generateAudioAction({ 
+          script: cleanScript, 
+          voiceName: voiceName || undefined 
+        });
         
         const updatedItem = { ...item, generatedAudio: audioDataUri, isGeneratingAudio: false };
 
