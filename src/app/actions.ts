@@ -6,6 +6,9 @@
  * exposing AI logic and credentials to the client.
  */
 
+// Validate environment variables on server startup
+import '@/lib/env-validation';
+
 import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 import type { GenerateMarketingCopyInput, GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
 import { generateImage } from '@/ai/flows/generate-image-flow';

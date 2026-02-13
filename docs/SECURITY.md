@@ -1,5 +1,77 @@
 # Security Considerations
 
+## API Key Security
+
+### Firebase API Keys
+
+Firebase API keys using the `NEXT_PUBLIC_` prefix are **intentionally client-accessible**. This is by design and documented by Firebase:
+
+- **Why Firebase API Keys Are Public**: Firebase API keys are not secret credentials. They identify your Firebase project to Google services. Security is enforced through Firebase Security Rules, not by hiding the API key.
+- **Reference**: [Firebase API Key Security](https://firebase.google.com/docs/projects/api-keys)
+- **Important**: Always configure proper Firebase Security Rules to protect your data. The API key alone does not grant access to your Firebase resources.
+
+Example Firebase Security Rules:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // Only authenticated users from @iliadmg.com domain can access
+      allow read, write: if request.auth != null && 
+                           request.auth.token.email.matches('.*@iliadmg.com$');
+    }
+  }
+}
+```
+
+### Google AI API Key (Genkit)
+
+The `GOOGLE_GENAI_API_KEY` **must remain server-side only**:
+
+- **Never** use the `NEXT_PUBLIC_` prefix for this key
+- **Never** expose this key to client-side code
+- **Always** use server actions to make AI API calls
+- This key grants access to your Google AI quota and must be protected
+
+Our implementation uses Next.js Server Actions in `/src/app/actions.ts` to ensure the Genkit API key never reaches the client.
+
+### Environment Variable Security
+
+1. **Server-Only Variables** (no `NEXT_PUBLIC_` prefix):
+   - `GOOGLE_GENAI_API_KEY` - Google AI/Genkit API key
+   - `ALLOWED_ORIGINS` - CORS configuration
+   - Any other sensitive credentials
+
+2. **Client-Accessible Variables** (`NEXT_PUBLIC_` prefix):
+   - `NEXT_PUBLIC_FIREBASE_*` - Firebase configuration (secured via Firebase Security Rules)
+   - Only use this prefix when the variable MUST be accessible in the browser
+
+3. **Never Commit**:
+   - `.env` files with real credentials
+   - `.env.local` files
+   - `.env.production` files
+   
+4. **Always Use**:
+   - `.env.example` for documentation (no real values)
+   - Platform secret management in production (e.g., Google Cloud Secret Manager)
+
+### Security Utilities
+
+We provide security utilities in `/src/lib/security-utils.ts`:
+
+```typescript
+import { safeLog, redactSensitiveData, assertServerSide } from '@/lib/security-utils';
+
+// Use safeLog instead of console.log to automatically redact sensitive data
+safeLog.log({ apiKey: 'secret', data: 'public' }); // Logs: { apiKey: '[REDACTED]', data: 'public' }
+
+// Assert that code is running server-side only
+assertServerSide('GOOGLE_GENAI_API_KEY');
+
+// Manually redact sensitive data before logging
+const safeData = redactSensitiveData(potentiallyUnsafeObject);
+```
+
 ## URL-Based State Storage
 
 The application currently uses base64-encoded URL parameters to pass marketing brief data between the `/api/ingest-strategy` endpoint and the main application. While this approach works for the current use case, there are important security and privacy considerations:
@@ -55,6 +127,16 @@ The `/api/ingest-strategy` endpoint supports CORS for external integrations.
 3. **Regular Review**:
    - Audit allowed origins periodically
    - Remove origins that are no longer needed
+
+## Security Headers
+
+Security headers are configured in `next.config.ts` to protect against common web vulnerabilities:
+
+- `X-Content-Type-Options: nosniff` - Prevents MIME type sniffing
+- `X-Frame-Options: DENY` - Prevents clickjacking attacks
+- `X-XSS-Protection: 1; mode=block` - Enables browser XSS protection
+- `Referrer-Policy: strict-origin-when-cross-origin` - Controls referrer information
+- `Permissions-Policy` - Restricts access to browser features
 
 ## Input Validation
 
@@ -140,4 +222,4 @@ This helps prevent common security and reliability issues.
 - Use platform-specific secret management in production
 
 ### Validation
-Consider adding environment variable validation at application startup to ensure all required variables are present.
+The application validates environment variables at startup using utilities in `/src/lib/security-utils.ts` to ensure all required variables are present in production.

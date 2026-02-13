@@ -89,10 +89,24 @@ ALLOWED_ORIGINS=https://app.example.com,https://dashboard.example.com
 
 ### Security Best Practices
 
+- **API Key Security**: See [API Key Security Guide](docs/API_KEY_SECURITY.md) for detailed information
 - Never commit `.env` files
 - Use environment-specific CORS origins in production
 - Regularly update dependencies
 - Review Firebase security rules
+- Use server actions for all AI operations to protect credentials
+
+### Important Security Notes
+
+1. **Firebase API Keys** (`NEXT_PUBLIC_FIREBASE_*`): These are intentionally client-accessible. Security is enforced through Firebase Security Rules, not by hiding the key.
+
+2. **Google AI API Key** (`GOOGLE_GENAI_API_KEY`): Must remain server-side only. Never add `NEXT_PUBLIC_` prefix to this variable.
+
+3. **Security Headers**: Automatically configured in `next.config.ts` to protect against common web vulnerabilities.
+
+For complete security documentation, see:
+- [API Key Security Guide](docs/API_KEY_SECURITY.md)
+- [General Security Considerations](docs/SECURITY.md)
 
 ## Architecture
 
