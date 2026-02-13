@@ -4,7 +4,21 @@
  */
 
 /**
- * Redacts sensitive values from objects before logging
+ * Redacts sensitive values from objects or arrays before logging
+ * 
+ * This function recursively processes objects and arrays to find and redact
+ * sensitive keys such as API keys, passwords, tokens, etc.
+ * 
+ * @example
+ * // Redacting an object
+ * redactSensitiveData({ apiKey: 'secret', data: 'public' })
+ * // Returns: { apiKey: '[REDACTED]', data: 'public' }
+ * 
+ * @example
+ * // Redacting an array of objects
+ * redactSensitiveData([{ password: 'secret' }, { password: 'secret2' }])
+ * // Returns: [{ password: '[REDACTED]' }, { password: '[REDACTED]' }]
+ * 
  * @param obj - Object or array that may contain sensitive data
  * @returns Object or array with sensitive fields redacted
  */
@@ -51,42 +65,37 @@ export function redactSensitiveData<T extends Record<string, unknown> | unknown[
 }
 
 /**
+ * Helper function to redact arguments before logging
+ * @internal
+ */
+function redactLogArgs(args: unknown[]): unknown[] {
+  return args.map((arg) => {
+    if (Array.isArray(arg)) {
+      return redactSensitiveData(arg);
+    } else if (typeof arg === 'object' && arg !== null) {
+      return redactSensitiveData(arg as Record<string, unknown>);
+    }
+    return arg;
+  });
+}
+
+/**
  * Safe logger that redacts sensitive information
  * Use this instead of console.log when logging objects that might contain API keys
+ * 
+ * @example
+ * safeLog.log({ apiKey: 'secret', data: 'public' })
+ * // Logs: { apiKey: '[REDACTED]', data: 'public' }
  */
 export const safeLog = {
   log: (...args: unknown[]) => {
-    const redactedArgs = args.map((arg) => {
-      if (Array.isArray(arg)) {
-        return redactSensitiveData(arg);
-      } else if (typeof arg === 'object' && arg !== null) {
-        return redactSensitiveData(arg as Record<string, unknown>);
-      }
-      return arg;
-    });
-    console.log(...redactedArgs);
+    console.log(...redactLogArgs(args));
   },
   error: (...args: unknown[]) => {
-    const redactedArgs = args.map((arg) => {
-      if (Array.isArray(arg)) {
-        return redactSensitiveData(arg);
-      } else if (typeof arg === 'object' && arg !== null) {
-        return redactSensitiveData(arg as Record<string, unknown>);
-      }
-      return arg;
-    });
-    console.error(...redactedArgs);
+    console.error(...redactLogArgs(args));
   },
   warn: (...args: unknown[]) => {
-    const redactedArgs = args.map((arg) => {
-      if (Array.isArray(arg)) {
-        return redactSensitiveData(arg);
-      } else if (typeof arg === 'object' && arg !== null) {
-        return redactSensitiveData(arg as Record<string, unknown>);
-      }
-      return arg;
-    });
-    console.warn(...redactedArgs);
+    console.warn(...redactLogArgs(args));
   },
 };
 

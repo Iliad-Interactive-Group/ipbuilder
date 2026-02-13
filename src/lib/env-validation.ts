@@ -4,11 +4,11 @@
  * Import this file in server-side code to ensure proper configuration
  */
 
-import { validateEnvironmentVariables } from '@/lib/security-utils';
+import { validateEnvironmentVariables, isClientSide } from '@/lib/security-utils';
 
 // Run validation immediately when this module is imported
 // This ensures that the server fails fast if required environment variables are missing
-if (typeof window === 'undefined') {
+if (!isClientSide()) {
   // Only run on server-side
   try {
     validateEnvironmentVariables();
