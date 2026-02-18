@@ -7,22 +7,26 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
+import { isVariantsArray, VariantCopy } from '@/lib/variant-utils';
 
 
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure;
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | VariantCopy[];
   imageSuggestion?: string;
+  imageSuggestions?: string[];
   isError?: boolean;
   isGeneratingImage?: boolean;
   generatedImage?: string;
+  generatedImages?: string[];
   isGeneratingAudio?: boolean;
   generatedAudio?: string;
 }
@@ -112,15 +116,17 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
             {generatedCopy.map((item) => {
               const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy;
               const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy;
+              const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
               
               return (
                 <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
                    <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
                      <div className="flex items-center justify-between w-full">
-                        <span className="flex items-center">
+                         <span className="flex items-center">
                           <Icon className="w-5 h-5 mr-3" />
                           {item.label}
+                          {hasVariants && <span className="ml-2 text-sm text-muted-foreground">({(item.marketingCopy as VariantCopy[]).length} variations)</span>}
                         </span>
                      </div>
                    </AccordionTrigger>
@@ -138,6 +144,26 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                            <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
                         ) : isBlogPost ? (
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
+                        ) : hasVariants ? (
+                           <Tabs defaultValue="1" className="w-full">
+                             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as VariantCopy[]).length}, 1fr)` }}>
+                               {(item.marketingCopy as VariantCopy[]).map((v) => (
+                                 <TabsTrigger key={v.variant} value={v.variant.toString()}>
+                                   Variant {v.variant}
+                                 </TabsTrigger>
+                               ))}
+                             </TabsList>
+                             {(item.marketingCopy as VariantCopy[]).map((v) => (
+                               <TabsContent key={v.variant} value={v.variant.toString()}>
+                                 <Textarea 
+                                   value={v.copy} 
+                                   readOnly
+                                   rows={8} 
+                                   className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
+                                 />
+                               </TabsContent>
+                             ))}
+                           </Tabs>
                         ) : isEditableContent(item) ? (
                            <EditableTextDisplay 
                                 item={item} 
@@ -146,7 +172,8 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                            />
                         ) : null}
                         
-                        {item.imageSuggestion && (
+                        {/* Single image display */}
+                        {item.imageSuggestion && !item.imageSuggestions && (
                             <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md space-y-3">
                                 <div>
                                     <p className="font-semibold flex items-center text-sm">
@@ -171,7 +198,59 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                     />
                                 ) : (
                                     <div className="p-4 bg-destructive/10 text-destructive text-center text-sm rounded-md">
-                                        Image generation failed.
+                                        Failed to generate image. Please try again or check your internet connection.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* Multiple images display */}
+                        {item.imageSuggestions && item.imageSuggestions.length > 0 && (
+                            <div className="p-3 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-r-md space-y-3">
+                                <div>
+                                    <p className="font-semibold flex items-center text-sm">
+                                        <Lightbulb className="w-4 h-4 mr-2"/>
+                                        Image Variations for A/B Testing
+                                    </p>
+                                </div>
+                                {item.isGeneratingImage ? (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {item.imageSuggestions.map((_, idx) => (
+                                            <div key={idx} className="space-y-2">
+                                                <Skeleton className="h-[256px] w-full rounded-md" />
+                                                <p className="text-xs text-center text-muted-foreground">Variant {idx + 1}</p>
+                                            </div>
+                                        ))}
+                                        <p className="col-span-2 text-xs text-center text-muted-foreground animate-pulse">Generating images...</p>
+                                    </div>
+                                ) : item.generatedImages && item.generatedImages.length > 0 ? (
+                                    <Tabs defaultValue="0" className="w-full">
+                                      <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${item.generatedImages.length}, 1fr)` }}>
+                                        {item.generatedImages.map((_, idx) => (
+                                          <TabsTrigger key={idx} value={idx.toString()}>
+                                            Variant {idx + 1}
+                                          </TabsTrigger>
+                                        ))}
+                                      </TabsList>
+                                      {item.generatedImages.map((imgUrl, idx) => (
+                                        <TabsContent key={idx} value={idx.toString()}>
+                                          <div className="space-y-2">
+                                            <p className="text-sm italic">{item.imageSuggestions![idx]}</p>
+                                            <Image 
+                                              src={imgUrl} 
+                                              alt={item.imageSuggestions![idx]}
+                                              width={512}
+                                              height={512}
+                                              className="rounded-lg border-2 border-border object-cover w-full"
+                                              data-ai-hint="generated image"
+                                            />
+                                          </div>
+                                        </TabsContent>
+                                      ))}
+                                    </Tabs>
+                                ) : (
+                                    <div className="p-4 bg-destructive/10 text-destructive text-center text-sm rounded-md">
+                                        Failed to generate image variations. Please try again or check your internet connection.
                                     </div>
                                 )}
                             </div>

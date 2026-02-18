@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Wand2, Loader2, Palette, Lightbulb, Save, History, Clock, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail } from 'lucide-react';
+import { FileText, Wand2, Loader2, Palette, Lightbulb, Save, History, Clock, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail, Volume2 } from 'lucide-react';
 import { suggestKeywords } from '@/ai/flows/suggest-keywords-flow';
 import { useToast } from "@/hooks/use-toast";
 
@@ -66,6 +66,49 @@ const EMAIL_TYPES = [
 ];
 const NO_EMAIL_TYPE_SELECTED_VALUE = "_no_email_type_";
 
+const VOICE_GENDERS = [
+    { value: "male", label: "Male Voice" },
+    { value: "female", label: "Female Voice" },
+];
+
+const MALE_VOICES = [
+    { value: "Puck", label: "Puck (Upbeat)" },
+    { value: "Charon", label: "Charon (Informative)" },
+    { value: "Fenrir", label: "Fenrir (Excitable)" },
+    { value: "Orus", label: "Orus (Firm)" },
+    { value: "Enceladus", label: "Enceladus (Breathy)" },
+    { value: "Iapetus", label: "Iapetus (Clear)" },
+    { value: "Umbriel", label: "Umbriel (Easy-going)" },
+    { value: "Algieba", label: "Algieba (Smooth)" },
+    { value: "Algenib", label: "Algenib (Gravelly)" },
+    { value: "Rasalgethi", label: "Rasalgethi (Informative)" },
+    { value: "Alnilam", label: "Alnilam (Firm)" },
+    { value: "Schedar", label: "Schedar (Even)" },
+    { value: "Achird", label: "Achird (Friendly)" },
+    { value: "Zubenelgenubi", label: "Zubenelgenubi (Casual)" },
+    { value: "Sadachbia", label: "Sadachbia (Lively)" },
+    { value: "Sadaltager", label: "Sadaltager (Knowledgeable)" },
+];
+
+const FEMALE_VOICES = [
+    { value: "Zephyr", label: "Zephyr (Bright)" },
+    { value: "Kore", label: "Kore (Firm)" },
+    { value: "Leda", label: "Leda (Youthful)" },
+    { value: "Aoede", label: "Aoede (Breezy)" },
+    { value: "Callirrhoe", label: "Callirrhoe (Easy-going)" },
+    { value: "Autonoe", label: "Autonoe (Bright)" },
+    { value: "Despina", label: "Despina (Smooth)" },
+    { value: "Erinome", label: "Erinome (Clear)" },
+    { value: "Laomedeia", label: "Laomedeia (Upbeat)" },
+    { value: "Achernar", label: "Achernar (Soft)" },
+    { value: "Gacrux", label: "Gacrux (Mature)" },
+    { value: "Pulcherrima", label: "Pulcherrima (Forward)" },
+    { value: "Vindemiatrix", label: "Vindemiatrix (Gentle)" },
+    { value: "Sulafat", label: "Sulafat (Warm)" },
+];
+
+const NO_VOICE_SELECTED_VALUE = "_no_voice_selected_";
+
 
 const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
 const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
@@ -82,6 +125,10 @@ export const formSchema = z.object({
   radioScriptLength: z.string().optional(),
   emailType: z.string().optional(),
   additionalInstructions: z.string().optional(),
+  numberOfVariations: z.number().optional(),
+  numberOfImageVariations: z.number().optional(),
+  voiceGender: z.string().optional(),
+  voiceName: z.string().optional(),
 });
 
 export type MarketingBriefFormData = z.infer<typeof formSchema>;
@@ -123,6 +170,10 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
   const showTvScriptLengthSelector = selectedContentTypes?.includes('tv script');
   const showRadioScriptLengthSelector = selectedContentTypes?.includes('radio script');
   const showEmailTypeSelector = selectedContentTypes?.includes('lead generation email');
+  const showVariationsSelector = selectedContentTypes?.some((ct: string) => ['radio script', 'tv script'].includes(ct));
+  const showImageVariationsSelector = selectedContentTypes?.some((ct: string) => ['social media post', 'display ad copy', 'billboard'].includes(ct));
+  const showVoiceSelector = selectedContentTypes?.some((ct: string) => ['radio script', 'tv script'].includes(ct));
+  const selectedVoiceGender = form.watch('voiceGender');
 
   const handleSuggestKeywords = async () => {
     const companyName = form.getValues("companyName");
@@ -136,7 +187,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
     try {
       const result = await suggestKeywords({ companyName, productDescription });
       if (result.suggestedKeywords && result.suggestedKeywords.length > 0) {
-        const currentKeywords = form.getValues("keywords").split(',').map(k => k.trim()).filter(k => k);
+        const currentKeywords = form.getValues("keywords").split(',').map((k: string) => k.trim()).filter((k: string) => k);
         const newKeywords = result.suggestedKeywords.filter(sk => !currentKeywords.includes(sk));
         const updatedKeywords = [...currentKeywords, ...newKeywords].join(', ');
         form.setValue("keywords", updatedKeywords);
@@ -465,6 +516,146 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                   </FormItem>
                 )}
               />
+            )}
+
+            {showVariationsSelector && (
+              <FormField
+                control={form.control}
+                name="numberOfVariations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Wand2 className="w-4 h-4 mr-2 text-muted-foreground"/>Number of Variations (Optional)</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === "1" ? undefined : parseInt(value))} 
+                      value={field.value?.toString() || "1"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="1 variation (default)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">1 variation (default)</SelectItem>
+                        <SelectItem value="2">2 variations</SelectItem>
+                        <SelectItem value="3">3 variations</SelectItem>
+                        <SelectItem value="4">4 variations</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Generate multiple unique variations for radio and TV scripts.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showImageVariationsSelector && (
+              <FormField
+                control={form.control}
+                name="numberOfImageVariations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><ImageIconLucide className="w-4 h-4 mr-2 text-muted-foreground"/>Number of Image Variations (Optional)</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === "1" ? undefined : parseInt(value))} 
+                      value={field.value?.toString() || "1"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="1 image (default)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">1 image (default)</SelectItem>
+                        <SelectItem value="2">2 images (A/B test)</SelectItem>
+                        <SelectItem value="3">3 images (A/B/C test)</SelectItem>
+                        <SelectItem value="4">4 images (A/B/C/D test)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Generate multiple unique images for A/B testing visual content.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showVoiceSelector && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="voiceGender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center"><Mic className="w-4 h-4 mr-2 text-muted-foreground"/>Voice Gender (Optional)</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value === NO_VOICE_SELECTED_VALUE ? undefined : value);
+                          // Reset voice name when gender changes
+                          if (value !== NO_VOICE_SELECTED_VALUE) {
+                            form.setValue('voiceName', undefined);
+                          }
+                        }} 
+                        value={field.value || NO_VOICE_SELECTED_VALUE}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select voice gender (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={NO_VOICE_SELECTED_VALUE}>Auto-select (Default)</SelectItem>
+                          {VOICE_GENDERS.map((gender) => (
+                            <SelectItem key={gender.value} value={gender.value}>
+                              {gender.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Choose male or female voice for audio generation. Audio defaults to 30 seconds.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {selectedVoiceGender && selectedVoiceGender !== NO_VOICE_SELECTED_VALUE && (
+                  <FormField
+                    control={form.control}
+                    name="voiceName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center"><Volume2 className="w-4 h-4 mr-2 text-muted-foreground"/>Specific Voice (Optional)</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === NO_VOICE_SELECTED_VALUE ? undefined : value)} 
+                          value={field.value || NO_VOICE_SELECTED_VALUE}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Auto-select voice" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={NO_VOICE_SELECTED_VALUE}>Auto-select (Default)</SelectItem>
+                            {(selectedVoiceGender === 'male' ? MALE_VOICES : FEMALE_VOICES).map((voice) => (
+                              <SelectItem key={voice.value} value={voice.value}>
+                                {voice.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Choose a specific voice personality from 30 available options.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </>
             )}
 
             <FormField

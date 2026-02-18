@@ -7,14 +7,17 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 import wav from 'wav';
 
-const GenerateAudioInputSchema = z.string().describe('The text script to convert to speech.');
+const GenerateAudioInputSchema = z.object({
+  script: z.string().describe('The text script to convert to speech.'),
+  voiceName: z.string().optional().describe('The specific voice name to use (e.g., "Algenib", "Kore", "Puck"). Defaults to "Algenib" if not specified.'),
+});
 const GenerateAudioOutputSchema = z.string().describe('The generated audio as a WAV data URI.');
 
-export async function generateAudio(script: string): Promise<string> {
-    return generateAudioFlow(script);
+export async function generateAudio(input: { script: string; voiceName?: string }): Promise<string> {
+    return generateAudioFlow(input);
 }
 
 // Helper function to convert raw PCM audio data from the model to a browser-compatible WAV format.
@@ -26,9 +29,9 @@ async function toWav(pcmData: Buffer, channels = 1, rate = 24000, sampleWidth = 
       bitDepth: sampleWidth * 8,
     });
 
-    let bufs: any[] = [];
+    const bufs: Buffer[] = [];
     writer.on('error', reject);
-    writer.on('data', (d) => bufs.push(d));
+    writer.on('data', (d: Buffer) => bufs.push(d));
     writer.on('end', () => resolve(Buffer.concat(bufs).toString('base64')));
 
     writer.write(pcmData);
@@ -42,7 +45,9 @@ const generateAudioFlow = ai.defineFlow(
     inputSchema: GenerateAudioInputSchema,
     outputSchema: GenerateAudioOutputSchema,
   },
-  async (script) => {
+  async (input: { script: string; voiceName?: string }) => {
+    // Default to 'Algenib' (male gravelly voice) if no voice specified
+    const voiceName = input.voiceName || 'Algenib';
     
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.5-flash-preview-tts',
@@ -51,11 +56,11 @@ const generateAudioFlow = ai.defineFlow(
         speechConfig: {
           voiceConfig: {
             // Using a prebuilt professional voice. This can be changed to other available voices.
-            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+            prebuiltVoiceConfig: { voiceName },
           },
         },
       },
-      prompt: script,
+      prompt: input.script,
     });
 
     if (!media) {

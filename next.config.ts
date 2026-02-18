@@ -2,12 +2,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -23,6 +18,41 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       }
     ],
+  },
+  
+  // Security headers to protect API keys and sensitive data
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          // NOTE: X-XSS-Protection is deprecated for modern browsers (Chrome, Firefox, Edge)
+          // but included for legacy browser support (Internet Explorer 8-11, older Safari versions).
+          // Modern browsers rely on Content-Security-Policy instead.
+          // Consider removing this header after legacy browser support is no longer required.
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+    ];
   },
 };
 

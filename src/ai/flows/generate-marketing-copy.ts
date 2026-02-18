@@ -10,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GenerateMarketingCopyInputSchema = z.object({
   keywords: z
@@ -43,7 +43,23 @@ const GenerateMarketingCopyInputSchema = z.object({
   emailType: z
     .string()
     .optional()
-    .describe("The type of email to generate (e.g., cold outreach, nurture, promotional).")
+    .describe("The type of email to generate (e.g., cold outreach, nurture, promotional)."),
+  numberOfVariations: z
+    .number()
+    .optional()
+    .describe("The number of variations to generate (2-4). Only applicable for certain content types like 'radio script' and 'tv script'."),
+  numberOfImageVariations: z
+    .number()
+    .optional()
+    .describe("The number of image variations to generate (2-4). Only applicable for visual content types like 'social media post', 'display ad copy', and 'billboard'."),
+  voiceGender: z
+    .string()
+    .optional()
+    .describe("The gender of the voice for audio generation ('male' or 'female')."),
+  voiceName: z
+    .string()
+    .optional()
+    .describe("The specific voice name for audio generation. Available voices include male (Puck, Charon, Fenrir, Orus, Enceladus, Iapetus, Umbriel, Algieba, Algenib, Rasalgethi, Alnilam, Schedar, Achird, Zubenelgenubi, Sadachbia, Sadaltager) and female (Zephyr, Kore, Leda, Aoede, Callirrhoe, Autonoe, Despina, Erinome, Laomedeia, Achernar, Gacrux, Pulcherrima, Vindemiatrix, Sulafat) options. See UI form for full list with descriptions.")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -96,8 +112,18 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 
 const GenerateMarketingCopyOutputSchema = z.object({
-  marketingCopy: z.any().describe('The generated marketing copy. Can be a single string, an array of strings, or a structured JSON object. If "display ad copy", 3 common ad sizes. If "radio script" or "tv script", the response should be a clean, voice-ready script containing ONLY the dialogue or voiceover lines, with no scene headings, SFX, or other non-speech text. If "podcast outline" or "blog post", a structured JSON object. If "lead generation email", a complete email structure.'),
-  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards. This should NOT be generated for audio-only or script-based content like radio or TV scripts.")
+  marketingCopy: z.union([
+    z.string().describe('A single string of marketing copy'),
+    z.array(z.string()).describe('An array of marketing copy strings'),
+    PodcastOutlineStructureSchema,
+    BlogPostStructureSchema,
+    z.array(z.object({
+      variant: z.number().describe('The variant number'),
+      copy: z.string().describe('The marketing copy for this variant')
+    })).describe('Array of variant objects for multi-variant generation')
+  ]).describe('The generated marketing copy in various formats'),
+  imageSuggestion: z.string().optional().describe("A brief, descriptive prompt for a relevant image, especially for visual content types like social media, display ads, or billboards. This should NOT be generated for audio-only or script-based content like radio or TV scripts."),
+  imageSuggestions: z.array(z.string()).optional().describe("Array of image prompts for multi-variant image generation.")
 });
 export type GenerateMarketingCopyOutput = z.infer<
   typeof GenerateMarketingCopyOutputSchema
@@ -115,10 +141,15 @@ const socialMediaPrompt = ai.definePrompt({
     output: {schema: z.object({ 
         marketingCopy: z.array(z.string()).describe("An array of 5 distinct social media post strings, tailored to the platform if specified."),
         imageSuggestion: z.string().optional().describe("A single, creative, and descriptive prompt for a relevant image that could accompany these social media posts."),
+        imageSuggestions: z.array(z.string()).optional().describe("Array of creative, descriptive prompts for multiple image variations for A/B testing."),
     })},
     prompt: `You are a marketing expert specializing in creating engaging social media content.
     Generate 5 distinct variations of a social media post.
-    Also, provide a single, creative, and descriptive prompt for a relevant image that could work for these posts.
+    {{#if numberOfImageVariations}}
+    Also, generate {{numberOfImageVariations}} creative, descriptive prompts for different image variations that could accompany these social media posts. Each image prompt should be unique and offer a different visual approach for A/B testing. Return these in the 'imageSuggestions' array.
+    {{else}}
+    Also, provide a single, creative, and descriptive prompt for a relevant image that could work for these posts in the 'imageSuggestion' field.
+    {{/if}}
 
     {{#if socialMediaPlatform}}
     Tailor these posts specifically for the "{{socialMediaPlatform}}" platform. Consider platform-specific best practices such as optimal length, tone, use of hashtags, emojis, and any typical content formats for "{{socialMediaPlatform}}".
@@ -201,6 +232,7 @@ const genericPrompt = ai.definePrompt({
   output: {schema: z.object({ 
       marketingCopy: z.string(),
       imageSuggestion: z.string().optional(),
+      imageSuggestions: z.array(z.string()).optional(),
   })},
   prompt: `You are a marketing expert specializing in creating engaging content.
   
@@ -230,7 +262,11 @@ const genericPrompt = ai.definePrompt({
   CTA: Urgent, action-oriented button text.
   Visual Notes: Suggest imagery or layout for the ad.
 
+  {{#if numberOfImageVariations}}
+  You MUST generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
+  {{else}}
   You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+  {{/if}}
   {{else if isRadioScript}}
   You are a master radio scriptwriter, embodying the styles of Melissa D'Anzieri (for memorable, audience-targeted narratives with emotional impact), Dan Kennedy (for direct-response persuasion focused on ROI and customer psychology), and John Carlton (for bold, story-based techniques that convert). 
   Generate a radio script for the specified length, crafted to deliver standout, attention-grabbing content that resonates and drives action.
@@ -367,7 +403,11 @@ const genericPrompt = ai.definePrompt({
 
   Keep it ultra-concise (under 10 words ideally), visually oriented, and focused on instant impact.
   Output only the formatted ad (e.g., Headline:, Subheadline:, CTA:, Visual Notes:), without extra explanation.
+  {{#if numberOfImageVariations}}
+  You MUST generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
+  {{else}}
   You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+  {{/if}}
 
   {{else if isWebsiteWireframe}}
   You are a premier UX/UI strategist, embodying Don Norman (for intuitive, user-centered design principles), Jakob Nielsen (for usability-optimized navigation and conversion flows), and Aurélien Salomon (for minimalist, high-fidelity wireframes that enhance experiences). Generate a detailed textual description of a website wireframe for the client, designed to outline standout, user-friendly structures that engage and convert.
@@ -407,6 +447,49 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async (input: GenerateMarketingCopyInput) => {
+    // Check if multiple variations are requested
+    const numberOfVariations = input.numberOfVariations || 1;
+    const supportsVariations = ['radio script', 'tv script'].includes(input.contentType);
+    
+    // If variations are requested for supported content types, generate them
+    if (numberOfVariations > 1 && supportsVariations) {
+      const variants = [];
+      
+      for (let i = 1; i <= numberOfVariations; i++) {
+        // For all other content types, use the generic prompt
+        const promptData = {
+          ...input,
+          currentYear: new Date().getFullYear().toString(),
+          isRadioScript: input.contentType === "radio script",
+          isTvScript: input.contentType === "tv script",
+          isBillboard: input.contentType === "billboard",
+          isWebsiteWireframe: input.contentType === "website wireframe",
+          isDisplayAdCopy: input.contentType === "display ad copy",
+          isLeadGenerationEmail: input.contentType === "lead generation email",
+          isWebsiteCopy: input.contentType === "website copy",
+          is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
+        };
+        
+        const {output} = await genericPrompt(promptData);
+        if (!output) {
+          throw new Error(`The AI failed to generate variant ${i}.`);
+        }
+        
+        // Strip production cues for scripts
+        const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
+        
+        variants.push({
+          variant: i,
+          copy: strippedCopy
+        });
+      }
+      
+      return { 
+        marketingCopy: variants,
+        imageSuggestion: undefined // No image for scripts
+      };
+    }
+    
     // Isolate social media post generation as it has a unique output structure (array)
     if (input.contentType === "social media post") {
         const {output} = await socialMediaPrompt(input);

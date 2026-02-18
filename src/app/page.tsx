@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -25,17 +25,18 @@ import { Loader2 } from 'lucide-react';
 
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
-import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
-import type { GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
+import { generateMarketingCopyAction, generateImageAction, generateAudioAction } from '@/app/actions';
+import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
+import ProtectedRoute from '@/components/protected-route';
+import UserMenu from '@/components/user-menu';
 import DataInputCard from '@/components/page/data-input-card';
 import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/components/page/marketing-brief-form';
 import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
-import { generateImage } from '@/ai/flows/generate-image-flow';
-import { generateAudio } from '@/ai/flows/generate-audio-flow';
+import { isVariantsArray } from '@/lib/variant-utils';
 import { Terminal } from 'lucide-react';
 
 interface GenerationProgress {
@@ -56,6 +57,7 @@ function IPBuilderPageContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[]>([]);
   const [editedCopy, setEditedCopy] = useState<Record<string, string>>({});
@@ -80,6 +82,10 @@ function IPBuilderPageContent() {
       radioScriptLength: "30s",
       emailType: "_no_email_type_",
       additionalInstructions: "",
+      numberOfVariations: undefined,
+      numberOfImageVariations: undefined,
+      voiceGender: undefined,
+      voiceName: undefined,
     },
   });
 
@@ -97,7 +103,7 @@ function IPBuilderPageContent() {
         form.setValue("productDescription", briefDataFromUrl.productDescription || "");
         form.setValue("keywords", (briefDataFromUrl.keywords || []).join(', '));
         toast({ title: "Marketing Brief Loaded", description: "The brief has been autofilled from the integrated app." });
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Failed to parse brief from URL", e);
         toast({ title: "Brief Load Error", description: "Could not read the marketing brief from the URL.", variant: "destructive" });
       } finally {
@@ -133,14 +139,18 @@ function IPBuilderPageContent() {
       radioScriptLength: "30s",
       emailType: "_no_email_type_",
       additionalInstructions: "",
+      numberOfVariations: undefined,
+      numberOfImageVariations: undefined,
+      voiceGender: undefined,
+      voiceName: undefined,
     });
     setGeneratedCopy([]);
     setEditedCopy({});
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
   
-  const handleCopy = (textToCopy: any, label: string) => {
-    if (typeof textToCopy === 'object' && textToCopy !== null) {
+  const handleCopy = (textToCopy: string | string[] | Record<string, unknown>, label: string) => {
+    if (typeof textToCopy === 'object' && textToCopy !== null && !Array.isArray(textToCopy)) {
       toast({ title: "Copy Failed", description: `Cannot copy complex object for ${label}. Please use export instead.`, variant: "destructive" });
       return;
     }
@@ -159,113 +169,149 @@ function IPBuilderPageContent() {
   };
 
   const onSubmit = async (data: MarketingBriefFormData) => {
-    setIsGenerating(true);
-    setGeneratedCopy([]); // Clear previous results immediately
-    setEditedCopy({}); // Clear previous edits
-    setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
-    
-    let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
-    let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
-    let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
-    let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
-    let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
-
-    const generatePromises = data.contentType.map(async (typeValue, index) => {
-      try {
-        const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
-        const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
-        
-        setGenerationProgress(prev => ({ ...prev!, current: prev!.current + 1, currentLabel }));
-
-        const marketingInput: any = { 
-          keywords: data.keywords,
-          contentType: typeValue,
-          tone: toneForAI || "",
-          additionalInstructions: data.additionalInstructions || "",
-          companyName: data.companyName,
-          productDescription: data.productDescription,
-        };
-
-        if (typeValue === "social media post" && platformForAI) {
-            marketingInput.socialMediaPlatform = platformForAI;
-        }
-        if (typeValue === "tv script") {
-            marketingInput.tvScriptLength = tvScriptLengthForAI;
-        }
-        if (typeValue === "radio script") {
-            marketingInput.radioScriptLength = radioScriptLengthForAI;
-        }
-        if (typeValue === "lead generation email") {
-            marketingInput.emailType = emailTypeForAI;
-        }
-
-        const result: GenerateMarketingCopyOutput = await generateMarketingCopy(marketingInput);
-        
-        return {
-          value: typeValue,
-          label: currentLabel,
-          marketingCopy: result.marketingCopy,
-          imageSuggestion: result.imageSuggestion,
-          isGeneratingImage: !!result.imageSuggestion,
-        };
-      } catch (error) {
-        console.error(`Error generating copy for ${typeValue}:`, error);
-        const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
-        const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
-        return {
-          value: typeValue,
-          label: currentLabel,
-          marketingCopy: "Error: Could not generate this content.",
-          isError: true
-        };
-      }
-    });
-
-    const initialResults: GeneratedCopyItem[] = [];
-    for (const promise of generatePromises) {
-        const result = await promise;
-        if (result) initialResults.push(result);
+    // Client-side validation before calling server action
+    const validationResult = formSchema.safeParse(data);
+    if (!validationResult.success) {
+      toast({ 
+        title: "Validation Error", 
+        description: "Please check your form inputs.", 
+        variant: "destructive" 
+      });
+      return;
     }
     
-    // Set the initial copy (unedited)
-    setGeneratedCopy(initialResults);
-    
-    // Also initialize the editedCopy state with the generated copy
-    const initialEdits: Record<string, string> = {};
-    initialResults.forEach(item => {
-        if (typeof item.marketingCopy === 'string') {
-            initialEdits[item.value] = item.marketingCopy;
-        } else if (Array.isArray(item.marketingCopy)) {
-            initialEdits[item.value] = item.marketingCopy.join('\n\n');
+    startTransition(async () => {
+      setIsGenerating(true);
+      setGeneratedCopy([]); // Clear previous results immediately
+      setEditedCopy({}); // Clear previous edits
+      setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
+      
+      let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
+      let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
+      let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
+      let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
+      let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
+
+      const generatePromises = data.contentType.map(async (typeValue: string) => {
+        try {
+          const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
+          const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
+          
+          setGenerationProgress((prev: GenerationProgress | null) => ({ 
+            total: prev?.total || 0, 
+            current: (prev?.current || 0) + 1, 
+            currentLabel 
+          }));
+
+          const marketingInput: GenerateMarketingCopyInput = { 
+            keywords: data.keywords,
+            contentType: typeValue,
+            tone: toneForAI || undefined,
+            additionalInstructions: data.additionalInstructions || undefined,
+            companyName: data.companyName,
+            productDescription: data.productDescription,
+          };
+
+          if (typeValue === "social media post" && platformForAI) {
+              marketingInput.socialMediaPlatform = platformForAI;
+          }
+          
+          // Add image variations for visual content types
+          if (['social media post', 'display ad copy', 'billboard'].includes(typeValue)) {
+            if (data.numberOfImageVariations && data.numberOfImageVariations > 1) {
+              marketingInput.numberOfImageVariations = data.numberOfImageVariations;
+            }
+          }
+          
+          if (typeValue === "tv script") {
+              marketingInput.tvScriptLength = tvScriptLengthForAI;
+              if (data.numberOfVariations && data.numberOfVariations > 1) {
+                marketingInput.numberOfVariations = data.numberOfVariations;
+              }
+          }
+          if (typeValue === "radio script") {
+              marketingInput.radioScriptLength = radioScriptLengthForAI;
+              if (data.numberOfVariations && data.numberOfVariations > 1) {
+                marketingInput.numberOfVariations = data.numberOfVariations;
+              }
+          }
+          if (typeValue === "lead generation email") {
+              marketingInput.emailType = emailTypeForAI;
+          }
+
+          const result: GenerateMarketingCopyOutput = await generateMarketingCopyAction(marketingInput);
+          
+          return {
+            value: typeValue,
+            label: currentLabel,
+            marketingCopy: result.marketingCopy,
+            imageSuggestion: result.imageSuggestion,
+            imageSuggestions: result.imageSuggestions,
+            isGeneratingImage: !!(result.imageSuggestion || result.imageSuggestions),
+          };
+        } catch (error) {
+          console.error(`Error generating copy for ${typeValue}:`, error);
+          const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
+          const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
+          return {
+            value: typeValue,
+            label: currentLabel,
+            marketingCopy: "Error: Could not generate this content.",
+            isError: true
+          };
         }
-    });
-    setEditedCopy(initialEdits);
+      });
 
-    toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating text for ${data.contentType.length} content type(s). Now generating images...` });
-    setIsGenerating(false);
-    setGenerationProgress(null);
+      // Use Promise.all to run all generations in parallel for better performance
+      const initialResults = await Promise.all(generatePromises);
+    
+      // Set the initial copy (unedited)
+      setGeneratedCopy(initialResults);
+      
+      // Also initialize the editedCopy state with the generated copy
+      const initialEdits: Record<string, string> = {};
+      initialResults.forEach(item => {
+          if (typeof item.marketingCopy === 'string') {
+              initialEdits[item.value] = item.marketingCopy;
+          } else if (Array.isArray(item.marketingCopy)) {
+              // Check if it's an array of variant objects
+              if (isVariantsArray(item.marketingCopy)) {
+                  // For variants, join all variant copies
+                  initialEdits[item.value] = item.marketingCopy.map((v) => `=== Variant ${v.variant} ===\n${v.copy}`).join('\n\n');
+              } else {
+                  // For regular arrays (like social media posts)
+                  initialEdits[item.value] = item.marketingCopy.join('\n\n');
+              }
+          }
+      });
+      setEditedCopy(initialEdits);
 
-    // Now, generate images for items that have a suggestion
-    initialResults.forEach(item => {
-        if (item.imageSuggestion) {
-            generateImage(item.imageSuggestion)
-                .then(imageDataUri => {
-                    setGeneratedCopy(prevCopies => 
-                        prevCopies.map(copy => 
-                            copy.value === item.value 
-                            ? { ...copy, generatedImage: imageDataUri, isGeneratingImage: false } 
-                            : copy
-                        )
-                    );
-                })
-                .catch(error => {
+      toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating text for ${data.contentType.length} content type(s). Now generating images...` });
+      setIsGenerating(false);
+      setGenerationProgress(null);
+
+      // Now, generate images for items that have a suggestion
+      initialResults.forEach(item => {
+          // Handle single image
+          if (item.imageSuggestion) {
+              generateImageAction(item.imageSuggestion)
+                  .then(imageDataUri => {
+                      setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
+                          prevCopies.map(copy => 
+                              copy.value === item.value 
+                              ? { ...copy, generatedImage: imageDataUri, isGeneratingImage: false } 
+                              : copy
+                          )
+                      );
+                  })
+                  .catch(error => {
                     console.error(`Error generating image for ${item.label}:`, error);
                     toast({
                         title: "Image Generation Failed",
                         description: `Could not generate the image for ${item.label}.`,
                         variant: "destructive"
                     });
-                    setGeneratedCopy(prevCopies => 
+                    setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
                         prevCopies.map(copy => 
                             copy.value === item.value 
                             ? { ...copy, isGeneratingImage: false } // Stop loading on error
@@ -273,7 +319,41 @@ function IPBuilderPageContent() {
                         )
                     );
                 });
-        }
+          }
+          
+          // Handle multiple images
+          if (item.imageSuggestions && item.imageSuggestions.length > 0) {
+              const imagePromises = item.imageSuggestions.map(suggestion => 
+                  generateImageAction(suggestion)
+              );
+              
+              Promise.all(imagePromises)
+                  .then(imageDataUris => {
+                      setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
+                          prevCopies.map(copy => 
+                              copy.value === item.value 
+                              ? { ...copy, generatedImages: imageDataUris, isGeneratingImage: false } 
+                              : copy
+                          )
+                      );
+                  })
+                  .catch(error => {
+                    console.error(`Error generating images for ${item.label}:`, error);
+                    toast({
+                        title: "Image Generation Failed",
+                        description: `Could not generate images for ${item.label}.`,
+                        variant: "destructive"
+                    });
+                    setGeneratedCopy((prevCopies: GeneratedCopyItem[]) => 
+                        prevCopies.map(copy => 
+                            copy.value === item.value 
+                            ? { ...copy, isGeneratingImage: false } 
+                            : copy
+                        )
+                    );
+                });
+          }
+      });
     });
   };
 
@@ -293,13 +373,19 @@ function IPBuilderPageContent() {
     
     // Strip production cues before sending to the TTS engine
     const cleanScript = stripProductionCues(scriptToProcess);
+    
+    // Get the selected voice name from form data if available
+    const voiceName = form.getValues('voiceName');
 
     setGeneratedCopy(prev => prev.map(copy => 
         copy.value === item.value ? { ...copy, isGeneratingAudio: true } : copy
     ));
 
     try {
-        const audioDataUri = await generateAudio(cleanScript);
+        const audioDataUri = await generateAudioAction({ 
+          script: cleanScript, 
+          voiceName: voiceName || undefined 
+        });
         
         const updatedItem = { ...item, generatedAudio: audioDataUri, isGeneratingAudio: false };
 
@@ -364,13 +450,14 @@ function IPBuilderPageContent() {
           <div className="w-1/3 flex justify-center">
             <AppLogo />
           </div>
-          <div className="w-1/3 flex justify-end">
+          <div className="w-1/3 flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
                 <Button variant="outline" size="sm">
                   <Terminal className="mr-2 h-4 w-4" />
                   Dev Tools
                 </Button>
               </Link>
+              <UserMenu />
           </div>
         </header>
 
@@ -453,8 +540,10 @@ function IPBuilderPageContent() {
 
 export default function IPBuilderPage() {
     return (
-        <Suspense>
-            <IPBuilderPageContent />
-        </Suspense>
+        <ProtectedRoute>
+            <Suspense>
+                <IPBuilderPageContent />
+            </Suspense>
+        </ProtectedRoute>
     )
 }

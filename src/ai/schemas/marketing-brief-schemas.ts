@@ -1,5 +1,5 @@
 
-import {z} from 'genkit';
+import {z} from 'zod';
 
 /**
  * @fileOverview This file contains the Zod schemas and TypeScript types 

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/firebase/client';
@@ -23,7 +23,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !auth) {
+    if (!auth) {
+      // If auth is not initialized (during build), set loading to false
       setLoading(false);
       return;
     }
@@ -34,20 +35,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const signOutUser = async () => {
+  const signOutUser = useCallback(async () => {
     if (!auth) {
-      console.error('Firebase auth is not initialized');
+      toast({ title: "Configuration Error", description: "Authentication is not configured.", variant: "destructive" });
       return;
     }
     try {
       await firebaseSignOut(auth);
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
       router.push('/login'); 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error signing out: ", error);
-      toast({ title: "Sign Out Error", description: error.message || "Could not sign out.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "Could not sign out.";
+      toast({ title: "Sign Out Error", description: errorMessage, variant: "destructive" });
     }
-  };
+  }, [router, toast]);
 
   return (
     <AuthContext.Provider value={{ user, loading, signOutUser }}>
