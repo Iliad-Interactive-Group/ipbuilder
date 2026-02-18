@@ -1,6 +1,6 @@
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,13 +11,28 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
 
-const auth = getAuth(app);
+if (typeof window !== 'undefined') {
+  // Only initialize Firebase on the client side
+  try {
+    if (!getApps().length) {
+      if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+        console.warn('Firebase configuration is missing. Please check your environment variables.');
+      } else {
+        app = initializeApp(firebaseConfig);
+      }
+    } else {
+      app = getApp();
+    }
+    
+    if (app) {
+      auth = getAuth(app);
+    }
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+  }
+}
 
 export { app, auth };
