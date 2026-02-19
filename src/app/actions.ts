@@ -50,16 +50,25 @@ export async function generateImageAction(prompt: string): Promise<string> {
 
 /**
  * Server action for generating audio
+ * Returns the audio data URI on success, or throws with a descriptive error message.
  */
 export async function generateAudioAction(input: { script: string; voiceName?: string }): Promise<string> {
   try {
     console.log('[Audio Action] Starting with script length:', input.script.length);
+    if (!input.script || input.script.trim().length === 0) {
+      throw new Error('Cannot generate audio from empty script.');
+    }
     const result = await generateAudio(input);
     console.log('[Audio Action] Success');
     return result;
   } catch (error) {
-    console.error('[Audio Action] Error:', error instanceof Error ? error.message : String(error));
-    throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Audio Action] Error:', message);
+    if (error instanceof Error && error.stack) {
+      console.error('[Audio Action] Stack:', error.stack);
+    }
+    // Re-throw with a clean, serializable error so it surfaces properly in production
+    throw new Error(`Audio generation failed: ${message}`);
   }
 }
 

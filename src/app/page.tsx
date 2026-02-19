@@ -188,17 +188,19 @@ function IPBuilderPageContent() {
       return;
     }
     
+    // Set generating state BEFORE startTransition so UI updates immediately
+    setIsGenerating(true);
+    setGeneratedCopy([]); // Clear previous results immediately
+    setEditedCopy({}); // Clear previous edits
+    setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: "Starting..."});
+    toast({ 
+      title: "Starting Generation", 
+      description: `Generating ${data.contentType.length} content type(s)... This may take 30-60 seconds.` 
+    });
+
     startTransition(async () => {
       try {
         console.log('[Form Submit] Transition started, setting generating state');
-        setIsGenerating(true);
-        setGeneratedCopy([]); // Clear previous results immediately
-        setEditedCopy({}); // Clear previous edits
-        setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
-        toast({ 
-          title: "Starting Generation", 
-          description: `Generating ${data.contentType.length} content type(s)...` 
-        });
         
         let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
         let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
@@ -450,10 +452,11 @@ function IPBuilderPageContent() {
         });
 
       } catch (error) {
-        console.error(`Error generating audio for ${item.label}:`, error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`Error generating audio for ${item.label}:`, errorMsg);
         toast({
           title: "Audio Generation Failed",
-          description: `Could not generate audio for ${item.label}.`,
+          description: `${item.label}: ${errorMsg}`,
           variant: "destructive"
         });
         setGeneratedCopy(prev => prev.map(copy => 
@@ -504,10 +507,11 @@ function IPBuilderPageContent() {
         });
 
     } catch (error) {
-        console.error(`Error generating audio for ${item.label}:`, error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`Error generating audio for ${item.label}:`, errorMsg);
         toast({
             title: "Audio Generation Failed",
-            description: `Could not generate audio for ${item.label}.`,
+            description: `${item.label}: ${errorMsg}`,
             variant: "destructive"
         });
         setGeneratedCopy(prev => prev.map(copy => 
@@ -577,6 +581,44 @@ function IPBuilderPageContent() {
             isSummarizing={isSummarizing}
            />
 
+          {(isGenerating || isPending) && (
+            <Card className="shadow-lg rounded-xl overflow-hidden border-primary/50 border-2 animate-pulse">
+              <CardContent className="p-8 flex flex-col items-center justify-center text-center min-h-[200px]">
+                <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+                <p className="text-xl font-semibold text-foreground">AI is generating your content...</p>
+                <p className="text-muted-foreground mt-1">This typically takes 30-60 seconds. Please don&apos;t close this page.</p>
+                {generationProgress && (
+                  <div className="mt-4 w-full max-w-sm">
+                    <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                      <span>Progress</span>
+                      <span>{generationProgress.current} / {generationProgress.total}</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div 
+                        className="bg-primary h-3 rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.max(5, (generationProgress.current / generationProgress.total) * 100)}%` }}
+                      />
+                    </div>
+                    {generationProgress.currentLabel && (
+                      <p className="text-sm text-primary font-medium mt-2">
+                        Currently generating: {generationProgress.currentLabel}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          {isSummarizing && !isGenerating && (
+            <Card className="shadow-lg rounded-xl overflow-hidden border-primary/50 border-2 animate-pulse">
+              <CardContent className="p-8 flex flex-col items-center justify-center text-center min-h-[200px]">
+                <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
+                <p className="text-xl font-semibold text-foreground">AI is analyzing your input...</p>
+                <p className="text-muted-foreground mt-1">Please wait while we process your data.</p>
+              </CardContent>
+            </Card>
+          )}
+
           {generatedCopy && generatedCopy.length > 0 && (
             <GeneratedCopyDisplay
               generatedCopy={generatedCopy}
@@ -588,29 +630,6 @@ function IPBuilderPageContent() {
               onExportHtml={handleExportHtml}
               onGenerateAudio={handleGenerateAudio}
             />
-          )}
-
-          {isGenerating && (
-            <Card className="shadow-lg rounded-xl overflow-hidden mt-8">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
-                {generationProgress && (
-                  <p className="text-muted-foreground">
-                    Generating {generationProgress.current} of {generationProgress.total}: {generationProgress.currentLabel}...
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          {isSummarizing && !isGenerating && (
-            <Card className="shadow-lg rounded-xl overflow-hidden mt-8">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-lg font-medium text-foreground">AI is working its magic...</p>
-                <p className="text-muted-foreground">Analyzing your input...</p>
-              </CardContent>
-            </Card>
           )}
 
           {activeAudioItem && (

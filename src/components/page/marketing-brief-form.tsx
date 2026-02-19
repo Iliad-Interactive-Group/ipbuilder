@@ -675,7 +675,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
             <div className="flex flex-col sm:flex-row gap-2">
               <Button type="submit" disabled={isGenerating || isSummarizing || isSuggestingKeywords} className="w-full sm:w-auto">
                   {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                  Generate Marketing Copy
+                  {isGenerating ? 'Generating... Please Wait' : 'Generate Marketing Copy'}
               </Button>
               <Button type="button" variant="outline" onClick={handleSaveBrief} className="w-full sm:w-auto">
                   <Save className="mr-2 h-4 w-4" />
