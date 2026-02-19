@@ -287,13 +287,13 @@ const genericPrompt = ai.definePrompt({
 
   Script length and word count must be strictly followed:
   {{#if radioScriptLength}}
-    - For '60s', the script must be approximately 175 words.
-    - For '30s', the script must be approximately 85 words.
-    - For '15s', the script must be approximately 40 words.
-    - For '10s', the script must be approximately 25 words.
+    - For '60s', the script must be approximately 154 words (reduced for TTS timing).
+    - For '30s', the script must be approximately 75 words (reduced for TTS timing).
+    - For '15s', the script must be approximately 35 words (reduced for TTS timing).
+    - For '10s', the script must be approximately 22 words (reduced for TTS timing).
     Current length: {{radioScriptLength}}.
   {{else}}
-    The script must be for 30 seconds, so approximately 85 words.
+    The script must be for 30 seconds, so approximately 75 words (reduced for TTS timing).
   {{/if}}
 
   Structure the script like this:
@@ -319,13 +319,13 @@ const genericPrompt = ai.definePrompt({
 
   Script length and word count must be strictly followed:
     {{#if is8sVEO}}
-      - For '8s', the script must be very concise, approximately 20 words.
+      - For '8s', the script must be very concise, approximately 18 words (reduced for TTS timing).
     {{else if tvScriptLength}}
-      - For '30s', the script must be approximately 85 words.
-      - For '15s', the script must be approximately 40 words.
+      - For '30s', the script must be approximately 75 words (reduced for TTS timing).
+      - For '15s', the script must be approximately 35 words (reduced for TTS timing).
       Current length: {{tvScriptLength}}.
     {{else}}
-      The script must be for 30 seconds, so approximately 85 words.
+      The script must be for 30 seconds, so approximately 75 words (reduced for TTS timing).
     {{/if}}
   
   Structure the script using a three-act paradigm:

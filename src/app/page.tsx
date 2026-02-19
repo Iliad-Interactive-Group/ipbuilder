@@ -413,14 +413,12 @@ function IPBuilderPageContent() {
             copy.value === item.value ? updatedItem : copy
         ));
 
+        // Auto-open the audio player modal immediately after generation
+        setActiveAudioItem(updatedItem);
+
         toast({
           title: "Audio Generated",
-          description: `Audio for ${item.label} is ready.`,
-          action: (
-            <Button variant="secondary" size="sm" onClick={() => setActiveAudioItem(updatedItem)}>
-              Play Audio
-            </Button>
-          ),
+          description: `Audio for ${item.label} is ready. Playing now...`,
         });
 
     } catch (error) {
