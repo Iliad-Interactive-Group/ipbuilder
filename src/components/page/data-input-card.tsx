@@ -43,6 +43,7 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [websiteUrl, setWebsiteUrl] = useState<string>("");
+  const [blueprintProgress, setBlueprintProgress] = useState<string>("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -80,17 +81,25 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
     }
 
     setIsSummarizing(true);
+    setBlueprintProgress('Starting analysis...');
 
     try {
       let blueprintOutput: MarketingBriefBlueprint;
 
       if (file) {
+        setBlueprintProgress('Processing document...');
         const dataUri = await fileToDataUri(file);
+        setBlueprintProgress('Analyzing document with AI...');
         blueprintOutput = await createMarketingBriefBlueprintAction({ documentDataUri: dataUri });
       } else {
+        setBlueprintProgress('Fetching website content...');
+        // Quick check to show progress before the actual call
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setBlueprintProgress('Content retrieved, analyzing with AI...');
         blueprintOutput = await createMarketingBriefBlueprintAction({ websiteUrl: websiteUrl.trim() });
       }
       
+      setBlueprintProgress('Complete!');
       onSummarizationComplete(blueprintOutput);
       
       toast({ title: "Input Summarized", description: "Form fields have been populated with the generated blueprint." });
@@ -105,6 +114,7 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
       toast({ title: "Blueprint Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsSummarizing(false);
+      setBlueprintProgress('');
     }
   };
 
@@ -167,6 +177,13 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
             />
           </div>
         </div>
+        
+        {isSummarizing && blueprintProgress && (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+            <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
+            <span className="text-sm font-medium text-foreground">{blueprintProgress}</span>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row gap-2">
         <Button onClick={handleSummarize} disabled={(!file && !websiteUrl.trim()) || isSummarizing || isGenerating} className="w-full sm:w-auto">

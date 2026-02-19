@@ -54,36 +54,24 @@ const prompt = ai.definePrompt({
   name: 'createMarketingBriefBlueprintPrompt',
   input: {schema: CreateMarketingBriefBlueprintInputSchema},
   output: {schema: MarketingBriefBlueprintSchema},
-  prompt: `You are an expert marketing analyst and data extractor. Your task is to analyze the provided input and generate a structured JSON marketing brief based on the output schema.
+  prompt: `You are a marketing strategist. Extract ONLY these key elements concisely:
 
-You will receive one of three possible inputs: a document, a website URL, or a block of raw text.
+1. Company name (if mentioned, or infer from domain/context)
+2. Product/service description (2-3 sentences capturing key features and benefits)
+3. 5-8 relevant keywords or short phrases
 
-Based *only* on the content of the provided input, your job is to extract the following information and populate the JSON object:
-1.  **companyName**: The name of the company. If not explicitly found, make a reasonable inference from context (e.g., the website domain).
-2.  **productDescription**: A detailed and comprehensive description of the product or service being offered. This description must be thorough enough to be used as a basis for generating creative marketing materials. It should be at least 3-4 sentences long and capture the key features, benefits, and target audience. Do not just use a single sentence.
-3.  **keywords**: A list of 5-10 relevant keywords or short key phrases that accurately reflect the company and its offerings.
-
-Ensure all fields in the output schema are populated. Do not leave any fields empty.
-
-If you are given a websiteUrl and you cannot access it, you MUST respond with an error. Do not invent information.
+Be BRIEF and DIRECT.
 
 {{#if documentDataUri}}
-Input Source: Document
 Document: {{media url=documentDataUri}}
 {{/if}}
 
 {{#if websiteUrl}}
-Input Source: Website URL
-Your analysis must be based exclusively on the content found at this exact URL. If you cannot access the URL, you must not invent information.
-URL: {{websiteUrl}}
+Website URL: {{websiteUrl}}
 {{/if}}
 
 {{#if rawText}}
-Input Source: Raw Text
-Text:
----
-{{rawText}}
----
+Text: {{rawText}}
 {{/if}}
 `,
 });
@@ -96,16 +84,17 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
   },
   async (input: CreateMarketingBriefBlueprintInput) => {
     try {
-      console.log('[Blueprint Flow] Starting generation with input keys:', Object.keys(input).filter(k => input[k as keyof typeof input]));
+      console.log('[Blueprint Flow - OPTIMIZED] Starting with reduced prompt');
       
+      // Use the optimized prompt with reduced token output
       const {output} = await prompt(input);
       
       if (!output) {
-        console.error('[Blueprint Flow] No output from prompt');
+        console.error('[Blueprint Flow - OPTIMIZED] No output from prompt');
         throw new Error('The AI model did not return the expected blueprint output.');
       }
       
-      console.log('[Blueprint Flow] Success, generated blueprint:', {
+      console.log('[Blueprint Flow - OPTIMIZED] Success:', {
         companyName: output.companyName,
         keywordCount: output.keywords?.length,
         descriptionLength: output.productDescription?.length,
@@ -113,9 +102,9 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
       
       return output;
     } catch (error) {
-      console.error('[Blueprint Flow] Generation error:', error instanceof Error ? error.message : String(error));
+      console.error('[Blueprint Flow - OPTIMIZED] Error:', error instanceof Error ? error.message : String(error));
       if (error instanceof Error && error.stack) {
-        console.error('[Blueprint Flow] Stack:', error.stack);
+        console.error('[Blueprint Flow - OPTIMIZED] Stack:', error.stack);
       }
       throw error;
     }
