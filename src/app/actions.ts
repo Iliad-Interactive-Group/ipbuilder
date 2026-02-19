@@ -49,26 +49,28 @@ export async function generateImageAction(prompt: string): Promise<string> {
 }
 
 /**
- * Server action for generating audio
- * Returns the audio data URI on success, or throws with a descriptive error message.
+ * Server action for generating audio.
+ * Returns a result object instead of throwing, because Next.js strips
+ * error messages from thrown errors in production builds.
  */
-export async function generateAudioAction(input: { script: string; voiceName?: string }): Promise<string> {
+export async function generateAudioAction(
+  input: { script: string; voiceName?: string }
+): Promise<{ success: true; data: string } | { success: false; error: string }> {
   try {
     console.log('[Audio Action] Starting with script length:', input.script.length);
     if (!input.script || input.script.trim().length === 0) {
-      throw new Error('Cannot generate audio from empty script.');
+      return { success: false, error: 'Cannot generate audio from empty script.' };
     }
     const result = await generateAudio(input);
     console.log('[Audio Action] Success');
-    return result;
+    return { success: true, data: result };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('[Audio Action] Error:', message);
     if (error instanceof Error && error.stack) {
       console.error('[Audio Action] Stack:', error.stack);
     }
-    // Re-throw with a clean, serializable error so it surfaces properly in production
-    throw new Error(`Audio generation failed: ${message}`);
+    return { success: false, error: `Audio generation failed: ${message}` };
   }
 }
 

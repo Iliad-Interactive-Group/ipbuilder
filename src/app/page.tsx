@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useTransition } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, useTransition } from 'react';
+import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -68,6 +69,7 @@ function IPBuilderPageContent() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [briefData, setBriefData] = useState<MarketingBriefBlueprint | null>(null);
   const [activeAudioItem, setActiveAudioItem] = useState<GeneratedCopyItem | null>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
 
 
   const form = useForm<MarketingBriefFormData>({
@@ -188,11 +190,20 @@ function IPBuilderPageContent() {
       return;
     }
     
-    // Set generating state BEFORE startTransition so UI updates immediately
-    setIsGenerating(true);
-    setGeneratedCopy([]); // Clear previous results immediately
-    setEditedCopy({}); // Clear previous edits
-    setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: "Starting..."});
+    // Use flushSync to force React to update the DOM immediately
+    // This ensures the loading spinner is visible BEFORE we start async work
+    flushSync(() => {
+      setIsGenerating(true);
+      setGeneratedCopy([]); // Clear previous results immediately
+      setEditedCopy({}); // Clear previous edits
+      setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: "Starting..."});
+    });
+
+    // Scroll to loading indicator after it renders
+    setTimeout(() => {
+      loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+
     toast({ 
       title: "Starting Generation", 
       description: `Generating ${data.contentType.length} content type(s)... This may take 30-60 seconds.` 
@@ -425,12 +436,15 @@ function IPBuilderPageContent() {
           // Strip production cues before sending to the TTS engine
           const cleanScript = stripProductionCues(variant.copy);
           
-          const audioDataUri = await generateAudioAction({ 
+          const audioResult = await generateAudioAction({ 
             script: cleanScript, 
             voiceName: voiceName || undefined 
           });
           
-          audioUris.push(audioDataUri);
+          if (!audioResult.success) {
+            throw new Error(audioResult.error);
+          }
+          audioUris.push(audioResult.data);
         }
         
         const updatedItem = { 
@@ -487,12 +501,16 @@ function IPBuilderPageContent() {
     ));
 
     try {
-        const audioDataUri = await generateAudioAction({ 
+        const audioResult = await generateAudioAction({ 
           script: cleanScript, 
           voiceName: voiceName || undefined 
         });
+
+        if (!audioResult.success) {
+          throw new Error(audioResult.error);
+        }
         
-        const updatedItem = { ...item, generatedAudio: audioDataUri, isGeneratingAudio: false };
+        const updatedItem = { ...item, generatedAudio: audioResult.data, isGeneratingAudio: false };
 
         setGeneratedCopy(prev => prev.map(copy => 
             copy.value === item.value ? updatedItem : copy
@@ -582,6 +600,7 @@ function IPBuilderPageContent() {
            />
 
           {(isGenerating || isPending) && (
+            <div ref={loadingRef}>
             <Card className="shadow-lg rounded-xl overflow-hidden border-primary/50 border-2 animate-pulse">
               <CardContent className="p-8 flex flex-col items-center justify-center text-center min-h-[200px]">
                 <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
@@ -608,6 +627,7 @@ function IPBuilderPageContent() {
                 )}
               </CardContent>
             </Card>
+            </div>
           )}
           {isSummarizing && !isGenerating && (
             <Card className="shadow-lg rounded-xl overflow-hidden border-primary/50 border-2 animate-pulse">
