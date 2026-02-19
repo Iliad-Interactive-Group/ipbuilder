@@ -21,7 +21,7 @@ import {
 
 import { useToast } from "@/hooks/use-toast";
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
@@ -518,12 +518,27 @@ function IPBuilderPageContent() {
                    <AlertDialogHeader>
                       <AlertDialogTitle>Playing Audio for: {activeAudioItem.label}</AlertDialogTitle>
                    </AlertDialogHeader>
-                   <div className="py-4">
+                   <div className="py-4 space-y-4">
                       <audio src={activeAudioItem.generatedAudio} controls autoPlay className="w-full">
                          Your browser does not support the audio element.
                       </audio>
                    </div>
-                   <AlertDialogFooter>
+                   <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = activeAudioItem.generatedAudio!;
+                          link.download = `${activeAudioItem.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Audio
+                      </Button>
                       <AlertDialogCancel onClick={() => setActiveAudioItem(null)}>Close</AlertDialogCancel>
                    </AlertDialogFooter>
                 </AlertDialogContent>

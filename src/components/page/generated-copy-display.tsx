@@ -265,7 +265,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                           )}
 
                           {isAudioContent(item) && !item.isError && (
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
@@ -276,6 +276,24 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                     {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
                                     {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio Spec' : 'Generate Audio Spec')}
                                 </Button>
+                                {item.generatedAudio && !item.isGeneratingAudio && (
+                                  <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      const link = document.createElement('a');
+                                      link.href = item.generatedAudio!;
+                                      link.download = `${item.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                    className="w-auto"
+                                  >
+                                    <Download className="w-3 h-3 mr-2" />
+                                    Download Audio
+                                  </Button>
+                                )}
                             </div>
                           )}
                         </div>
