@@ -49,32 +49,57 @@ const generateAudioFlow = ai.defineFlow(
     // Default to 'Algenib' (male gravelly voice) if no voice specified
     const voiceName = input.voiceName || 'Algenib';
     
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-preview-tts',
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            // Using a prebuilt professional voice. This can be changed to other available voices.
-            prebuiltVoiceConfig: { voiceName },
+    console.log('[Audio Flow] Starting audio generation with:', {
+      scriptLength: input.script.length,
+      voiceName,
+      scriptPreview: input.script.substring(0, 100) + '...'
+    });
+    
+    try {
+      const result = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-exp',
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName },
+            },
           },
         },
-      },
-      prompt: input.script,
-    });
+        prompt: input.script,
+      });
 
-    if (!media) {
-      throw new Error("The AI failed to generate audio.");
+      console.log('[Audio Flow] Generation response:', {
+        hasMedia: !!result.media,
+        mediaUrl: result.media?.url?.substring(0, 50) + '...',
+        mediaContentType: result.media?.contentType
+      });
+
+      if (!result.media) {
+        console.error('[Audio Flow] No media in response:', result);
+        throw new Error("The AI failed to generate audio. No media returned.");
+      }
+
+      // The model returns raw PCM data in a data URI. We need to extract it and convert it to WAV.
+      const audioBuffer = Buffer.from(
+        result.media.url.substring(result.media.url.indexOf(',') + 1),
+        'base64'
+      );
+      
+      console.log('[Audio Flow] Audio buffer size:', audioBuffer.length);
+      
+      if (audioBuffer.length === 0) {
+        throw new Error("Generated audio buffer is empty");
+      }
+      
+      const wavBase64 = await toWav(audioBuffer);
+      
+      console.log('[Audio Flow] WAV conversion complete. Base64 length:', wavBase64.length);
+      
+      return `data:audio/wav;base64,${wavBase64}`;
+    } catch (error) {
+      console.error('[Audio Flow] Error during generation:', error);
+      throw error;
     }
-
-    // The model returns raw PCM data in a data URI. We need to extract it and convert it to WAV.
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-    
-    const wavBase64 = await toWav(audioBuffer);
-    
-    return `data:audio/wav;base64,${wavBase64}`;
   }
 );

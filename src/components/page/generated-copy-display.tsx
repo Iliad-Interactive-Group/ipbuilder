@@ -72,12 +72,19 @@ const EditableTextDisplay: React.FC<{
     };
     
     return (
-        <Textarea 
-            value={currentText} 
-            onChange={handleTextChange}
-            rows={getRowsForContentType(item.value)} 
-            className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
-        />
+        <div className="space-y-2">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                Click to edit the copy below. Changes will be automatically saved and used for audio generation.
+            </p>
+            <Textarea 
+                value={currentText} 
+                onChange={handleTextChange}
+                rows={getRowsForContentType(item.value)} 
+                className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50 hover:border-primary/50 transition-colors"
+                placeholder="Edit your copy here..."
+            />
+        </div>
     );
 };
 
@@ -265,35 +272,40 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                           )}
 
                           {isAudioContent(item) && !item.isError && (
-                            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => onGenerateAudio(item)} 
-                                  disabled={item.isGeneratingAudio}
-                                  className="w-auto"
-                                >
-                                    {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
-                                    {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio Spec' : 'Generate Audio Spec')}
-                                </Button>
-                                {item.generatedAudio && !item.isGeneratingAudio && (
-                                  <Button 
-                                    variant="secondary" 
-                                    size="sm" 
-                                    onClick={() => {
-                                      const link = document.createElement('a');
-                                      link.href = item.generatedAudio!;
-                                      link.download = `${item.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                    }}
-                                    className="w-auto"
-                                  >
-                                    <Download className="w-3 h-3 mr-2" />
-                                    Download Audio
-                                  </Button>
-                                )}
+                            <div className="w-full space-y-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => onGenerateAudio(item)} 
+                                      disabled={item.isGeneratingAudio}
+                                      className="w-auto"
+                                    >
+                                        {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
+                                        {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio Spec' : 'Generate Audio Spec')}
+                                    </Button>
+                                    {item.generatedAudio && !item.isGeneratingAudio && (
+                                      <Button 
+                                        variant="secondary" 
+                                        size="sm" 
+                                        onClick={() => {
+                                          const link = document.createElement('a');
+                                          link.href = item.generatedAudio!;
+                                          link.download = `${item.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                        }}
+                                        className="w-auto"
+                                      >
+                                        <Download className="w-3 h-3 mr-2" />
+                                        Download Audio
+                                      </Button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  💡 Audio will be generated from your edited copy above. Make sure to finalize your edits first.
+                                </p>
                             </div>
                           )}
                         </div>
