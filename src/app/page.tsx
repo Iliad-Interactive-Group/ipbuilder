@@ -169,9 +169,16 @@ function IPBuilderPageContent() {
   };
 
   const onSubmit = async (data: MarketingBriefFormData) => {
+    console.log('[Form Submit] Button clicked, starting generation for:', {
+      contentTypes: data.contentType,
+      companyName: data.companyName,
+      keywordCount: data.keywords.split(',').length,
+    });
+
     // Client-side validation before calling server action
     const validationResult = formSchema.safeParse(data);
     if (!validationResult.success) {
+      console.warn('[Form Submit] Validation failed:', validationResult.error);
       toast({ 
         title: "Validation Error", 
         description: "Please check your form inputs.", 
@@ -181,18 +188,20 @@ function IPBuilderPageContent() {
     }
     
     startTransition(async () => {
-      setIsGenerating(true);
-      setGeneratedCopy([]); // Clear previous results immediately
-      setEditedCopy({}); // Clear previous edits
-      setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
-      
-      let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
-      let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
-      let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
-      let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
-      let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
+      try {
+        console.log('[Form Submit] Transition started, setting generating state');
+        setIsGenerating(true);
+        setGeneratedCopy([]); // Clear previous results immediately
+        setEditedCopy({}); // Clear previous edits
+        setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
+        
+        let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
+        let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
+        let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
+        let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
+        let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
 
-      const generatePromises = data.contentType.map(async (typeValue: string) => {
+        const generatePromises = data.contentType.map(async (typeValue: string) => {
         try {
           const contentTypeDefinition = CONTENT_TYPES.find(ct => ct.value === typeValue);
           const currentLabel = contentTypeDefinition ? contentTypeDefinition.label : typeValue;
@@ -264,6 +273,7 @@ function IPBuilderPageContent() {
 
       // Use Promise.all to run all generations in parallel for better performance
       const initialResults = await Promise.all(generatePromises);
+      console.log('[Form Submit] All generations complete, received results:', initialResults.length);
     
       // Set the initial copy (unedited)
       setGeneratedCopy(initialResults);
@@ -289,6 +299,7 @@ function IPBuilderPageContent() {
       toast({ title: "Marketing Copy Generation Complete!", description: `Finished generating text for ${data.contentType.length} content type(s). Now generating images...` });
       setIsGenerating(false);
       setGenerationProgress(null);
+      console.log('[Form Submit] Text generation complete, starting image generation');
 
       // Now, generate images for items that have a suggestion
       initialResults.forEach(item => {
@@ -354,6 +365,15 @@ function IPBuilderPageContent() {
                 });
           }
       });
+      } catch (error) {
+        console.error('[Form Submit] Unexpected error:', error);
+        setIsGenerating(false);
+        toast({
+          title: "Generation Failed",
+          description: error instanceof Error ? error.message : "An unexpected error occurred",
+          variant: "destructive"
+        });
+      }
     });
   };
 
