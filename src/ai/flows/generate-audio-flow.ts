@@ -94,6 +94,13 @@ const generateAudioFlow = ai.defineFlow(
       });
 
       console.log('[Audio Flow] Generation response received');
+      console.log('[Audio Flow] Result object keys:', Object.keys(result));
+      console.log('[Audio Flow] Result.media:', result.media);
+      console.log('[Audio Flow] Full result:', JSON.stringify(result, (key, value) => {
+        // Truncate large base64 strings in logging
+        if (typeof value === 'string' && value.length > 200) return value.substring(0, 200) + '...';
+        return value;
+      }, 2));
 
       // Check if the model returned media content
       if (!result.media || !result.media.url) {
