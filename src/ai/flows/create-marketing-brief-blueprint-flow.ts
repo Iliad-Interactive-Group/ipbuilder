@@ -54,20 +54,20 @@ const prompt = ai.definePrompt({
   name: 'createMarketingBriefBlueprintPrompt',
   input: {schema: CreateMarketingBriefBlueprintInputSchema},
   output: {schema: MarketingBriefBlueprintSchema},
-  prompt: `You are a marketing strategist. Extract ONLY these key elements concisely:
+  prompt: `You are a marketing analyst. Analyze the provided input and extract these elements:
 
-1. Company name (if mentioned, or infer from domain/context)
-2. Product/service description (2-3 sentences capturing key features and benefits)
-3. 5-8 relevant keywords or short phrases
+1. **companyName**: The company name (or infer from domain if not explicit)
+2. **productDescription**: A 2-3 sentence description capturing key features, benefits, and target audience
+3. **keywords**: 5-8 relevant keywords or short phrases
 
-Be BRIEF and DIRECT.
+Return concise, actionable information.
 
 {{#if documentDataUri}}
 Document: {{media url=documentDataUri}}
 {{/if}}
 
 {{#if websiteUrl}}
-Website URL: {{websiteUrl}}
+Website: {{websiteUrl}}
 {{/if}}
 
 {{#if rawText}}
