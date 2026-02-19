@@ -555,7 +555,8 @@ function IPBuilderPageContent() {
           <MarketingBriefForm
             form={form}
             onSubmit={onSubmit}
-            isGenerating={isGenerating || isSummarizing}
+            isGenerating={isGenerating}
+            isSummarizing={isSummarizing}
            />
 
           {generatedCopy && generatedCopy.length > 0 && (

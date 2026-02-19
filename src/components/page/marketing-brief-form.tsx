@@ -139,6 +139,7 @@ interface MarketingBriefFormProps {
   form: any; // React Hook Form's form object
   onSubmit: (data: MarketingBriefFormData) => void;
   isGenerating: boolean;
+  isSummarizing: boolean;
 }
 
 const CONTENT_TYPES = [
@@ -154,7 +155,7 @@ const CONTENT_TYPES = [
   { value: "lead generation email", label: "Lead Generation Email", icon: <Mail className="w-4 h-4" /> },
 ];
 
-const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit, isGenerating }) => {
+const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit, isGenerating, isSummarizing }) => {
   const { toast } = useToast();
   const [isSuggestingKeywords, setIsSuggestingKeywords] = useState(false);
   const [hasSavedBrief, setHasSavedBrief] = useState(false);
@@ -672,7 +673,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
               )}
             />
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="submit" disabled={isGenerating || isSuggestingKeywords} className="w-full sm:w-auto">
+              <Button type="submit" disabled={isGenerating || isSummarizing || isSuggestingKeywords} className="w-full sm:w-auto">
                   {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                   Generate Marketing Copy
               </Button>
