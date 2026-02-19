@@ -29,6 +29,7 @@ export interface GeneratedCopyItem {
   generatedImages?: string[];
   isGeneratingAudio?: boolean;
   generatedAudio?: string;
+  generatedAudios?: string[]; // Multiple audio files for variants
 }
 
 interface GeneratedCopyDisplayProps {
@@ -282,25 +283,15 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                       className="w-auto"
                                     >
                                         {item.isGeneratingAudio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="w-3 h-3 mr-2" />}
-                                        {item.isGeneratingAudio ? 'Generating...' : (item.generatedAudio ? 'Regenerate Audio Spec' : 'Generate Audio Spec')}
+                                        {item.isGeneratingAudio 
+                                          ? 'Generating...' 
+                                          : ((item.generatedAudio || item.generatedAudios) ? 'Regenerate Audio Spec' : 'Generate Audio Spec')
+                                        }
                                     </Button>
-                                    {item.generatedAudio && !item.isGeneratingAudio && (
-                                      <Button 
-                                        variant="secondary" 
-                                        size="sm" 
-                                        onClick={() => {
-                                          const link = document.createElement('a');
-                                          link.href = item.generatedAudio!;
-                                          link.download = `${item.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                        }}
-                                        className="w-auto"
-                                      >
-                                        <Download className="w-3 h-3 mr-2" />
-                                        Download Audio
-                                      </Button>
+                                    {(item.generatedAudio || item.generatedAudios) && !item.isGeneratingAudio && (
+                                      <span className="text-xs text-green-600 font-medium">
+                                        ✓ Audio ready - Click button above to play {item.generatedAudios ? `${item.generatedAudios.length} variants` : ''}
+                                      </span>
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">

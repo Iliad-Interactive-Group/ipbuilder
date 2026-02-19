@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -378,7 +379,73 @@ function IPBuilderPageContent() {
   };
 
   const handleGenerateAudio = async (item: GeneratedCopyItem) => {
-    // Use the edited copy if it exists, otherwise use the original.
+    // Get the selected voice name from form data if available
+    const voiceName = form.getValues('voiceName');
+
+    // Check if this is a variants array (multiple variations)
+    if (Array.isArray(item.marketingCopy) && isVariantsArray(item.marketingCopy)) {
+      const variants = item.marketingCopy;
+      
+      setGeneratedCopy(prev => prev.map(copy => 
+        copy.value === item.value ? { ...copy, isGeneratingAudio: true } : copy
+      ));
+
+      try {
+        const audioUris: string[] = [];
+        
+        // Generate audio for each variant sequentially
+        for (let i = 0; i < variants.length; i++) {
+          const variant = variants[i];
+          
+          toast({
+            title: `Generating Audio ${i + 1}/${variants.length}`,
+            description: `Processing Variant ${variant.variant}...`,
+          });
+          
+          // Strip production cues before sending to the TTS engine
+          const cleanScript = stripProductionCues(variant.copy);
+          
+          const audioDataUri = await generateAudioAction({ 
+            script: cleanScript, 
+            voiceName: voiceName || undefined 
+          });
+          
+          audioUris.push(audioDataUri);
+        }
+        
+        const updatedItem = { 
+          ...item, 
+          generatedAudios: audioUris, 
+          isGeneratingAudio: false 
+        };
+
+        setGeneratedCopy(prev => prev.map(copy => 
+          copy.value === item.value ? updatedItem : copy
+        ));
+
+        // Auto-open the audio player modal with the first variant
+        setActiveAudioItem(updatedItem);
+
+        toast({
+          title: "All Audio Generated",
+          description: `${audioUris.length} audio files ready. Playing Variant 1...`,
+        });
+
+      } catch (error) {
+        console.error(`Error generating audio for ${item.label}:`, error);
+        toast({
+          title: "Audio Generation Failed",
+          description: `Could not generate audio for ${item.label}.`,
+          variant: "destructive"
+        });
+        setGeneratedCopy(prev => prev.map(copy => 
+          copy.value === item.value ? { ...copy, isGeneratingAudio: false } : copy
+        ));
+      }
+      return;
+    }
+
+    // Single copy version (original logic)
     let scriptToProcess = editedCopy[item.value];
 
     // Ensure we have a valid script to process.
@@ -393,9 +460,6 @@ function IPBuilderPageContent() {
     
     // Strip production cues before sending to the TTS engine
     const cleanScript = stripProductionCues(scriptToProcess);
-    
-    // Get the selected voice name from form data if available
-    const voiceName = form.getValues('voiceName');
 
     setGeneratedCopy(prev => prev.map(copy => 
         copy.value === item.value ? { ...copy, isGeneratingAudio: true } : copy
@@ -532,31 +596,71 @@ function IPBuilderPageContent() {
 
           {activeAudioItem && (
              <AlertDialog open={!!activeAudioItem} onOpenChange={(isOpen) => !isOpen && setActiveAudioItem(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-2xl">
                    <AlertDialogHeader>
                       <AlertDialogTitle>Playing Audio for: {activeAudioItem.label}</AlertDialogTitle>
                    </AlertDialogHeader>
                    <div className="py-4 space-y-4">
-                      <audio src={activeAudioItem.generatedAudio} controls autoPlay className="w-full">
-                         Your browser does not support the audio element.
-                      </audio>
+                      {activeAudioItem.generatedAudios && activeAudioItem.generatedAudios.length > 1 ? (
+                        <Tabs defaultValue="0" className="w-full">
+                          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${activeAudioItem.generatedAudios.length}, 1fr)` }}>
+                            {activeAudioItem.generatedAudios.map((_, idx) => (
+                              <TabsTrigger key={idx} value={idx.toString()}>
+                                Variant {idx + 1}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                          {activeAudioItem.generatedAudios.map((audioUrl, idx) => (
+                            <TabsContent key={idx} value={idx.toString()}>
+                              <div className="space-y-4">
+                                <audio key={audioUrl} src={audioUrl} controls autoPlay={idx === 0} className="w-full">
+                                  Your browser does not support the audio element.
+                                </audio>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = audioUrl;
+                                    link.download = `${activeAudioItem.label.replace(/\s+/g, '-').toLowerCase()}-variant-${idx + 1}-${Date.now()}.wav`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }}
+                                  className="w-full"
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download Variant {idx + 1}
+                                </Button>
+                              </div>
+                            </TabsContent>
+                          ))}
+                        </Tabs>
+                      ) : (
+                        <>
+                          <audio src={activeAudioItem.generatedAudio} controls autoPlay className="w-full">
+                            Your browser does not support the audio element.
+                          </audio>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = activeAudioItem.generatedAudio!;
+                              link.download = `${activeAudioItem.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                            className="w-full"
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Audio
+                          </Button>
+                        </>
+                      )}
                    </div>
-                   <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = activeAudioItem.generatedAudio!;
-                          link.download = `${activeAudioItem.label.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.wav`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                        className="w-full sm:w-auto"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Audio
-                      </Button>
+                   <AlertDialogFooter>
                       <AlertDialogCancel onClick={() => setActiveAudioItem(null)}>Close</AlertDialogCancel>
                    </AlertDialogFooter>
                 </AlertDialogContent>
