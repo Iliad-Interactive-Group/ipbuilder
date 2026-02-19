@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, Wand2, RotateCcw, LinkIcon, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { createMarketingBriefBlueprint } from '@/ai/flows/create-marketing-brief-blueprint-flow';
+import { createMarketingBriefBlueprintAction } from '@/app/actions';
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 
@@ -86,9 +86,9 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
 
       if (file) {
         const dataUri = await fileToDataUri(file);
-        blueprintOutput = await createMarketingBriefBlueprint({ documentDataUri: dataUri });
+        blueprintOutput = await createMarketingBriefBlueprintAction({ documentDataUri: dataUri });
       } else {
-        blueprintOutput = await createMarketingBriefBlueprint({ websiteUrl: websiteUrl.trim() });
+        blueprintOutput = await createMarketingBriefBlueprintAction({ websiteUrl: websiteUrl.trim() });
       }
       
       onSummarizationComplete(blueprintOutput);

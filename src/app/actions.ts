@@ -13,6 +13,8 @@ import { generateMarketingCopy } from '@/ai/flows/generate-marketing-copy';
 import type { GenerateMarketingCopyInput, GenerateMarketingCopyOutput } from '@/ai/flows/generate-marketing-copy';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateAudio } from '@/ai/flows/generate-audio-flow';
+import { createMarketingBriefBlueprint } from '@/ai/flows/create-marketing-brief-blueprint-flow';
+import type { CreateMarketingBriefBlueprintInput, MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 /**
  * Server action for generating marketing copy
@@ -35,4 +37,13 @@ export async function generateImageAction(prompt: string): Promise<string> {
  */
 export async function generateAudioAction(input: { script: string; voiceName?: string }): Promise<string> {
   return await generateAudio(input);
+}
+
+/**
+ * Server action for creating a marketing brief blueprint
+ */
+export async function createMarketingBriefBlueprintAction(
+  input: CreateMarketingBriefBlueprintInput
+): Promise<MarketingBriefBlueprint> {
+  return await createMarketingBriefBlueprint(input);
 }
