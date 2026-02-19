@@ -1,9 +1,15 @@
 
 'use server';
 /**
- * @fileOverview AI agent that generates audio from text using a TTS model.
+ * @fileOverview AI agent that generates audio from text using Google's Text-to-Speech.
  *
  * - generateAudio - A function that generates a WAV audio file.
+ * 
+ * IMPORTANT: Gemini's native TTS via Genkit may not be fully supported yet.
+ * If audio generation fails in production, consider:
+ * 1. Using Google Cloud Text-to-Speech API directly (@google-cloud/text-to-speech)
+ * 2. Using ElevenLabs or other TTS services
+ * 3. Waiting for official Gemini TTS support in Genkit
  */
 
 import {ai} from '@/ai/genkit';
@@ -12,7 +18,7 @@ import wav from 'wav';
 
 const GenerateAudioInputSchema = z.object({
   script: z.string().describe('The text script to convert to speech.'),
-  voiceName: z.string().optional().describe('The specific voice name to use (e.g., "Algenib", "Kore", "Puck"). Defaults to "Algenib" if not specified.'),
+  voiceName: z.string().optional().describe('The specific voice name to use (e.g., "Algenib", "Kore", "Puck"). Defaults to "Kore" if not specified.'),
 });
 const GenerateAudioOutputSchema = z.string().describe('The generated audio as a WAV data URI.');
 
@@ -46,8 +52,8 @@ const generateAudioFlow = ai.defineFlow(
     outputSchema: GenerateAudioOutputSchema,
   },
   async (input: { script: string; voiceName?: string }) => {
-    // Default to 'Algenib' (male gravelly voice) if no voice specified
-    const voiceName = input.voiceName || 'Algenib';
+    // Default to 'Kore' (female professional voice) if no voice specified
+    const voiceName = input.voiceName || 'Kore';
     
     console.log('[Audio Flow] Starting audio generation with:', {
       scriptLength: input.script.length,
@@ -55,10 +61,19 @@ const generateAudioFlow = ai.defineFlow(
       scriptPreview: input.script.substring(0, 100) + '...'
     });
     
+    // Validate script length - TTS has limits
+    if (input.script.length > 5000) {
+      console.warn('[Audio Flow] Script too long, truncating to 5000 characters');
+    }
+    const scriptText = input.script.substring(0, 5000);
+    
     try {
+      // Attempt to use Gemini's TTS capability
+      // Note: This may not work in all environments/versions of Genkit
       const result = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-exp',
+        model: 'googleai/gemini-3-pro',
         config: {
+          // Request audio output from the model
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
@@ -66,40 +81,79 @@ const generateAudioFlow = ai.defineFlow(
             },
           },
         },
-        prompt: input.script,
+        prompt: scriptText,
       });
 
-      console.log('[Audio Flow] Generation response:', {
-        hasMedia: !!result.media,
-        mediaUrl: result.media?.url?.substring(0, 50) + '...',
-        mediaContentType: result.media?.contentType
-      });
+      console.log('[Audio Flow] Generation response received');
 
-      if (!result.media) {
-        console.error('[Audio Flow] No media in response:', result);
-        throw new Error("The AI failed to generate audio. No media returned.");
+      // Check if the model returned media content
+      if (!result.media || !result.media.url) {
+        console.error('[Audio Flow] No media in response. TTS may not be available.');
+        throw new Error(
+          "Audio generation is not currently available. " +
+          "The AI model did not return audio content. " +
+          "This feature requires Gemini TTS support which may not be enabled for your API key."
+        );
       }
 
-      // The model returns raw PCM data in a data URI. We need to extract it and convert it to WAV.
-      const audioBuffer = Buffer.from(
-        result.media.url.substring(result.media.url.indexOf(',') + 1),
-        'base64'
-      );
+      console.log('[Audio Flow] Media content type:', result.media.contentType);
+
+      // The model returns raw audio data in a data URI. We need to extract and convert it.
+      const commaIndex = result.media.url.indexOf(',');
+      if (commaIndex === -1) {
+        throw new Error("Invalid audio data format received from AI model.");
+      }
+      
+      const base64Data = result.media.url.substring(commaIndex + 1);
+      const audioBuffer = Buffer.from(base64Data, 'base64');
       
       console.log('[Audio Flow] Audio buffer size:', audioBuffer.length);
       
       if (audioBuffer.length === 0) {
-        throw new Error("Generated audio buffer is empty");
+        throw new Error(
+          "Generated audio buffer is empty. " +
+          "The model configuration may not support TTS output."
+        );
       }
       
+      // Convert PCM to WAV format for browser compatibility
       const wavBase64 = await toWav(audioBuffer);
       
-      console.log('[Audio Flow] WAV conversion complete. Base64 length:', wavBase64.length);
+      console.log('[Audio Flow] WAV conversion complete. Output size:', wavBase64.length);
       
       return `data:audio/wav;base64,${wavBase64}`;
-    } catch (error) {
-      console.error('[Audio Flow] Error during generation:', error);
-      throw error;
+      
+    } catch (error: unknown) {
+      console.error('[Audio Flow] Error during audio generation:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Check for common error patterns and provide helpful messages
+      if (errorMessage.includes('not supported') || 
+          errorMessage.includes('AUDIO') || 
+          errorMessage.includes('modalities')) {
+        throw new Error(
+          'Audio generation (TTS) is not currently supported by the AI model. ' +
+          'This feature requires specific API capabilities. Please contact support.'
+        );
+      }
+      
+      if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+        throw new Error(
+          'Audio generation quota exceeded. Please try again later.'
+        );
+      }
+      
+      if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+        throw new Error(
+          'Audio generation authentication failed. Please check your API configuration.'
+        );
+      }
+      
+      // Re-throw with the original message for debugging
+      throw new Error(`Audio generation failed: ${errorMessage}`);
     }
   }
 );
+
+export { generateAudioFlow };

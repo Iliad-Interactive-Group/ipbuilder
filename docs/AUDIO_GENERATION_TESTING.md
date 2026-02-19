@@ -95,7 +95,7 @@ Look for these log messages in the terminal where you ran `npm run dev`:
 
 ### Current Configuration
 
-**Model**: `googleai/gemini-2.0-flash-exp`
+**Model**: `googleai/gemini-3-pro`
 **Format**: WAV (24kHz, 16-bit PCM)
 **Processing**: Server-side via Next.js Server Actions
 **Storage**: Base64 data URIs (in-memory, no external storage)

@@ -288,7 +288,7 @@ The following patterns are automatically removed before TTS:
 
 ### Audio Output
 - **Format**: WAV (24kHz, 16-bit PCM)
-- **Model**: Google Gemini 2.0 Flash Exp
+- **Model**: Google Gemini 3 Pro
 - **Processing**: Server-side via Next.js Server Actions
 - **Storage**: Base64 data URIs
 
