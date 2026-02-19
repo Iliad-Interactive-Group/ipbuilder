@@ -17,32 +17,31 @@ import wav from 'wav';
 
 const textToSpeechClient = new TextToSpeechApi.TextToSpeechClient();
 
-// Map user-selected voice names to Google Cloud TTS Neural2 voices
-// Neural2 provides 10+ distinct en-US voices for maximum variety
+// Map user-selected voice names (from old TTS system) to Google Cloud TTS voices
 const VOICE_NAME_MAPPING: Record<string, string> = {
-  // Male voices - Neural2
+  // Male voices
   'Puck': 'en-US-Neural2-D',
-  'Charon': 'en-US-Neural2-A',
-  'Fenrir': 'en-US-Neural2-J',
+  'Charon': 'en-US-Neural2-D',
+  'Fenrir': 'en-US-Neural2-F',
   'Orus': 'en-US-Neural2-D',
-  'Enceladus': 'en-US-Neural2-I',
-  'Iapetus': 'en-US-Neural2-A',
+  'Enceladus': 'en-US-Neural2-F',
+  'Iapetus': 'en-US-Neural2-D',
   'Umbriel': 'en-US-Neural2-B',
-  'Algieba': 'en-US-Neural2-J',
+  'Algieba': 'en-US-Neural2-D',
   'Algenib': 'en-US-Neural2-D',
   
-  // Female voices - Neural2
+  // Female voices
   'Zephyr': 'en-US-Neural2-C',
   'Kore': 'en-US-Neural2-E',
-  'Leda': 'en-US-Neural2-F',
-  'Aoede': 'en-US-Neural2-H',
+  'Leda': 'en-US-Neural2-C',
+  'Aoede': 'en-US-Neural2-E',
   'Callirrhoe': 'en-US-Neural2-C',
-  'Autonoe': 'en-US-Neural2-G',
-  'Despina': 'en-US-Neural2-F',
-  'Erinome': 'en-US-Neural2-H',
+  'Autonoe': 'en-US-Neural2-E',
+  'Despina': 'en-US-Neural2-C',
+  'Erinome': 'en-US-Neural2-E',
 };
 
-// Default fallback voices by gender (Neural2 tier)
+// Default fallback voices by gender
 const DEFAULT_FEMALE_VOICE = 'en-US-Neural2-E'; // Professional female
 const DEFAULT_MALE_VOICE = 'en-US-Neural2-D';   // Professional male
 
@@ -128,7 +127,7 @@ const generateAudioFlow = async (input: { script: string; voiceName?: string }):
           audioEncoding: 'LINEAR16' as const, // 16-bit PCM audio
           pitch: 0,
           speakingRate: 1.1, // 10% faster for timing control
-          sampleRateHertz: 24000, // Higher quality for Journey voices
+          sampleRateHertz: 16000,
         },
       };
 
@@ -151,7 +150,7 @@ const generateAudioFlow = async (input: { script: string; voiceName?: string }):
       
       // Convert PCM to WAV format for browser compatibility
       console.log('[Audio Flow] Converting PCM to WAV format...');
-      const wavBase64 = await convertPcmToWav(audioBuffer, 24000, 1);
+      const wavBase64 = await convertPcmToWav(audioBuffer, 16000, 1);
       
       console.log('[Audio Flow] WAV conversion complete. Output size:', wavBase64.length);
       

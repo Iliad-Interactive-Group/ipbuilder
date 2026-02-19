@@ -278,7 +278,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
-                                      onClick={() => onGenerateAudio({ ...item, marketingCopy: editedCopy[item.value] || item.marketingCopy })} 
+                                      onClick={() => onGenerateAudio(item)} 
                                       disabled={item.isGeneratingAudio}
                                       className="w-auto"
                                     >
