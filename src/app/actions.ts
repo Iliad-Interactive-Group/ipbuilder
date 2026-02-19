@@ -45,5 +45,21 @@ export async function generateAudioAction(input: { script: string; voiceName?: s
 export async function createMarketingBriefBlueprintAction(
   input: CreateMarketingBriefBlueprintInput
 ): Promise<MarketingBriefBlueprint> {
-  return await createMarketingBriefBlueprint(input);
+  try {
+    console.log('[Blueprint Action] Starting with input:', {
+      hasWebsiteUrl: !!input.websiteUrl,
+      hasDocument: !!input.documentDataUri,
+      hasText: !!input.rawText,
+    });
+    
+    const result = await createMarketingBriefBlueprint(input);
+    console.log('[Blueprint Action] Success:', result);
+    return result;
+  } catch (error) {
+    console.error('[Blueprint Action] Error:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error) {
+      console.error('[Blueprint Action] Stack:', error.stack);
+    }
+    throw error;
+  }
 }

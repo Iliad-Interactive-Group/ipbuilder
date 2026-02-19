@@ -95,11 +95,30 @@ const createMarketingBriefBlueprintFlow = ai.defineFlow(
     outputSchema: MarketingBriefBlueprintSchema,
   },
   async (input: CreateMarketingBriefBlueprintInput) => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error('The AI model did not return the expected blueprint output.');
+    try {
+      console.log('[Blueprint Flow] Starting generation with input keys:', Object.keys(input).filter(k => input[k as keyof typeof input]));
+      
+      const {output} = await prompt(input);
+      
+      if (!output) {
+        console.error('[Blueprint Flow] No output from prompt');
+        throw new Error('The AI model did not return the expected blueprint output.');
+      }
+      
+      console.log('[Blueprint Flow] Success, generated blueprint:', {
+        companyName: output.companyName,
+        keywordCount: output.keywords?.length,
+        descriptionLength: output.productDescription?.length,
+      });
+      
+      return output;
+    } catch (error) {
+      console.error('[Blueprint Flow] Generation error:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.stack) {
+        console.error('[Blueprint Flow] Stack:', error.stack);
+      }
+      throw error;
     }
-    return output;
   }
 );
 
