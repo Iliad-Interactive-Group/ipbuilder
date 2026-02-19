@@ -54,11 +54,27 @@ const suggestKeywordsFlow = ai.defineFlow(
     outputSchema: SuggestKeywordsOutputSchema,
   },
   async (input: SuggestKeywordsInput) => {
-    const {output} = await prompt(input);
-    if (!output || !output.suggestedKeywords) {
-        // Fallback if the model doesn't return the expected structure, though the schema should guide it.
+    try {
+      console.log('[Keywords Flow] Starting with input:', {
+        companyNameLength: input.companyName.length,
+        productDescLength: input.productDescription.length,
+      });
+      
+      const {output} = await prompt(input);
+      
+      if (!output || !output.suggestedKeywords) {
+        console.warn('[Keywords Flow] No keywords in output, using empty array');
         return { suggestedKeywords: [] };
+      }
+      
+      console.log('[Keywords Flow] Success, generated', output.suggestedKeywords.length, 'keywords');
+      return output;
+    } catch (error) {
+      console.error('[Keywords Flow] Error:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.stack) {
+        console.error('[Keywords Flow] Stack:', error.stack);
+      }
+      throw error;
     }
-    return output;
   }
 );

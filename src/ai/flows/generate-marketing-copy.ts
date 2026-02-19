@@ -447,104 +447,124 @@ const generateMarketingCopyFlow = ai.defineFlow(
     outputSchema: GenerateMarketingCopyOutputSchema,
   },
   async (input: GenerateMarketingCopyInput) => {
-    // Check if multiple variations are requested
-    const numberOfVariations = input.numberOfVariations || 1;
-    const supportsVariations = ['radio script', 'tv script'].includes(input.contentType);
-    
-    // If variations are requested for supported content types, generate them
-    if (numberOfVariations > 1 && supportsVariations) {
-      const variants = [];
+    try {
+      console.log('[MktgCopy Flow] Starting generation for:', {
+        contentType: input.contentType,
+        keywordsLength: input.keywords.length,
+        numberOfVariations: input.numberOfVariations || 1,
+      });
+
+      // Check if multiple variations are requested
+      const numberOfVariations = input.numberOfVariations || 1;
+      const supportsVariations = ['radio script', 'tv script'].includes(input.contentType);
       
-      for (let i = 1; i <= numberOfVariations; i++) {
-        // For all other content types, use the generic prompt
-        const promptData = {
-          ...input,
-          currentYear: new Date().getFullYear().toString(),
-          isRadioScript: input.contentType === "radio script",
-          isTvScript: input.contentType === "tv script",
-          isBillboard: input.contentType === "billboard",
-          isWebsiteWireframe: input.contentType === "website wireframe",
-          isDisplayAdCopy: input.contentType === "display ad copy",
-          isLeadGenerationEmail: input.contentType === "lead generation email",
-          isWebsiteCopy: input.contentType === "website copy",
-          is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
-        };
+      // If variations are requested for supported content types, generate them
+      if (numberOfVariations > 1 && supportsVariations) {
+        const variants = [];
         
-        const {output} = await genericPrompt(promptData);
-        if (!output) {
-          throw new Error(`The AI failed to generate variant ${i}.`);
+        for (let i = 1; i <= numberOfVariations; i++) {
+          // For all other content types, use the generic prompt
+          const promptData = {
+            ...input,
+            currentYear: new Date().getFullYear().toString(),
+            isRadioScript: input.contentType === "radio script",
+            isTvScript: input.contentType === "tv script",
+            isBillboard: input.contentType === "billboard",
+            isWebsiteWireframe: input.contentType === "website wireframe",
+            isDisplayAdCopy: input.contentType === "display ad copy",
+            isLeadGenerationEmail: input.contentType === "lead generation email",
+            isWebsiteCopy: input.contentType === "website copy",
+            is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
+          };
+          
+          const {output} = await genericPrompt(promptData);
+          if (!output) {
+            throw new Error(`The AI failed to generate variant ${i}.`);
+          }
+          
+          // Strip production cues for scripts
+          const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
+          
+          variants.push({
+            variant: i,
+            copy: strippedCopy
+          });
         }
         
-        // Strip production cues for scripts
-        const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
-        
-        variants.push({
-          variant: i,
-          copy: strippedCopy
-        });
+        console.log('[MktgCopy Flow] Generated', variants.length, 'variations');
+        return { 
+          marketingCopy: variants,
+          imageSuggestion: undefined // No image for scripts
+        };
       }
       
-      return { 
-        marketingCopy: variants,
-        imageSuggestion: undefined // No image for scripts
+      // Isolate social media post generation as it has a unique output structure (array)
+      if (input.contentType === "social media post") {
+          const {output} = await socialMediaPrompt(input);
+          if (!output) {
+            throw new Error('The AI failed to generate social media posts.');
+          }
+          console.log('[MktgCopy Flow] Generated social media posts');
+          return output;
+      }
+
+      // Isolate podcast outline generation for its unique JSON structure
+      if (input.contentType === "podcast outline") {
+          const { output } = await podcastPrompt(input);
+          if (!output) {
+               throw new Error("The AI failed to generate the podcast outline.");
+          }
+          console.log('[MktgCopy Flow] Generated podcast outline');
+          // Ensure no image suggestion for podcast outlines
+          return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+      }
+      
+      // Isolate blog post generation for its unique JSON structure
+      if (input.contentType === "blog post") {
+          const { output } = await blogPostPrompt(input);
+          if (!output) {
+               throw new Error("The AI failed to generate the blog post.");
+          }
+          console.log('[MktgCopy Flow] Generated blog post');
+          // Ensure no image suggestion for blog posts
+          return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+      }
+      
+      // For all other content types, use the generic prompt
+      const promptData = {
+        ...input,
+        currentYear: new Date().getFullYear().toString(),
+        isRadioScript: input.contentType === "radio script",
+        isTvScript: input.contentType === "tv script",
+        isBillboard: input.contentType === "billboard",
+        isWebsiteWireframe: input.contentType === "website wireframe",
+        isDisplayAdCopy: input.contentType === "display ad copy",
+        isLeadGenerationEmail: input.contentType === "lead generation email",
+        isWebsiteCopy: input.contentType === "website copy",
+        is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
       };
-    }
-    
-    // Isolate social media post generation as it has a unique output structure (array)
-    if (input.contentType === "social media post") {
-        const {output} = await socialMediaPrompt(input);
-        if (!output) {
-          throw new Error('The AI failed to generate social media posts.');
-        }
-        return output;
-    }
+      
+      const {output} = await genericPrompt(promptData);
+      if (!output) {
+        throw new Error('The AI failed to generate the requested marketing copy.');
+      }
+      
+      // For audio-based content, ensure no image suggestion is returned.
+      if (promptData.isRadioScript || promptData.isTvScript) {
+        const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
+        console.log('[MktgCopy Flow] Generated audio script, stripped and returning');
+        return { marketingCopy: strippedCopy, imageSuggestion: undefined };
+      }
 
-    // Isolate podcast outline generation for its unique JSON structure
-    if (input.contentType === "podcast outline") {
-        const { output } = await podcastPrompt(input);
-        if (!output) {
-             throw new Error("The AI failed to generate the podcast outline.");
-        }
-        // Ensure no image suggestion for podcast outlines
-        return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+      console.log('[MktgCopy Flow] Generated generic content');
+      // For all other generic types, return the full output from the prompt
+      return output;
+    } catch (error) {
+      console.error('[MktgCopy Flow] Error:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.stack) {
+        console.error('[MktgCopy Flow] Stack:', error.stack);
+      }
+      throw error;
     }
-    
-    // Isolate blog post generation for its unique JSON structure
-    if (input.contentType === "blog post") {
-        const { output } = await blogPostPrompt(input);
-        if (!output) {
-             throw new Error("The AI failed to generate the blog post.");
-        }
-        // Ensure no image suggestion for blog posts
-        return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
-    }
-    
-    // For all other content types, use the generic prompt
-    const promptData = {
-      ...input,
-      currentYear: new Date().getFullYear().toString(),
-      isRadioScript: input.contentType === "radio script",
-      isTvScript: input.contentType === "tv script",
-      isBillboard: input.contentType === "billboard",
-      isWebsiteWireframe: input.contentType === "website wireframe",
-      isDisplayAdCopy: input.contentType === "display ad copy",
-      isLeadGenerationEmail: input.contentType === "lead generation email",
-      isWebsiteCopy: input.contentType === "website copy",
-      is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
-    };
-    
-    const {output} = await genericPrompt(promptData);
-    if (!output) {
-      throw new Error('The AI failed to generate the requested marketing copy.');
-    }
-    
-    // For audio-based content, ensure no image suggestion is returned.
-    if (promptData.isRadioScript || promptData.isTvScript) {
-      const strippedCopy = (output.marketingCopy || '').replace(/\[[^\]]*\]/g, '').trim();
-      return { marketingCopy: strippedCopy, imageSuggestion: undefined };
-    }
-
-    // For all other generic types, return the full output from the prompt
-    return output;
   }
 );

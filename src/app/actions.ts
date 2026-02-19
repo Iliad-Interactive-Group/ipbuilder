@@ -22,21 +22,45 @@ import type { CreateMarketingBriefBlueprintInput, MarketingBriefBlueprint } from
 export async function generateMarketingCopyAction(
   input: GenerateMarketingCopyInput
 ): Promise<GenerateMarketingCopyOutput> {
-  return await generateMarketingCopy(input);
+  try {
+    console.log('[MktgCopy Action] Starting for content type:', input.contentType);
+    const result = await generateMarketingCopy(input);
+    console.log('[MktgCopy Action] Success');
+    return result;
+  } catch (error) {
+    console.error('[MktgCopy Action] Error:', error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }
 
 /**
  * Server action for generating images
  */
 export async function generateImageAction(prompt: string): Promise<string> {
-  return await generateImage(prompt);
+  try {
+    console.log('[Image Action] Starting');
+    const result = await generateImage(prompt);
+    console.log('[Image Action] Success');
+    return result;
+  } catch (error) {
+    console.error('[Image Action] Error:', error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }
 
 /**
  * Server action for generating audio
  */
 export async function generateAudioAction(input: { script: string; voiceName?: string }): Promise<string> {
-  return await generateAudio(input);
+  try {
+    console.log('[Audio Action] Starting with script length:', input.script.length);
+    const result = await generateAudio(input);
+    console.log('[Audio Action] Success');
+    return result;
+  } catch (error) {
+    console.error('[Audio Action] Error:', error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }
 
 /**
