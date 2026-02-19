@@ -195,6 +195,10 @@ function IPBuilderPageContent() {
         setGeneratedCopy([]); // Clear previous results immediately
         setEditedCopy({}); // Clear previous edits
         setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: ""});
+        toast({ 
+          title: "Starting Generation", 
+          description: `Generating ${data.contentType.length} content type(s)...` 
+        });
         
         let toneForAI = data.tone === "_no_tone_selected_" ? "" : data.tone;
         let platformForAI = (data.socialMediaPlatform === "_no_platform_selected_" || data.socialMediaPlatform === "generic") ? "" : data.socialMediaPlatform;
@@ -212,6 +216,11 @@ function IPBuilderPageContent() {
             current: (prev?.current || 0) + 1, 
             currentLabel 
           }));
+          
+          toast({ 
+            title: "Generating", 
+            description: `Creating ${currentLabel}...` 
+          });
 
           const marketingInput: GenerateMarketingCopyInput = { 
             keywords: data.keywords,
@@ -301,6 +310,15 @@ function IPBuilderPageContent() {
       setIsGenerating(false);
       setGenerationProgress(null);
       console.log('[Form Submit] Text generation complete, starting image generation');
+
+      // Track images that need to be generated
+      const itemsWithImages = initialResults.filter(item => item.imageSuggestion || item.imageSuggestions);
+      if (itemsWithImages.length > 0) {
+        toast({ 
+          title: "Starting Image Generation", 
+          description: `Generating ${itemsWithImages.length} image(s)...` 
+        });
+      }
 
       // Now, generate images for items that have a suggestion
       initialResults.forEach(item => {
