@@ -8,5 +8,5 @@ assertServerSide('GOOGLE_GENAI_API_KEY');
 
 export const ai = genkit({
   plugins: [googleAI()],
-  model: 'googleai/gemini-3-pro',
+  model: 'googleai/gemini-3-pro-preview',
 });

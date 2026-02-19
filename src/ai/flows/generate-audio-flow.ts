@@ -71,7 +71,7 @@ const generateAudioFlow = ai.defineFlow(
       // Attempt to use Gemini's TTS capability
       // Note: This may not work in all environments/versions of Genkit
       const result = await ai.generate({
-        model: 'googleai/gemini-3-pro',
+        model: 'googleai/gemini-2.5-pro-preview-tts',
         config: {
           // Request audio output from the model
           responseModalities: ['AUDIO'],

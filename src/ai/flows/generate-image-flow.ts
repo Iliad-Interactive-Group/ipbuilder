@@ -25,7 +25,7 @@ const generateImageFlow = ai.defineFlow(
   async (prompt: string) => {
     
     const {media} = await ai.generate({
-        model: 'googleai/gemini-3-pro-image-generation',
+        model: 'googleai/gemini-3-pro-image-preview',
         prompt: prompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
