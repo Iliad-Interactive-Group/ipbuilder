@@ -71,13 +71,27 @@ const EditableTextDisplay: React.FC<{
             default: return 8;
         }
     };
+
+    // Calculate word count and estimated duration
+    // Standard speaking rate is ~130-150 wpm.
+    // For radio/AI TTS with pauses, ~2.2 words/sec is a good estimator.
+    const wordCount = currentText.trim().split(/\s+/).filter(w => w.length > 0).length;
+    const estimatedDuration = Math.round(wordCount / 2.2);
     
     return (
         <div className="space-y-2">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Info className="w-3 h-3" />
-                Click to edit the copy below. Changes will be automatically saved and used for audio generation.
-            </p>
+            <div className="flex justify-between items-center">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    Click to edit. Changes save automatically.
+                </p>
+                {['radio script', 'tv script'].includes(item.value) && (
+                    <div className={`text-xs font-medium px-2 py-1 rounded-md ${estimatedDuration > 30 ? 'bg-yellow-100 text-yellow-800' : 'bg-muted text-muted-foreground'}`}>
+                        {wordCount} words ≈ {estimatedDuration}s
+                        {estimatedDuration > 30 && estimatedDuration < 60 && " (Aim for ~60-65 words for 30s)"}
+                    </div>
+                )}
+            </div>
             <Textarea 
                 value={currentText} 
                 onChange={handleTextChange}
@@ -289,9 +303,22 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                         }
                                     </Button>
                                     {(item.generatedAudio || item.generatedAudios) && !item.isGeneratingAudio && (
-                                      <span className="text-xs text-green-600 font-medium">
-                                        ✓ Audio ready - Click button above to play {item.generatedAudios ? `${item.generatedAudios.length} variants` : ''}
-                                      </span>
+                                      <div className="w-full space-y-2 mt-2">
+                                        {item.generatedAudio && (
+                                            <audio controls className="w-full h-10" src={item.generatedAudio} />
+                                        )}
+                                        {item.generatedAudios && item.generatedAudios.length > 0 && (
+                                            <div className="space-y-2 border-t pt-2 mt-2">
+                                                <p className="text-xs font-semibold text-muted-foreground">Audio Variants:</p>
+                                                {item.generatedAudios.map((audioSrc, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <span className="text-xs font-medium w-20 shrink-0">Variant {idx + 1}</span>
+                                                        <audio controls className="flex-1 h-8" src={audioSrc} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                      </div>
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
