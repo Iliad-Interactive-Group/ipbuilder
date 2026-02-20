@@ -5,11 +5,7 @@
  *
  * - generateAudio - A function that generates a WAV audio file.
  *
- * TIMING OPTIMIZATION:
- * To keep TTS audio within target time limits (e.g., 30s for radio spots):
- * 1. Marketing copy prompts reduce word count targets by 12%
- * 2. Speech rate is set to 1.1x (10% faster)
- * 3. This combination typically keeps ads within ±0.5s of target duration
+ * Uses Gemini 2.5 Pro TTS for natural-sounding voice synthesis.
  */
 
 import {ai} from '@/ai/genkit';
@@ -77,7 +73,6 @@ const generateAudioFlow = ai.defineFlow(
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName },
             },
-            speechRate: 1.1,
           },
         },
         prompt: scriptText,
