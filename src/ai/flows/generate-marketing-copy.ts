@@ -100,6 +100,14 @@ export type PodcastOutlineStructure = z.infer<typeof PodcastOutlineStructureSche
 
 const BlogPostStructureSchema = z.object({
   title: z.string().describe("The main, compelling title of the blog post."),
+  topic_theme: z.string().optional().describe("The thematic focus of this post (e.g. 'Problem/Solution', 'Industry Trend')."),
+  seoKeywords: z.array(z.string()).optional().describe("List of target SEO keywords for this specific post."),
+  metaDescription: z.string().optional().describe("SEO-optimized meta description under 160 characters."),
+  keyTakeaways: z.array(z.string()).optional().describe("3 bullet points summarizing the key value props (for AI snapshots)."),
+  faqSnippet: z.object({
+    question: z.string().describe("A relevant 'People Also Ask' question."),
+    answer: z.string().describe("A direct, clear answer to the question."),
+  }).optional().describe("FAQ snippet for Schema markup."),
   sections: z.array(z.object({
     heading: z.string().describe("The heading for this section of the blog post."),
     contentItems: z.array(z.object({
@@ -117,6 +125,7 @@ const GenerateMarketingCopyOutputSchema = z.object({
     z.array(z.string()).describe('An array of marketing copy strings'),
     PodcastOutlineStructureSchema,
     BlogPostStructureSchema,
+    z.array(BlogPostStructureSchema).describe('An array of blog posts for a content series'),
     z.array(z.object({
       variant: z.number().describe('The variant number'),
       copy: z.string().describe('The marketing copy for this variant')
@@ -201,27 +210,32 @@ const podcastPrompt = ai.definePrompt({
 const blogPostPrompt = ai.definePrompt({
     name: 'generateBlogPostPrompt',
     input: { schema: GenerateMarketingCopyInputSchema },
-    output: { schema: z.object({ marketingCopy: BlogPostStructureSchema }) },
-    prompt: `You are an elite blog post writer, channeling the expertise of Ann Handley (for reader-first, storytelling-driven content that's accessible and shareable), Seth Godin (for concise, thought-provoking ideas that challenge norms and inspire action), and Neil Patel (for SEO-optimized, data-backed posts that rank highly and convert readers). Your goal is to generate a high-quality, engaging blog post tailored to the client's business, designed to captivate and convert with standout, memorable content.
+    output: { schema: z.object({ marketingCopy: z.array(BlogPostStructureSchema) }) },
+    prompt: `You are an elite Content Strategist, channeling the expertise of Ann Handley (for reader-first, storytelling-driven content), Seth Godin (for concise, thought-provoking ideas), and Neil Patel (for SEO-optimized, data-backed posts).
+    Your goal is to create a 4-Part Blog Post Integration Series (1 Month of Content) for the client's business.
+    The goal is to build long-term authority by covering 4 distinct strategic angles:
 
-    Inputs to incorporate:
-    - Client's business summary (Product Description): {{productDescription}}
+    1.  **The "Problem/Solution" Post**: Identifies a core customer pain point and solves it with empathy and authority.
+    2.  **The "Educational/How-To" Post**: Teaches a specific high-value skill or concept relevant to the product.
+    3.  **The "Industry Trend" Post (Thought Leadership)**: Discusses where the market is going, positioning the brand as a visionary.
+    4.  **The "Product Spotlight" Post (Bottom of Funnel)**: A deep dive into a specific offering/benefit, focusing on transformation.
+
+    Business Context:
+    - Product Description: {{productDescription}}
     - Company Name: {{companyName}}
     - Tone: {{tone}}
-    - Keywords to include: {{keywords}}
+    - Keywords: {{keywords}}
     - Additional instructions: {{additionalInstructions}}
 
-    Length: Aim for an SEO friendly length of about 2350 words unless specified otherwise.
-    
-    Structure the blog post according to the provided JSON output schema. The post should follow this narrative flow:
-    
-    Hook: Start with a compelling story or provocative question to draw readers in, empathizing with their problems (practical, emotional, deeper values).
-    Body: Explore insights with an approachable narrative, backed by data or examples, positioning the client as a guide highlighting transformations.
-    Practical Section: Offer actionable steps with naturally integrated keywords, ending with strong CTAs for engagement.
-    Conclusion: End with a memorable takeaway, warning of inaction subtly, and a compelling CTA.
-    
-    Ensure the post is optimized for SEO (include relevant keywords, subheadings, bullet points), readable (short paragraphs, active voice), and aligned with the client's voice.
-    Output only the structured JSON that conforms to the schema. Do not include any meta-commentary.
+    REQUIREMENTS FOR EACH POST:
+    1.  **Dual Optimization**: Write for humans (engaging hook, clear value) AND for AI Search/SGE (Clear definitions, structured data).
+    2.  **Key Takeaways**: Include 3 specific bullet points at the very top summarizing the value (Crucial for AI Snapshots).
+    3.  **FAQ Snippet**: End with one "People Also Ask" style question and a direct answer (Great for Voice Search & Snippets).
+    4.  **Length**: Each post should be comprehensive (approx 1500-2000 words logic, though output may be condensed for token limits).
+
+    Structure the JSON output as an array of 4 blog post objects, each following the schema provided.
+    Ensure the "topic_theme" field explicitly labels the post type (e.g., "Problem/Solution", "Educational").
+    Output only the structured JSON.
     `,
 });
 

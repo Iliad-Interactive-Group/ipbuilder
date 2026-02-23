@@ -20,7 +20,7 @@ import { isVariantsArray, VariantCopy } from '@/lib/variant-utils';
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | VariantCopy[];
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | VariantCopy[];
   imageSuggestion?: string;
   imageSuggestions?: string[];
   isError?: boolean;
@@ -42,6 +42,79 @@ interface GeneratedCopyDisplayProps {
   onExportHtml: () => void;
   onGenerateAudio: (item: GeneratedCopyItem) => void;
 }
+
+
+// NEW Helper Component for the updated Blog format
+const SingleBlogPostDisplay: React.FC<{ post: BlogPostStructure }> = ({ post }) => (
+  <div className="space-y-6 text-left animate-in fade-in duration-500">
+    <div className="border-b pb-4">
+      <div className="flex justify-between items-start mb-2">
+         <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase border border-border px-2 py-1 rounded">
+            {post.topic_theme || "Blog Post"}
+         </span>
+      </div>
+      <h3 className="text-3xl font-bold text-primary mb-3 leading-tight">{post.title}</h3>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {post.seoKeywords && post.seoKeywords.map((kw, i) => (
+          <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">#{kw}</span>
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground italic border-l-2 border-primary/50 pl-3">
+        Meta: {post.metaDescription}
+      </p>
+    </div>
+
+    {/* LLM Optimization Section - The "Zero Click" Answer */}
+    {post.keyTakeaways && (
+       <div className="bg-blue-50 dark:bg-blue-950/30 p-5 rounded-xl border border-blue-100 dark:border-blue-900 shadow-sm">
+          <h4 className="text-xs font-black text-blue-700 dark:text-blue-400 mb-3 uppercase tracking-widest flex items-center">
+             <Lightbulb className="w-4 h-4 mr-2" />
+             AI Snapshot / Key Takeaways
+          </h4>
+          <ul className="space-y-2">
+             {post.keyTakeaways.map((pt, i) => (
+                <li key={i} className="text-sm text-foreground/90 flex items-start">
+                    <span className="mr-2 text-blue-500">•</span> {pt}
+                </li>
+             ))}
+          </ul>
+       </div>
+    )}
+
+    <div className="space-y-8 mt-6">
+      {post.sections.map((section, idx) => (
+        <div key={idx} className="prose dark:prose-invert max-w-none">
+          <h4 className="text-xl font-bold mb-3">{section.heading}</h4>
+          <div className="text-muted-foreground whitespace-pre-line leading-relaxed space-y-4">
+            {section.contentItems.map((item, itemIdx) => {
+                if (item.paragraph) return <p key={itemIdx}>{item.paragraph}</p>;
+                if (item.listItems) return (
+                    <ul key={itemIdx} className="list-disc pl-5 space-y-2">
+                        {item.listItems.map((li, liIdx) => <li key={liIdx}>{li}</li>)}
+                    </ul>
+                );
+                return null;
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* FAQ Schema Section */}
+    {post.faqSnippet && (
+        <div className="mt-10 pt-6 border-t border-dashed">
+            <h4 className="font-semibold text-lg mb-3 flex items-center">
+                <Info className="w-5 h-5 mr-2 text-primary" />
+                People Also Ask (Schema Ready)
+            </h4>
+            <div className="bg-muted/50 p-5 rounded-lg border">
+                <p className="font-bold text-foreground mb-2">Q: {post.faqSnippet.question}</p>
+                <p className="text-sm text-muted-foreground">A: {post.faqSnippet.answer}</p>
+            </div>
+        </div>
+    )}
+  </div>
+);
 
 const EditableTextDisplay: React.FC<{
   item: GeneratedCopyItem;
@@ -137,7 +210,16 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
           <Accordion type="multiple" defaultValue={generatedCopy.map(item => item.value)} className="w-full space-y-2">
             {generatedCopy.map((item) => {
               const isPodcast = item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy;
-              const isBlogPost = item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy;
+              
+              // DETECT IF IT IS A BLOG SERIES (Array of objects with titles)
+              const isBlogSeries = item.value === 'blog post' && 
+                                   Array.isArray(item.marketingCopy) && 
+                                   (item.marketingCopy.length > 0) &&
+                                   (item.marketingCopy[0] as any).title;
+
+              // Fallback for old single posts
+              const isGenericBlogPost = item.value === 'blog post' && !isBlogSeries && typeof item.marketingCopy === 'object';
+              
               const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
               
@@ -164,7 +246,30 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                            </div>
                         ) : isPodcast ? (
                            <PodcastOutlineDisplay outline={item.marketingCopy as PodcastOutlineStructure} />
-                        ) : isBlogPost ? (
+                        ) : isBlogSeries ? (
+                           <Tabs defaultValue="week1" className="w-full">
+                                <div className="flex items-center justify-between mb-4">
+                                    <TabsList className="grid w-full max-w-lg grid-cols-4 h-auto p-1">
+                                        {(item.marketingCopy as BlogPostStructure[]).map((_, idx) => (
+                                            <TabsTrigger key={idx} value={`week${idx + 1}`} className="text-xs py-2">
+                                                Week {idx + 1}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </div>
+                                
+                                {(item.marketingCopy as BlogPostStructure[]).map((post, idx) => (
+                                    <TabsContent key={idx} value={`week${idx + 1}`} className="mt-0 p-6 border rounded-xl bg-card shadow-sm">
+                                        <SingleBlogPostDisplay post={post} />
+                                        <div className="mt-8 flex justify-end border-t pt-4">
+                                            <Button variant="secondary" size="sm" onClick={() => onCopy(JSON.stringify(post, null, 2), `Blog Week ${idx + 1}`)}>
+                                                <Copy className="w-3 h-3 mr-2" /> Copy Week {idx + 1} JSON
+                                            </Button>
+                                        </div>
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
+                        ) : isGenericBlogPost ? (
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
                         ) : hasVariants ? (
                            <Tabs defaultValue="1" className="w-full">
@@ -279,7 +384,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         )}
                         
                         <div className="flex flex-wrap gap-2 items-center">
-                          {!isPodcast && !isBlogPost && !item.isError && (
+                          {!isPodcast && !isBlogSeries && !isGenericBlogPost && !item.isError && (
                             <Button variant="outline" size="sm" onClick={() => onCopy(editedCopy[item.value] || item.marketingCopy, item.label)} className="w-full sm:w-auto">
                               <Copy className="w-3 h-3 mr-2" />
                               Copy {item.label}
