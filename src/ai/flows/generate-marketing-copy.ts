@@ -307,6 +307,11 @@ const genericPrompt = ai.definePrompt({
   You MUST spell out all numbers (e.g., write "one hundred" not "100").
   Do NOT generate an image suggestion. The 'imageSuggestion' field in the output must be empty.
 
+  IMPORTANT FORMATTING RULES FOR AUDIO GENERATION:
+  - All spoken dialogue MUST be prefixed with a character tag in brackets, specifically [VO]: or [NARRATOR]: or [CHARACTER]:.
+  - All visual descriptions, scene headings, camera directions, and transitions MUST be enclosed in brackets like [FADE IN], [CUT TO], [SCENE START], or standard sluglines like INT./EXT. (which we will strip out).
+  - Do NOT write spoken text without a tag.
+
   Inputs to incorporate:
   - Client's business summary: {{productDescription}}
   - Company Name: {{companyName}}

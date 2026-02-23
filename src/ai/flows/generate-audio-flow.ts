@@ -41,6 +41,82 @@ async function toWav(pcmData: Buffer, channels = 1, rate = 24000, sampleWidth = 
   });
 }
 
+
+// Prompt to extract spoken dialogue from a mixed script
+const extractDialoguePrompt = ai.definePrompt({
+  name: 'extractDialoguePrompt',
+  input: { schema: z.object({ script: z.string() }) },
+  output: { schema: z.object({ cleanedScript: z.string() }) },
+  prompt: `You are an expert script editor preparing text for a Text-to-Speech engine.
+  The input text may contain scene descriptions, camera directions, sluglines, and production notes mixed with dialogue.
+  
+  Your task is to extract ONLY the spoken words (dialogue/voiceover) that should be read aloud.
+  
+  Rules:
+  1. Remove all sluglines (e.g., EXT. HOUSE, INT. ROOM).
+  2. Remove all camera directions (e.g., CUT TO, FADE IN, CLOSE UP).
+  3. Remove all action descriptions (e.g., "A sweeping drone shot...", "The couple toasts...").
+  4. Remove character names if they are just labels (e.g., "NARRATOR:").
+  5. Keep ONLY the actual spoken words.
+  6. If the text is already clean dialogue, return it as is.
+  7. Do not add any introductory text or explanations.
+  
+  Input Script:
+  {{script}}
+  `,
+});
+
+// Helper function to purely clean script text for TTS using regex (Fast Path)
+function cleanScriptRegex(scriptText: string): string {
+  // If the script follows the structured TV format (e.g. [VO]: Dialogue), we extract only spoken parts.
+  const hasStructuredDialogue = /\[(VO|NARRATOR|CHARACTER|MAN|WOMAN)[^\]]*\]:/i.test(scriptText);
+  
+  if (hasStructuredDialogue) {
+      const lines = scriptText.split('\n');
+      const spokenLines: string[] = [];
+      
+      for (let line of lines) {
+          line = line.trim();
+          // Check for lines starting with a speaker tag like [VO]: or [NARRATOR]:
+          // Regex: Optional square bracket, speaker name, optional bracket, colon, greedy capture of text
+          const match = line.match(/^\[?(VO|NARRATOR|CHARACTER|MAN|WOMAN|ANNOUNCER)[^\]]*\]?:\s*(.+)/i);
+          
+          if (match && match[2]) {
+              spokenLines.push(match[2].trim());
+          }
+      }
+      
+      if (spokenLines.length > 0) {
+          console.log('[Audio Flow] Detected structured TV script (regex), extracted dialogue lines.');
+          return spokenLines.join(' ');
+      }
+  }
+
+  // Fallback cleaning strategy for standard screenplay format
+  let cleaned = scriptText;
+  
+  // 1. Remove Scene Headings (INT., EXT.)
+  cleaned = cleaned.replace(/^(INT\.|EXT\.|INT\.\/EXT\.|I\/E).*$/gim, '');
+  
+  // 2. Remove Transitions (CUT TO:, FADE IN:, etc.)
+  cleaned = cleaned.replace(/^\[?(CUT TO|FADE IN|FADE OUT|DISSOLVE TO|SMASH CUT|SCENE START|SCENE END)[\s:\]].*$/gim, '');
+  
+  // 3. Remove parentheticals (e.g. (laughing))
+  cleaned = cleaned.replace(/\([^\)]+\)/g, '');
+  
+  // 4. Remove bracketed instructions like [SFX: ...] or [VISUAL: ...]
+  cleaned = cleaned.replace(/\[(SFX|MUSIC|SOUND|FX|VISUAL|VIDEO|SCENE|SHOT)[^\]]*\]/gi, '');
+  
+  // 5. Remove any remaining lines solely in brackets []
+  cleaned = cleaned.replace(/^\[[^\]]+\]$/gm, '');
+  
+  // 6. Remove "Variat n" headers if present
+  cleaned = cleaned.replace(/^={3,}\s*Variant\s*\d+\s*={3,}$/gm, '');
+
+  // 7. Collapse whitespace
+  return cleaned.replace(/\s+/g, ' ').trim();
+}
+
 const generateAudioFlow = ai.defineFlow(
   {
     name: 'generateAudioFlow',
@@ -57,11 +133,59 @@ const generateAudioFlow = ai.defineFlow(
       scriptPreview: input.script.substring(0, 100) + '...'
     });
 
+    let scriptText = input.script;
+
+    // Detect if the script is unstructured or has mixed content (TV/Radio) that needs AI cleaning
+    // If it clearly has script formatting like EXT. or FADE IN, or if user asked for TV script
+    const hasScriptFormatting = /(^|\n)(EXT\.|INT\.|FADE |CUT |\[?VO:?\]?)/i.test(input.script);
+    
+    // Check if it's already structured in a way regex can handle easily (Variant 2 style)
+    const isStandardScript = /(^|\n)\[?(VO|NARRATOR|CHARACTER)[^\]]*\]:/i.test(input.script);
+    
+    let cleanScript = '';
+
+    if (isStandardScript) {
+        // Fast path: Use regex cleaning for well-formatted scripts
+        cleanScript = cleanScriptRegex(input.script);
+        console.log('[Audio Flow] Using standard regex cleaning strategy.');
+    } else if (hasScriptFormatting || input.script.length > 300) {
+        // AI Path: If script looks complex or long and unstructured (Variant 1 style), ask AI to extract dialogue
+        console.log('[Audio Flow] Complex or unstructured script detected. Asking AI to extract dialogue...');
+        try {
+            const extraction = await extractDialoguePrompt({ script: input.script });
+            if (extraction.output && extraction.output.cleanedScript) {
+                cleanScript = extraction.output.cleanedScript;
+                console.log('[Audio Flow] AI extracted dialogue successfully.');
+            } else {
+                console.warn('[Audio Flow] AI extraction returned empty, falling back to regex.');
+                cleanScript = cleanScriptRegex(input.script);
+            }
+        } catch (e) {
+             console.error('[Audio Flow] AI extraction failed, falling back to regex.', e);
+             cleanScript = cleanScriptRegex(input.script);
+        }
+    } else {
+        // Simple text, just do basic regex cleaning
+        cleanScript = cleanScriptRegex(input.script);
+    }
+    
+    // Final safety check: if cleaning removed everything (empty script), try to use original script.
+    if (!cleanScript || cleanScript.trim().length === 0) {
+        console.warn('[Audio Flow] Cleaning resulted in empty script. Using original script as fallback.');
+        cleanScript = input.script;
+    }
+
+    console.log('[Audio Flow] Final cleaned script for TTS:', {
+      originalLength: input.script.length,
+      cleanedLength: cleanScript.length,
+      cleanPreview: cleanScript.substring(0, 100) + '...'
+    });
+
     // Validate script length - TTS has limits
-    if (input.script.length > 5000) {
+    if (cleanScript.length > 5000) {
       console.warn('[Audio Flow] Script too long, truncating to 5000 characters');
     }
-    const scriptText = input.script.substring(0, 5000);
+    const finalScriptText = cleanScript.substring(0, 5000);
 
     try {
       // Use Gemini's native TTS capability for natural-sounding voices
@@ -75,7 +199,7 @@ const generateAudioFlow = ai.defineFlow(
             },
           },
         },
-        prompt: scriptText,
+        prompt: finalScriptText,
       });
 
       console.log('[Audio Flow] Generation response received');
