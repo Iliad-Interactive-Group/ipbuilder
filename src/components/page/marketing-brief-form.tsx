@@ -109,6 +109,11 @@ const FEMALE_VOICES = [
 
 const NO_VOICE_SELECTED_VALUE = "_no_voice_selected_";
 
+const BLOG_FORMATS = [
+  { value: "single", label: "Single Blog Post (Deep Dive)" },
+  { value: "series", label: "4-Part Blog Series (1 Month Content Strategy)" },
+];
+const NO_BLOG_FORMAT_SELECTED_VALUE = "series";
 
 const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
 const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
@@ -119,6 +124,7 @@ export const formSchema = z.object({
   productDescription: z.string().min(1, "Product description is required"),
   keywords: z.string().min(1, "Keywords are required (comma-separated)"),
   contentType: z.array(z.string()).min(1, "Please select at least one content type."),
+  blogFormat: z.string().optional(),
   tone: z.string().optional(),
   socialMediaPlatform: z.string().optional(),
   tvScriptLength: z.string().optional(),
@@ -168,6 +174,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
 
   const selectedContentTypes = form.watch('contentType');
   const showSocialMediaPlatformSelector = selectedContentTypes?.includes('social media post');
+  const showBlogFormatSelector = selectedContentTypes?.includes('blog post');
   const showTvScriptLengthSelector = selectedContentTypes?.includes('tv script');
   const showRadioScriptLengthSelector = selectedContentTypes?.includes('radio script');
   const showEmailTypeSelector = selectedContentTypes?.includes('lead generation email');
@@ -211,6 +218,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
         productDescription: form.getValues("productDescription"),
         keywords: form.getValues("keywords"),
         tone: form.getValues("tone") || NO_TONE_SELECTED_VALUE,
+        blogFormat: form.getValues("blogFormat") || NO_BLOG_FORMAT_SELECTED_VALUE,
         socialMediaPlatform: form.getValues("socialMediaPlatform") || NO_PLATFORM_SELECTED_VALUE,
         tvScriptLength: form.getValues("tvScriptLength") || NO_TV_LENGTH_SELECTED_VALUE,
         radioScriptLength: form.getValues("radioScriptLength") || NO_RADIO_LENGTH_SELECTED_VALUE,
@@ -237,6 +245,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
             keywords: savedBrief.keywords || "",
             contentType: form.getValues('contentType'), 
             tone: savedBrief.tone || NO_TONE_SELECTED_VALUE,
+            blogFormat: savedBrief.blogFormat || NO_BLOG_FORMAT_SELECTED_VALUE,
             socialMediaPlatform: savedBrief.socialMediaPlatform || NO_PLATFORM_SELECTED_VALUE,
             tvScriptLength: savedBrief.tvScriptLength || NO_TV_LENGTH_SELECTED_VALUE,
             radioScriptLength: savedBrief.radioScriptLength || NO_RADIO_LENGTH_SELECTED_VALUE,
@@ -423,6 +432,36 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                       <FormMessage />
                   </FormItem>
                   )}
+              />
+            )}
+
+            {showBlogFormatSelector && (
+              <FormField
+                control={form.control}
+                name="blogFormat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><FileText className="w-4 h-4 mr-2 text-muted-foreground"/>Blog Format</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || NO_BLOG_FORMAT_SELECTED_VALUE} defaultValue={NO_BLOG_FORMAT_SELECTED_VALUE}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select blog format" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {BLOG_FORMATS.map((format) => (
+                          <SelectItem key={format.value} value={format.value}>
+                            {format.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose between a single deep-dive post or a 4-part monthly series.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             )}
 

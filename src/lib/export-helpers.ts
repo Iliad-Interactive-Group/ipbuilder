@@ -61,11 +61,24 @@ const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>
     
     if (item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy) {
        return podcastOutlineToString(item.marketingCopy as PodcastOutlineStructure);
-    } else if (item.value === 'blog post' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'sections' in item.marketingCopy) {
-       return blogPostToString(item.marketingCopy as BlogPostStructure);
-    } else {
-       return Array.isArray(item.marketingCopy) ? item.marketingCopy.join('\n\n') : String(item.marketingCopy);
-    }
+    } else if (item.value === 'blog post') {
+        if (Array.isArray(item.marketingCopy)) {
+            // It's a series of posts
+            return item.marketingCopy.map((post, index) => {
+                if (typeof post === 'object' && 'sections' in post) {
+                     return `[Part ${index + 1}] ${blogPostToString(post as BlogPostStructure)}`;
+                } else {
+                    return String(post);
+                }
+            }).join('\n\n' + '='.repeat(40) + '\n\n');
+        } else if (typeof item.marketingCopy === 'object' && 'sections' in item.marketingCopy) {
+           // It's a single post object
+           return blogPostToString(item.marketingCopy as BlogPostStructure);
+        }
+    } 
+    
+    // Fallback for other array types (like social media posts which are strings) or simple strings
+    return Array.isArray(item.marketingCopy) ? item.marketingCopy.join('\n\n') : String(item.marketingCopy);
 };
 
 

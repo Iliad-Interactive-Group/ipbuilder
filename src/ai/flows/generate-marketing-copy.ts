@@ -59,7 +59,11 @@ const GenerateMarketingCopyInputSchema = z.object({
   voiceName: z
     .string()
     .optional()
-    .describe("The specific voice name for audio generation. Available voices include male (Puck, Charon, Fenrir, Orus, Enceladus, Iapetus, Umbriel, Algieba, Algenib, Rasalgethi, Alnilam, Schedar, Achird, Zubenelgenubi, Sadachbia, Sadaltager) and female (Zephyr, Kore, Leda, Aoede, Callirrhoe, Autonoe, Despina, Erinome, Laomedeia, Achernar, Gacrux, Pulcherrima, Vindemiatrix, Sulafat) options. See UI form for full list with descriptions.")
+    .describe("The specific voice name for audio generation. Available voices include male (Puck, Charon, Fenrir, Orus, Enceladus, Iapetus, Umbriel, Algieba, Algenib, Rasalgethi, Alnilam, Schedar, Achird, Zubenelgenubi, Sadachbia, Sadaltager) and female (Zephyr, Kore, Leda, Aoede, Callirrhoe, Autonoe, Despina, Erinome, Laomedeia, Achernar, Gacrux, Pulcherrima, Vindemiatrix, Sulafat) options. See UI form for full list with descriptions."),
+  blogFormat: z
+    .string()
+    .optional()
+    .describe("The format of the blog post to generate ('single' or 'series'). Defaults to 'series' if not specified.")
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -207,8 +211,8 @@ const podcastPrompt = ai.definePrompt({
     `,
 });
 
-const blogPostPrompt = ai.definePrompt({
-    name: 'generateBlogPostPrompt',
+const blogPostSeriesPrompt = ai.definePrompt({
+    name: 'generateBlogPostSeriesPrompt',
     input: { schema: GenerateMarketingCopyInputSchema },
     output: { schema: z.object({ marketingCopy: z.array(BlogPostStructureSchema) }) },
     prompt: `You are an elite Content Strategist, channeling the expertise of Ann Handley (for reader-first, storytelling-driven content), Seth Godin (for concise, thought-provoking ideas), and Neil Patel (for SEO-optimized, data-backed posts).
@@ -235,6 +239,36 @@ const blogPostPrompt = ai.definePrompt({
 
     Structure the JSON output as an array of 4 blog post objects, each following the schema provided.
     Ensure the "topic_theme" field explicitly labels the post type (e.g., "Problem/Solution", "Educational").
+    Output only the structured JSON.
+    `,
+});
+
+const blogPostSinglePrompt = ai.definePrompt({
+    name: 'generateBlogPostSinglePrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: BlogPostStructureSchema }) },
+    prompt: `You are an elite Content Strategist, channeling the expertise of Ann Handley (for reader-first, storytelling-driven content), Seth Godin (for concise, thought-provoking ideas), and Neil Patel (for SEO-optimized, data-backed posts).
+    Your goal is to create a single, high-impact Blog Post for the client's business.
+
+    Business Context:
+    - Product Description: {{productDescription}}
+    - Company Name: {{companyName}}
+    - Tone: {{tone}}
+    - Keywords: {{keywords}}
+    - Additional instructions: {{additionalInstructions}}
+
+    REQUIREMENTS:
+    1.  **Dual Optimization**: Write for humans (engaging hook, clear value) AND for AI Search/SGE (Clear definitions, structured data).
+    2.  **Key Takeaways**: Include 3 specific bullet points at the very top summarizing the value (Crucial for AI Snapshots).
+    3.  **FAQ Snippet**: End with one "People Also Ask" style question and a direct answer (Great for Voice Search & Snippets).
+    4.  **Length**: The post should be comprehensive (approx 1500-2000 words logic, though output may be condensed for token limits).
+    5.  **Structure**:
+        - Create a compelling **Title**.
+        - Define a clear **Topic Theme**.
+        - Include **SEO Keywords** and a **Meta Description**.
+        - Break the content into clear **Sections** with **Headings** and **Content Items** (paragraphs or lists).
+
+    Structure the JSON output as a single blog post object following the schema provided.
     Output only the structured JSON.
     `,
 });
@@ -540,13 +574,24 @@ const generateMarketingCopyFlow = ai.defineFlow(
       
       // Isolate blog post generation for its unique JSON structure
       if (input.contentType === "blog post") {
-          const { output } = await blogPostPrompt(input);
-          if (!output) {
-               throw new Error("The AI failed to generate the blog post.");
+          if (input.blogFormat === 'single') {
+              const { output } = await blogPostSinglePrompt(input);
+              if (!output) {
+                  throw new Error("The AI failed to generate the blog post.");
+              }
+              console.log('[MktgCopy Flow] Generated single blog post');
+              // Ensure no image suggestion for blog posts
+              return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+          } else {
+              // Default to series prompt if format is 'series' or unspecified (though form should specify)
+              const { output } = await blogPostSeriesPrompt(input);
+              if (!output) {
+                  throw new Error("The AI failed to generate the blog post series.");
+              }
+              console.log('[MktgCopy Flow] Generated blog post series');
+              // Ensure no image suggestion for blog posts
+              return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
           }
-          console.log('[MktgCopy Flow] Generated blog post');
-          // Ensure no image suggestion for blog posts
-          return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
       }
       
       // For all other content types, use the generic prompt
