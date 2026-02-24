@@ -10,7 +10,7 @@ const AppLogo = () => {
         width={250} 
         height={60}
         priority 
-        style={{ objectFit: 'contain', filter: 'invert(1) brightness(2)' }}
+        style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
       />
     </div>
   );
