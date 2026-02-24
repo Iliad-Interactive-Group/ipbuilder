@@ -565,7 +565,7 @@ function IPBuilderPageContent() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col bg-slate-800 selection:bg-primary/20 selection:text-primary">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
         <header className="mb-6 text-center flex justify-between items-center">
           <div className="w-1/3"></div>
@@ -574,7 +574,7 @@ function IPBuilderPageContent() {
           </div>
           <div className="w-1/3 flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
-                <Button variant="outline" size="sm" className="border-slate-400 text-white hover:bg-slate-700">
+                <Button variant="outline" size="sm" className="bg-white border-slate-300 text-slate-900 hover:bg-slate-100">
                   <Terminal className="mr-2 h-4 w-4" />
                   Dev Tools
                 </Button>
