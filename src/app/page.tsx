@@ -565,8 +565,8 @@ function IPBuilderPageContent() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-slate-800 selection:bg-primary/20 selection:text-primary">
-      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 to-slate-800 selection:bg-primary/20 selection:text-primary">
+      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl bg-slate-100 rounded-lg my-4 shadow-lg">
         <header className="mb-6 text-center flex justify-between items-center">
           <div className="w-1/3"></div>
           <div className="w-1/3 flex justify-center">
