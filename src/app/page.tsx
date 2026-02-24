@@ -574,7 +574,7 @@ function IPBuilderPageContent() {
           </div>
           <div className="w-1/3 flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="border-slate-400 text-white hover:bg-slate-700">
                   <Terminal className="mr-2 h-4 w-4" />
                   Dev Tools
                 </Button>
@@ -726,7 +726,7 @@ function IPBuilderPageContent() {
           )}
         </div>
       </main>
-      <footer className="py-6 text-center text-muted-foreground text-sm font-body">
+      <footer className="py-6 text-center text-slate-400 text-sm font-body">
         <p>&copy; {currentYear !== null ? currentYear : '...'} The Calton Group. All rights reserved.</p>
       </footer>
     </div>
