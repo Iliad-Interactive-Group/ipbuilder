@@ -565,7 +565,7 @@ function IPBuilderPageContent() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 selection:bg-primary/20 selection:text-primary">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl">
         <header className="mb-6 text-center flex justify-between items-center">
           <div className="w-1/3"></div>
