@@ -30,19 +30,54 @@ const podcastOutlineToString = (outline: PodcastOutlineStructure): string => {
 };
 
 const blogPostToString = (post: BlogPostStructure): string => {
-    let content = `Blog Post\n\n`;
-    content += `Title: ${post.title}\n\n`;
+    if (!post || typeof post !== 'object') {
+        console.warn('[Export] Invalid blog post:', post);
+        return '[Invalid blog post structure]';
+    }
+
+    let content = '';
     
-    post.sections.forEach(section => {
-        content += `--- ${section.heading} ---\n`;
-        section.contentItems.forEach(item => {
-            if (item.paragraph) {
-                content += `${item.paragraph}\n\n`;
-            } else if (item.listItems) {
-                content += item.listItems.map(li => `  - ${li}`).join('\n') + '\n\n';
+    // Add title
+    if (post.title) {
+        content += `${post.title}\n\n`;
+    }
+    
+    // Add topic/theme if available
+    if (post.topic_theme) {
+        content += `Theme: ${post.topic_theme}\n`;
+    }
+    
+    // Add key takeaways if available
+    if (post.keyTakeaways && Array.isArray(post.keyTakeaways) && post.keyTakeaways.length > 0) {
+        content += `Key Takeaways:\n${post.keyTakeaways.map(t => `  • ${t}`).join('\n')}\n\n`;
+    }
+    
+    // Add sections with content
+    if (post.sections && Array.isArray(post.sections)) {
+        post.sections.forEach(section => {
+            if (section.heading) {
+                content += `${section.heading}\n`;
+            }
+            
+            if (section.contentItems && Array.isArray(section.contentItems)) {
+                section.contentItems.forEach(item => {
+                    if (item.paragraph) {
+                        content += `${item.paragraph}\n\n`;
+                    } else if (item.listItems && Array.isArray(item.listItems)) {
+                        item.listItems.forEach(listItem => {
+                            content += `  • ${listItem}\n`;
+                        });
+                        content += '\n';
+                    }
+                });
             }
         });
-    });
+    }
+    
+    // Add FAQ if available
+    if (post.faqSnippet && post.faqSnippet.question) {
+        content += `\nFAQ\nQ: ${post.faqSnippet.question}\nA: ${post.faqSnippet.answer}\n`;
+    }
 
     return content;
 };
@@ -59,26 +94,43 @@ const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>
         return editedText;
     }
     
+    // Handle podcast outlines
     if (item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy) {
        return podcastOutlineToString(item.marketingCopy as PodcastOutlineStructure);
-    } else if (item.value === 'blog post') {
-        if (Array.isArray(item.marketingCopy)) {
-            // It's a series of posts
+    }
+    
+    // Handle blog posts
+    if (item.value === 'blog post') {
+        // Check if it's an array of blog post objects (blog series)
+        if (Array.isArray(item.marketingCopy) && item.marketingCopy.length > 0) {
             return item.marketingCopy.map((post, index) => {
-                if (typeof post === 'object' && 'sections' in post) {
-                     return `[Part ${index + 1}] ${blogPostToString(post as BlogPostStructure)}`;
+                // Each post in the array should have a 'sections' property
+                if (typeof post === 'object' && post !== null && 'sections' in post) {
+                    return `[Part ${index + 1}] ${blogPostToString(post as BlogPostStructure)}`;
+                } else if (typeof post === 'string') {
+                    // Fallback for string items
+                    return `[Part ${index + 1}] ${post}`;
                 } else {
-                    return String(post);
+                    console.warn('[Export] Invalid blog post object:', post);
+                    return `[Part ${index + 1}] [Invalid blog post structure]`;
                 }
-            }).join('\n\n' + '='.repeat(40) + '\n\n');
-        } else if (typeof item.marketingCopy === 'object' && 'sections' in item.marketingCopy) {
-           // It's a single post object
-           return blogPostToString(item.marketingCopy as BlogPostStructure);
+            }).join('\n\n' + '='.repeat(60) + '\n\n');
+        } 
+        // Single blog post object
+        else if (typeof item.marketingCopy === 'object' && item.marketingCopy !== null && 'sections' in item.marketingCopy) {
+            return blogPostToString(item.marketingCopy as BlogPostStructure);
         }
-    } 
+        // If we get here and it's still a blog post, log a warning
+        console.warn('[Export] Unexpected blog post structure:', item.marketingCopy);
+        return `[Unable to export blog post - unexpected structure]`;
+    }
     
     // Fallback for other array types (like social media posts which are strings) or simple strings
-    return Array.isArray(item.marketingCopy) ? item.marketingCopy.join('\n\n') : String(item.marketingCopy);
+    if (Array.isArray(item.marketingCopy)) {
+        return item.marketingCopy.map(item => typeof item === 'string' ? item : String(item)).join('\n\n');
+    }
+    
+    return String(item.marketingCopy);
 };
 
 
