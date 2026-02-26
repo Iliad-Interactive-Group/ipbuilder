@@ -84,3 +84,7 @@ Thumbs.db
 *.mp4
 *.mov
 *.avi
+
+# Google Cloud credentials (local development only)
+/credentials/
+/credentials/*.json
