@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/firebase/client';
 import { Button } from '@/components/ui/button';
@@ -29,21 +29,39 @@ function LoginPageContent() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redirectCheckDone, setRedirectCheckDone] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, loading: authLoading, signOutUser } = useAuth();
 
   // Check for redirect sign-in result (from Google auth redirect)
+  // This should only run once when component mounts
   useEffect(() => {
+    if (redirectCheckDone) return; // Only run once
+    
     const handleRedirectResult = async () => {
-      if (!auth) return;
+      if (!auth) {
+        console.log('[Auth Debug] Auth not initialized');
+        return;
+      }
       try {
+        // Check URL for redirect params
+        const currentUrl = window.location.href;
+        console.log('[Auth Debug] Current URL:', currentUrl);
+        console.log('[Auth Debug] Search params:', window.location.search);
+        
+        console.log('[Auth Debug] Calling getRedirectResult...');
         const result = await getRedirectResult(auth);
+        console.log('[Auth Debug] getRedirectResult returned:', result?.user?.email || 'null');
+        
         if (result) {
           // User successfully logged in via redirect
           const userEmail = result.user.email;
+          console.log('[Auth Debug] User email from redirect:', userEmail);
+          console.log('[Auth Debug] Is allowed domain:', userEmail ? isAllowedDomain(userEmail) : false);
+          
           if (userEmail && !isAllowedDomain(userEmail)) {
+            console.log('[Auth Debug] Domain not allowed, signing out');
             await signOutUser();
             setError(`Access is restricted to ${ALLOWED_DOMAIN} email addresses only.`);
             toast({ 
@@ -51,36 +69,49 @@ function LoginPageContent() {
               description: `Only ${ALLOWED_DOMAIN} email addresses are allowed.`, 
               variant: "destructive" 
             });
+          } else {
+            console.log('[Auth Debug] Domain allowed, waiting for AuthContext to update');
           }
+          // If domain is allowed, AuthContext will pick up the user change
+          // and the user check effect below will handle the redirect
+        } else {
+          console.log('[Auth Debug] No redirect result found');
         }
       } catch (err: any) {
-        console.error('Redirect sign-in error:', err);
+        console.error('[Auth Debug] Redirect sign-in error:', err);
+      } finally {
+        setRedirectCheckDone(true);
       }
     };
 
     handleRedirectResult();
-  }, [signOutUser, toast]);
+  }, [redirectCheckDone, signOutUser, toast]);
 
-  // Check for error query parameter (domain restriction)
+  // Redirect to dashboard if user is authenticated and domain is allowed
   useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'unauthorized-domain') {
-      setError('Access is restricted to @iliadmg.com email addresses only.');
-      // Sign out the user if they're not from the allowed domain
-      if (user && user.email && !isAllowedDomain(user.email)) {
-        signOutUser();
-      }
-    }
-  }, [searchParams, user, signOutUser]);
-
-  useEffect(() => {
+    console.log('[Auth Debug] User check effect - user:', user?.email, 'authLoading:', authLoading);
+    
     if (!authLoading && user) {
+      console.log('[Auth Debug] User is loaded, checking domain...');
       // Check if user is from allowed domain
       if (user.email && isAllowedDomain(user.email)) {
+        console.log('[Auth Debug] Domain OK, redirecting to /');
         router.push('/');
+      } else if (user.email) {
+        console.log('[Auth Debug] Domain check failed for:', user.email);
+        // User has wrong domain, sign them out to prevent loop
+        signOutUser();
+        setError(`Access is restricted to ${ALLOWED_DOMAIN} email addresses only.`);
+        toast({ 
+          title: "Access Denied", 
+          description: `Only ${ALLOWED_DOMAIN} email addresses are allowed.`, 
+          variant: "destructive" 
+        });
       }
+    } else if (!authLoading && !user) {
+      console.log('[Auth Debug] No user, staying on login page');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, signOutUser, toast]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +171,9 @@ function LoginPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('[Auth Debug] handleGoogleSignIn called');
     if (!auth) {
+      console.log('[Auth Debug] auth not initialized');
       setError('Authentication is not configured. Please contact support.');
       toast({ title: "Configuration Error", description: "Authentication is not configured.", variant: "destructive" });
       return;
@@ -149,30 +182,65 @@ function LoginPageContent() {
     setIsLoading(true);
     setError(null);
     
+    // Create provider outside try block so it's accessible in catch
+    console.log('[Auth Debug] Creating GoogleAuthProvider...');
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      hd: 'iliadmg.com', // Hint to Google to show only iliadmg.com accounts
+      prompt: 'select_account'
+    });
+    
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        hd: 'iliadmg.com', // Hint to Google to show only iliadmg.com accounts
-        prompt: 'select_account'
-      });
+      // Try popup first (works in regular browsers)
+      console.log('[Auth Debug] Attempting popup sign-in...');
+      const { signInWithPopup } = await import('firebase/auth');
+      const result = await signInWithPopup(auth, provider);
       
-      await signInWithRedirect(auth, provider);
-      // signInWithRedirect will redirect to Google, user will return here after auth
-      return;
+      // Check domain
+      if (result.user.email && !isAllowedDomain(result.user.email)) {
+        await signOutUser();
+        setError(`Access is restricted to ${ALLOWED_DOMAIN} email addresses only.`);
+        toast({ 
+          title: "Access Denied", 
+          description: `Only ${ALLOWED_DOMAIN} email addresses are allowed.`, 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ title: "Login Successful", description: "Welcome back!" });
+      }
+      
     } catch (err: any) {
       console.error("Google sign-in error:", err);
-      let errorMessage = 'Failed to sign in with Google.';
-      // Redirect-based errors are different from popup errors
-      if (err.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Google sign-in is not enabled. Please contact support.';
-      } else if (err.message) {
-        errorMessage = err.message;
+      
+      // If popup is blocked, fall back to redirect
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        console.log('[Auth Debug] Popup blocked, falling back to redirect...');
+        toast({ 
+          title: "Popup Blocked", 
+          description: "Redirecting to Google sign-in...",
+          duration: 2000
+        });
+        
+        try {
+          await signInWithRedirect(auth, provider);
+          return; // Don't setIsLoading(false) - page will reload
+        } catch (redirectErr: any) {
+          console.error("Redirect sign-in error:", redirectErr);
+          setError('Failed to sign in with Google.');
+          toast({ title: "Google Sign-In Failed", description: "Please try again.", variant: "destructive" });
+        }
+      } else {
+        let errorMessage = 'Failed to sign in with Google.';
+        if (err.code === 'auth/operation-not-allowed') {
+          errorMessage = 'Google sign-in is not enabled. Please contact support.';
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
+        toast({ title: "Google Sign-In Failed", description: errorMessage, variant: "destructive" });
       }
-      setError(errorMessage);
-      toast({ title: "Google Sign-In Failed", description: errorMessage, variant: "destructive" });
     } finally {
-      // Note: We don't call setIsLoading(false) here because signInWithRedirect
-      // will redirect to Google and the page will reload. The loading state will persist until redirect.
+      setIsLoading(false);
     }
   };
   

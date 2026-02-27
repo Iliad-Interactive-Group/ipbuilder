@@ -1,7 +1,24 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
+import { useTheme } from 'next-themes';
 
 const AppLogo = () => {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  // Avoid hydration mismatch by only rendering after mount
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex justify-center items-center my-4" style={{ height: '60px' }} />
+    );
+  }
+
   return (
     <div className="flex justify-center items-center my-4" style={{ height: 'auto' }}>
       <Image
@@ -10,7 +27,7 @@ const AppLogo = () => {
         width={250} 
         height={60}
         priority 
-        style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+        className="object-contain dark:invert"
       />
     </div>
   );

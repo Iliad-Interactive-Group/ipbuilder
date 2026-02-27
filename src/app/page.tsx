@@ -33,6 +33,7 @@ import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput } from '@/
 import AppLogo from '@/components/app-logo';
 import ProtectedRoute from '@/components/protected-route';
 import UserMenu from '@/components/user-menu';
+import { ThemeToggle } from '@/components/theme-toggle';
 import DataInputCard from '@/components/page/data-input-card';
 import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/components/page/marketing-brief-form';
 import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
@@ -565,8 +566,8 @@ function IPBuilderPageContent() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 to-slate-800 selection:bg-primary/20 selection:text-primary">
-      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl bg-slate-100 rounded-lg my-4 shadow-lg">
+    <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
+      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl bg-card rounded-lg my-4 shadow-lg border border-border">
         <header className="mb-6 text-center flex justify-between items-center">
           <div className="w-1/3"></div>
           <div className="w-1/3 flex justify-center">
@@ -574,11 +575,12 @@ function IPBuilderPageContent() {
           </div>
           <div className="w-1/3 flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
-                <Button variant="outline" size="sm" className="bg-white border-slate-300 text-slate-900 hover:bg-slate-100">
+                <Button variant="outline" size="sm">
                   <Terminal className="mr-2 h-4 w-4" />
                   Dev Tools
                 </Button>
               </Link>
+              <ThemeToggle />
               <UserMenu />
           </div>
         </header>

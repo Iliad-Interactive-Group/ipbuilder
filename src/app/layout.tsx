@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 import ErrorBoundary from '@/components/error-boundary';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'Iliad IPbuilder',
@@ -23,12 +24,19 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning={true}>
-        <ErrorBoundary>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </ErrorBoundary>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <ErrorBoundary>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );
