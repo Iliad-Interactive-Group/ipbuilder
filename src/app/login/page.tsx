@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,33 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, loading: authLoading, signOutUser } = useAuth();
+
+  // Check for redirect sign-in result (from Google auth redirect)
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      if (!auth) return;
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // User successfully logged in via redirect
+          const userEmail = result.user.email;
+          if (userEmail && !isAllowedDomain(userEmail)) {
+            await signOutUser();
+            setError(`Access is restricted to ${ALLOWED_DOMAIN} email addresses only.`);
+            toast({ 
+              title: "Access Denied", 
+              description: `Only ${ALLOWED_DOMAIN} email addresses are allowed.`, 
+              variant: "destructive" 
+            });
+          }
+        }
+      } catch (err: any) {
+        console.error('Redirect sign-in error:', err);
+      }
+    };
+
+    handleRedirectResult();
+  }, [signOutUser, toast]);
 
   // Check for error query parameter (domain restriction)
   useEffect(() => {
@@ -129,37 +156,23 @@ function LoginPageContent() {
         prompt: 'select_account'
       });
       
-      const userCredential = await signInWithPopup(auth, provider);
-      
-      // Validate domain
-      if (userCredential.user.email && !isAllowedDomain(userCredential.user.email)) {
-        await signOutUser();
-        setError(`Access is restricted to ${ALLOWED_DOMAIN} email addresses only.`);
-        toast({ 
-          title: "Access Denied", 
-          description: `Only ${ALLOWED_DOMAIN} email addresses are allowed.`, 
-          variant: "destructive" 
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      toast({ title: "Login Successful", description: "Welcome back!" });
-      router.push('/');
+      await signInWithRedirect(auth, provider);
+      // signInWithRedirect will redirect to Google, user will return here after auth
+      return;
     } catch (err: any) {
       console.error("Google sign-in error:", err);
       let errorMessage = 'Failed to sign in with Google.';
-      if (err.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Sign-in cancelled.';
-      } else if (err.code === 'auth/popup-blocked') {
-        errorMessage = 'Popup was blocked. Please allow popups for this site.';
+      // Redirect-based errors are different from popup errors
+      if (err.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Google sign-in is not enabled. Please contact support.';
       } else if (err.message) {
         errorMessage = err.message;
       }
       setError(errorMessage);
       toast({ title: "Google Sign-In Failed", description: errorMessage, variant: "destructive" });
     } finally {
-      setIsLoading(false);
+      // Note: We don't call setIsLoading(false) here because signInWithRedirect
+      // will redirect to Google and the page will reload. The loading state will persist until redirect.
     }
   };
   
