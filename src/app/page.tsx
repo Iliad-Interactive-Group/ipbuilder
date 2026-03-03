@@ -305,6 +305,13 @@ function IPBuilderPageContent() {
       // Also initialize the editedCopy state with the generated copy
       const initialEdits: Record<string, string> = {};
       initialResults.forEach(item => {
+          // Skip structured content types (blog posts, podcast outlines) - these are
+          // rendered from their structured data and should NOT be flattened to strings.
+          // Flattening BlogPostStructure[] with .join() produces "[object Object]" which
+          // corrupts the export output.
+          if (item.value === 'blog post' || item.value === 'podcast outline') {
+              return; // Do not add to editedCopy - export functions handle these natively
+          }
           if (typeof item.marketingCopy === 'string') {
               initialEdits[item.value] = item.marketingCopy;
           } else if (Array.isArray(item.marketingCopy)) {
@@ -313,8 +320,8 @@ function IPBuilderPageContent() {
                   // For variants, join all variant copies
                   initialEdits[item.value] = item.marketingCopy.map((v) => `=== Variant ${v.variant} ===\n${v.copy}`).join('\n\n');
               } else {
-                  // For regular arrays (like social media posts)
-                  initialEdits[item.value] = item.marketingCopy.join('\n\n');
+                  // For regular arrays (like social media posts which are string[])
+                  initialEdits[item.value] = item.marketingCopy.map(v => typeof v === 'string' ? v : String(v)).join('\n\n');
               }
           }
       });

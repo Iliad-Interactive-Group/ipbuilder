@@ -157,6 +157,160 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
   URL.revokeObjectURL(element.href);
 };
 
+/**
+ * Renders a single BlogPostStructure into the jsPDF document with proper formatting.
+ * Returns the updated yPosition after rendering.
+ */
+const renderBlogPostToPdf = (
+    doc: jsPDF,
+    post: BlogPostStructure,
+    startY: number,
+    margin: number,
+    maxLineWidth: number,
+    pageHeight: number,
+    lineHeightFactor: number
+): number => {
+    let yPosition = startY;
+
+    const ensureSpace = (neededHeight: number) => {
+        if (yPosition + neededHeight > pageHeight - margin) {
+            doc.addPage();
+            yPosition = margin;
+        }
+    };
+
+    // Post title - large bold
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    const titleLH = 15 * lineHeightFactor;
+    const titleLines = doc.splitTextToSize(post.title || 'Untitled Post', maxLineWidth);
+    ensureSpace(titleLines.length * titleLH);
+    doc.text(titleLines, margin, yPosition);
+    yPosition += (titleLines.length * titleLH) + 3;
+
+    // Theme / topic
+    if (post.topic_theme) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        const themeLine = `Theme: ${post.topic_theme}`;
+        ensureSpace(9 * lineHeightFactor);
+        doc.text(themeLine, margin, yPosition);
+        yPosition += 9 * lineHeightFactor + 2;
+    }
+
+    // Meta description
+    if (post.metaDescription) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        const metaLines = doc.splitTextToSize(`Meta: ${post.metaDescription}`, maxLineWidth);
+        ensureSpace(metaLines.length * 9 * lineHeightFactor);
+        doc.text(metaLines, margin, yPosition);
+        yPosition += (metaLines.length * 9 * lineHeightFactor) + 2;
+    }
+
+    // SEO Keywords
+    if (post.seoKeywords && post.seoKeywords.length > 0) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const kwText = `Keywords: ${post.seoKeywords.join(', ')}`;
+        const kwLines = doc.splitTextToSize(kwText, maxLineWidth);
+        ensureSpace(kwLines.length * 9 * lineHeightFactor);
+        doc.text(kwLines, margin, yPosition);
+        yPosition += (kwLines.length * 9 * lineHeightFactor) + 4;
+    }
+
+    // Key Takeaways
+    if (post.keyTakeaways && post.keyTakeaways.length > 0) {
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        ensureSpace(11 * lineHeightFactor + 2);
+        doc.text('Key Takeaways', margin, yPosition);
+        yPosition += 11 * lineHeightFactor + 1;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const bulletLH = 10 * lineHeightFactor;
+        post.keyTakeaways.forEach(takeaway => {
+            const bulletLines = doc.splitTextToSize(`  \u2022 ${takeaway}`, maxLineWidth - 4);
+            ensureSpace(bulletLines.length * bulletLH);
+            doc.text(bulletLines, margin, yPosition);
+            yPosition += bulletLines.length * bulletLH;
+        });
+        yPosition += 4;
+    }
+
+    // Sections with headings and content
+    if (post.sections && Array.isArray(post.sections)) {
+        post.sections.forEach(section => {
+            // Section heading - bold
+            if (section.heading) {
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                const headingLH = 12 * lineHeightFactor;
+                const headingLines = doc.splitTextToSize(section.heading, maxLineWidth);
+                ensureSpace(headingLines.length * headingLH + 4);
+                doc.text(headingLines, margin, yPosition);
+                yPosition += (headingLines.length * headingLH) + 2;
+            }
+
+            // Content items - normal weight
+            if (section.contentItems && Array.isArray(section.contentItems)) {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                const contentLH = 10 * lineHeightFactor;
+
+                section.contentItems.forEach(item => {
+                    if (item.paragraph) {
+                        const paraLines = doc.splitTextToSize(item.paragraph, maxLineWidth);
+                        paraLines.forEach((line: string) => {
+                            ensureSpace(contentLH);
+                            doc.text(line, margin, yPosition);
+                            yPosition += contentLH;
+                        });
+                        yPosition += 3;
+                    } else if (item.listItems && Array.isArray(item.listItems) && item.listItems.length > 0) {
+                        item.listItems.forEach(listItem => {
+                            const bulletLines = doc.splitTextToSize(`  \u2022 ${listItem}`, maxLineWidth - 4);
+                            bulletLines.forEach((line: string) => {
+                                ensureSpace(contentLH);
+                                doc.text(line, margin, yPosition);
+                                yPosition += contentLH;
+                            });
+                        });
+                        yPosition += 3;
+                    }
+                });
+            }
+            yPosition += 4;
+        });
+    }
+
+    // FAQ Snippet
+    if (post.faqSnippet && post.faqSnippet.question) {
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        ensureSpace(11 * lineHeightFactor + 2);
+        doc.text('FAQ', margin, yPosition);
+        yPosition += 11 * lineHeightFactor + 1;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        const qLines = doc.splitTextToSize(`Q: ${post.faqSnippet.question}`, maxLineWidth);
+        ensureSpace(qLines.length * 10 * lineHeightFactor);
+        doc.text(qLines, margin, yPosition);
+        yPosition += qLines.length * 10 * lineHeightFactor + 1;
+
+        doc.setFont('helvetica', 'normal');
+        const aLines = doc.splitTextToSize(`A: ${post.faqSnippet.answer}`, maxLineWidth);
+        ensureSpace(aLines.length * 10 * lineHeightFactor);
+        doc.text(aLines, margin, yPosition);
+        yPosition += aLines.length * 10 * lineHeightFactor;
+        yPosition += 4;
+    }
+
+    return yPosition;
+};
+
 export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
     try {
       const doc = new jsPDF();
@@ -201,18 +355,49 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             yPosition += (suggestionLines.length * suggestionLineHeight) + 5;
         }
 
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const textLineHeight = 10 * lineHeightFactor;
-        
-        const marketingText = getItemText(copy, editedCopy);
-        const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
-        
-        textLines.forEach((line: string) => {
-          ensureSpace(textLineHeight);
-          doc.text(line, margin, yPosition);
-          yPosition += textLineHeight;
-        });
+        // Blog posts get structured PDF rendering with proper formatting
+        const isBlogSeries = copy.value === 'blog post' &&
+            Array.isArray(copy.marketingCopy) &&
+            copy.marketingCopy.length > 0 &&
+            typeof copy.marketingCopy[0] === 'object' &&
+            copy.marketingCopy[0] !== null &&
+            'title' in (copy.marketingCopy[0] as object);
+        const isSingleBlog = copy.value === 'blog post' &&
+            !Array.isArray(copy.marketingCopy) &&
+            typeof copy.marketingCopy === 'object' &&
+            copy.marketingCopy !== null &&
+            'sections' in (copy.marketingCopy as object);
+
+        if (isBlogSeries) {
+            (copy.marketingCopy as BlogPostStructure[]).forEach((post, idx) => {
+                // Part separator with a horizontal rule
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                ensureSpace(20);
+                const partLabel = `\u2014\u2014 Part ${idx + 1} of ${(copy.marketingCopy as BlogPostStructure[]).length} \u2014\u2014`;
+                doc.text(partLabel, margin, yPosition);
+                yPosition += 16;
+
+                yPosition = renderBlogPostToPdf(doc, post, yPosition, margin, maxLineWidth, pageHeight, lineHeightFactor);
+                yPosition += 8;
+            });
+        } else if (isSingleBlog) {
+            yPosition = renderBlogPostToPdf(doc, copy.marketingCopy as BlogPostStructure, yPosition, margin, maxLineWidth, pageHeight, lineHeightFactor);
+        } else {
+            // Default: render as plain text (all other content types)
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const textLineHeight = 10 * lineHeightFactor;
+            
+            const marketingText = getItemText(copy, editedCopy);
+            const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
+            
+            textLines.forEach((line: string) => {
+              ensureSpace(textLineHeight);
+              doc.text(line, margin, yPosition);
+              yPosition += textLineHeight;
+            });
+        }
 
         yPosition += 10;
       });
