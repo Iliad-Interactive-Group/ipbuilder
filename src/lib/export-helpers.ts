@@ -88,6 +88,77 @@ const getFilenameBase = (copies: GeneratedCopyItem[]): string => {
     return `${firstContentTypeLabel.toLowerCase().replace(/\s+/g, '_').substring(0,20)}`;
 }
 
+const escapeHtml = (value: string): string =>
+    value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+const isBlogPostStructure = (value: unknown): value is BlogPostStructure => {
+        return typeof value === 'object' && value !== null && 'sections' in value && 'title' in value;
+};
+
+const isBlogPostSeries = (value: unknown): value is BlogPostStructure[] => {
+        return Array.isArray(value) && value.length > 0 && isBlogPostStructure(value[0]);
+};
+
+const blogPostToHtml = (post: BlogPostStructure, partLabel?: string): string => {
+        const keywordsHtml = post.seoKeywords && post.seoKeywords.length > 0
+                ? `<div class="chip-row">${post.seoKeywords.map(kw => `<span class="chip">${escapeHtml(kw)}</span>`).join('')}</div>`
+                : '';
+
+        const takeawaysHtml = post.keyTakeaways && post.keyTakeaways.length > 0
+                ? `
+                        <section class="takeaways">
+                            <h4>Key Takeaways</h4>
+                            <ul>
+                                ${post.keyTakeaways.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                            </ul>
+                        </section>
+                    `
+                : '';
+
+        const sectionsHtml = (post.sections || []).map(section => `
+            <section class="blog-section">
+                <h3>${escapeHtml(section.heading)}</h3>
+                ${(section.contentItems || []).map(item => {
+                        if (item.paragraph) {
+                                return `<p>${escapeHtml(item.paragraph)}</p>`;
+                        }
+                        if (item.listItems && item.listItems.length > 0) {
+                                return `<ul>${item.listItems.map(li => `<li>${escapeHtml(li)}</li>`).join('')}</ul>`;
+                        }
+                        return '';
+                }).join('')}
+            </section>
+        `).join('');
+
+        const faqHtml = post.faqSnippet
+                ? `
+                    <section class="faq">
+                        <h4>People Also Ask</h4>
+                        <p class="faq-q">Q: ${escapeHtml(post.faqSnippet.question)}</p>
+                        <p class="faq-a">A: ${escapeHtml(post.faqSnippet.answer)}</p>
+                    </section>
+                `
+                : '';
+
+        return `
+            <article class="blog-article">
+                ${partLabel ? `<div class="part-label">${escapeHtml(partLabel)}</div>` : ''}
+                ${post.topic_theme ? `<p class="topic-theme">${escapeHtml(post.topic_theme)}</p>` : ''}
+                <h2>${escapeHtml(post.title)}</h2>
+                ${post.metaDescription ? `<p class="meta-description">${escapeHtml(post.metaDescription)}</p>` : ''}
+                ${keywordsHtml}
+                ${takeawaysHtml}
+                ${sectionsHtml}
+                ${faqHtml}
+            </article>
+        `;
+};
+
 const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string => {
     const editedText = editedCopy[item.value];
     if (editedText !== undefined) {
@@ -171,6 +242,10 @@ const renderBlogPostToPdf = (
     lineHeightFactor: number
 ): number => {
     let yPosition = startY;
+    const bodyLineHeight = 5.4;
+    const compactLineHeight = 4.6;
+    const titleLineHeight = 7.2;
+    const headingLineHeight = 6;
 
     const ensureSpace = (neededHeight: number) => {
         if (yPosition + neededHeight > pageHeight - margin) {
@@ -179,134 +254,138 @@ const renderBlogPostToPdf = (
         }
     };
 
-    // Post title - large bold
-    doc.setFontSize(15);
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+    yPosition += 4;
+
+    doc.setFontSize(17);
     doc.setFont('helvetica', 'bold');
-    const titleLH = 15 * lineHeightFactor;
+    doc.setTextColor(18, 18, 18);
     const titleLines = doc.splitTextToSize(post.title || 'Untitled Post', maxLineWidth);
-    ensureSpace(titleLines.length * titleLH);
+    ensureSpace(titleLines.length * titleLineHeight + 3);
     doc.text(titleLines, margin, yPosition);
-    yPosition += (titleLines.length * titleLH) + 3;
+    yPosition += (titleLines.length * titleLineHeight) + 3;
 
-    // Theme / topic
     if (post.topic_theme) {
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'italic');
+        doc.setTextColor(90, 90, 90);
         const themeLine = `Theme: ${post.topic_theme}`;
-        ensureSpace(9 * lineHeightFactor);
+        ensureSpace(compactLineHeight + 2);
         doc.text(themeLine, margin, yPosition);
-        yPosition += 9 * lineHeightFactor + 2;
+        yPosition += compactLineHeight + 2;
     }
 
-    // Meta description
     if (post.metaDescription) {
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'italic');
+        doc.setTextColor(75, 75, 75);
         const metaLines = doc.splitTextToSize(`Meta: ${post.metaDescription}`, maxLineWidth);
-        ensureSpace(metaLines.length * 9 * lineHeightFactor);
+        ensureSpace(metaLines.length * compactLineHeight + 2);
         doc.text(metaLines, margin, yPosition);
-        yPosition += (metaLines.length * 9 * lineHeightFactor) + 2;
+        yPosition += (metaLines.length * compactLineHeight) + 2;
     }
 
-    // SEO Keywords
     if (post.seoKeywords && post.seoKeywords.length > 0) {
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(55, 55, 55);
         const kwText = `Keywords: ${post.seoKeywords.join(', ')}`;
         const kwLines = doc.splitTextToSize(kwText, maxLineWidth);
-        ensureSpace(kwLines.length * 9 * lineHeightFactor);
+        ensureSpace(kwLines.length * compactLineHeight + 3);
         doc.text(kwLines, margin, yPosition);
-        yPosition += (kwLines.length * 9 * lineHeightFactor) + 4;
+        yPosition += (kwLines.length * compactLineHeight) + 4;
     }
 
-    // Key Takeaways
     if (post.keyTakeaways && post.keyTakeaways.length > 0) {
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        ensureSpace(11 * lineHeightFactor + 2);
+        doc.setTextColor(22, 22, 22);
+        ensureSpace(headingLineHeight + 2);
         doc.text('Key Takeaways', margin, yPosition);
-        yPosition += 11 * lineHeightFactor + 1;
+        yPosition += headingLineHeight;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        const bulletLH = 10 * lineHeightFactor;
+        doc.setTextColor(35, 35, 35);
         post.keyTakeaways.forEach(takeaway => {
             const bulletLines = doc.splitTextToSize(`  \u2022 ${takeaway}`, maxLineWidth - 4);
-            ensureSpace(bulletLines.length * bulletLH);
+            ensureSpace(bulletLines.length * bodyLineHeight);
             doc.text(bulletLines, margin, yPosition);
-            yPosition += bulletLines.length * bulletLH;
+            yPosition += bulletLines.length * bodyLineHeight;
         });
-        yPosition += 4;
+        yPosition += 3;
     }
 
-    // Sections with headings and content
     if (post.sections && Array.isArray(post.sections)) {
         post.sections.forEach(section => {
-            // Section heading - bold
             if (section.heading) {
-                doc.setFontSize(12);
+                doc.setFontSize(13);
                 doc.setFont('helvetica', 'bold');
-                const headingLH = 12 * lineHeightFactor;
+                doc.setTextColor(20, 20, 20);
                 const headingLines = doc.splitTextToSize(section.heading, maxLineWidth);
-                ensureSpace(headingLines.length * headingLH + 4);
+                ensureSpace(headingLines.length * headingLineHeight + 3);
                 doc.text(headingLines, margin, yPosition);
-                yPosition += (headingLines.length * headingLH) + 2;
+                yPosition += (headingLines.length * headingLineHeight) + 2;
             }
 
-            // Content items - normal weight
             if (section.contentItems && Array.isArray(section.contentItems)) {
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
-                const contentLH = 10 * lineHeightFactor;
+                doc.setTextColor(30, 30, 30);
 
                 section.contentItems.forEach(item => {
                     if (item.paragraph) {
                         const paraLines = doc.splitTextToSize(item.paragraph, maxLineWidth);
                         paraLines.forEach((line: string) => {
-                            ensureSpace(contentLH);
+                            ensureSpace(bodyLineHeight);
                             doc.text(line, margin, yPosition);
-                            yPosition += contentLH;
+                            yPosition += bodyLineHeight;
                         });
-                        yPosition += 3;
+                        yPosition += 2;
                     } else if (item.listItems && Array.isArray(item.listItems) && item.listItems.length > 0) {
                         item.listItems.forEach(listItem => {
                             const bulletLines = doc.splitTextToSize(`  \u2022 ${listItem}`, maxLineWidth - 4);
                             bulletLines.forEach((line: string) => {
-                                ensureSpace(contentLH);
+                                ensureSpace(bodyLineHeight);
                                 doc.text(line, margin, yPosition);
-                                yPosition += contentLH;
+                                yPosition += bodyLineHeight;
                             });
                         });
-                        yPosition += 3;
+                        yPosition += 2;
                     }
                 });
             }
-            yPosition += 4;
+            yPosition += 2;
         });
     }
 
-    // FAQ Snippet
     if (post.faqSnippet && post.faqSnippet.question) {
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        ensureSpace(11 * lineHeightFactor + 2);
-        doc.text('FAQ', margin, yPosition);
-        yPosition += 11 * lineHeightFactor + 1;
+        doc.setTextColor(22, 22, 22);
+        ensureSpace(headingLineHeight + 2);
+        doc.text('People Also Ask', margin, yPosition);
+        yPosition += headingLineHeight;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
+        doc.setTextColor(28, 28, 28);
         const qLines = doc.splitTextToSize(`Q: ${post.faqSnippet.question}`, maxLineWidth);
-        ensureSpace(qLines.length * 10 * lineHeightFactor);
+        ensureSpace(qLines.length * bodyLineHeight + 1);
         doc.text(qLines, margin, yPosition);
-        yPosition += qLines.length * 10 * lineHeightFactor + 1;
+        yPosition += qLines.length * bodyLineHeight + 1;
 
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(35, 35, 35);
         const aLines = doc.splitTextToSize(`A: ${post.faqSnippet.answer}`, maxLineWidth);
-        ensureSpace(aLines.length * 10 * lineHeightFactor);
+        ensureSpace(aLines.length * bodyLineHeight + 2);
         doc.text(aLines, margin, yPosition);
-        yPosition += aLines.length * 10 * lineHeightFactor;
-        yPosition += 4;
+        yPosition += aLines.length * bodyLineHeight + 2;
     }
+
+    doc.setTextColor(0, 0, 0);
+    yPosition += 3;
 
     return yPosition;
 };
@@ -319,7 +398,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
       const pageWidth = doc.internal.pageSize.width;
       const margin = 15;
       const maxLineWidth = pageWidth - margin * 2;
-      const lineHeightFactor = 1.15;
+    const bodyLineHeight = 5.2;
 
       doc.setFontSize(18);
       const mainTitle = "Generated Marketing Copies";
@@ -335,24 +414,29 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
           }
         };
 
-        doc.setFontSize(14);
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
-        const labelLineHeight = 14 * lineHeightFactor;
+        doc.setTextColor(24, 24, 24);
+        const labelLineHeight = 6;
         const contentTypeLabel = `Content Type: ${copy.label}`;
         const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
         ensureSpace(labelLines.length * labelLineHeight);
         doc.text(labelLines, margin, yPosition);
-        yPosition += (labelLines.length * labelLineHeight) + 2;
+        yPosition += (labelLines.length * labelLineHeight) + 1;
+        doc.setDrawColor(230, 230, 230);
+        doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+        yPosition += 4;
 
         if (copy.imageSuggestion) {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'italic');
-            const suggestionLineHeight = 10 * lineHeightFactor;
+            doc.setTextColor(85, 85, 85);
+            const suggestionLineHeight = 4.8;
             const suggestionText = `Image Suggestion: ${copy.imageSuggestion}`;
             const suggestionLines = doc.splitTextToSize(suggestionText, maxLineWidth);
             ensureSpace(suggestionLines.length * suggestionLineHeight + 4);
             doc.text(suggestionLines, margin, yPosition);
-            yPosition += (suggestionLines.length * suggestionLineHeight) + 5;
+            yPosition += (suggestionLines.length * suggestionLineHeight) + 3;
         }
 
         // Blog posts get structured PDF rendering with proper formatting
@@ -376,18 +460,19 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 ensureSpace(20);
                 const partLabel = `\u2014\u2014 Part ${idx + 1} of ${(copy.marketingCopy as BlogPostStructure[]).length} \u2014\u2014`;
                 doc.text(partLabel, margin, yPosition);
-                yPosition += 16;
+                yPosition += 8;
 
-                yPosition = renderBlogPostToPdf(doc, post, yPosition, margin, maxLineWidth, pageHeight, lineHeightFactor);
+                yPosition = renderBlogPostToPdf(doc, post, yPosition, margin, maxLineWidth, pageHeight, 1.15);
                 yPosition += 8;
             });
         } else if (isSingleBlog) {
-            yPosition = renderBlogPostToPdf(doc, copy.marketingCopy as BlogPostStructure, yPosition, margin, maxLineWidth, pageHeight, lineHeightFactor);
+            yPosition = renderBlogPostToPdf(doc, copy.marketingCopy as BlogPostStructure, yPosition, margin, maxLineWidth, pageHeight, 1.15);
         } else {
             // Default: render as plain text (all other content types)
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            const textLineHeight = 10 * lineHeightFactor;
+            doc.setTextColor(30, 30, 30);
+            const textLineHeight = bodyLineHeight;
             
             const marketingText = getItemText(copy, editedCopy);
             const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
@@ -399,6 +484,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             });
         }
 
+                doc.setTextColor(0, 0, 0);
         yPosition += 10;
       });
 
@@ -420,62 +506,207 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Generated Marketing Copies</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-            h1 { font-size: 1.8em; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px;}
-            h2 { font-size: 1.4em; margin-top: 20px; margin-bottom: 8px; color: #555; }
-            h3 { font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; color: #666; }
-            h4 { font-size: 1.1em; margin-top: 10px; margin-bottom: 5px; color: #777; }
-            p.suggestion { font-style: italic; color: #777; margin-top: -5px; margin-bottom: 10px; }
+                        * { box-sizing: border-box; }
+                        body {
+                            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                            margin: 0;
+                            background: #f4f5f8;
+                            color: #15181d;
+                            line-height: 1.65;
+                            padding: 32px 18px;
+                        }
+                        .container {
+                            max-width: 960px;
+                            margin: 0 auto;
+                            background: #ffffff;
+                            border: 1px solid #e6e8ed;
+                            border-radius: 16px;
+                            box-shadow: 0 8px 30px rgba(17, 24, 39, 0.07);
+                            overflow: hidden;
+                        }
+                        .page-header {
+                            padding: 30px 36px 20px;
+                            border-bottom: 1px solid #eceef3;
+                            background: linear-gradient(180deg, #fcfcfd 0%, #ffffff 100%);
+                        }
+                        .page-header h1 {
+                            margin: 0;
+                            font-size: 2rem;
+                            line-height: 1.2;
+                            letter-spacing: -0.02em;
+                        }
+                        .page-header p {
+                            margin: 10px 0 0;
+                            color: #5b6472;
+                            font-size: 0.95rem;
+                        }
+                        .content-block {
+                            padding: 26px 36px;
+                            border-bottom: 1px solid #f0f2f6;
+                        }
+                        .content-block:last-child { border-bottom: 0; }
+                        .content-type {
+                            margin: 0 0 14px;
+                            font-size: 1.15rem;
+                            font-weight: 700;
+                            letter-spacing: -0.01em;
+                        }
+                        .suggestion {
+                            margin: 0 0 16px;
+                            padding: 10px 12px;
+                            border-left: 3px solid #7a869a;
+                            background: #f8fafc;
+                            color: #374151;
+                            font-size: 0.95rem;
+                        }
+                        .suggestion strong { color: #111827; }
+                        .blog-article {
+                            border: 1px solid #e7e9ef;
+                            border-radius: 14px;
+                            padding: 24px;
+                            margin-top: 14px;
+                            background: #fff;
+                        }
+                        .part-label {
+                            display: inline-block;
+                            margin-bottom: 12px;
+                            padding: 4px 10px;
+                            border-radius: 999px;
+                            border: 1px solid #d8deea;
+                            color: #3d4a5c;
+                            font-size: 0.78rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                        }
+                        .topic-theme {
+                            margin: 0 0 8px;
+                            color: #4b5563;
+                            font-size: 0.9rem;
+                            font-style: italic;
+                        }
+                        .blog-article h2 {
+                            margin: 0 0 10px;
+                            font-size: 1.9rem;
+                            line-height: 1.22;
+                            letter-spacing: -0.02em;
+                            color: #101828;
+                        }
+                        .meta-description {
+                            margin: 0 0 14px;
+                            color: #4b5563;
+                            font-style: italic;
+                        }
+                        .chip-row {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 8px;
+                            margin-bottom: 18px;
+                        }
+                        .chip {
+                            display: inline-flex;
+                            align-items: center;
+                            padding: 4px 10px;
+                            border-radius: 999px;
+                            background: #f3f7ff;
+                            border: 1px solid #d9e6ff;
+                            color: #1d4ed8;
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                        }
+                        .takeaways {
+                            background: #f7faff;
+                            border: 1px solid #dbeafe;
+                            border-radius: 12px;
+                            padding: 14px 16px;
+                            margin: 16px 0 20px;
+                        }
+                        .takeaways h4 {
+                            margin: 0 0 8px;
+                            color: #1d4ed8;
+                            font-size: 0.95rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                        }
+                        .takeaways ul { margin: 0; padding-left: 20px; }
+                        .takeaways li { margin-bottom: 6px; }
+                        .blog-section { margin: 22px 0; }
+                        .blog-section h3 {
+                            margin: 0 0 10px;
+                            font-size: 1.25rem;
+                            line-height: 1.3;
+                            color: #111827;
+                        }
+                        .blog-section p { margin: 0 0 12px; color: #1f2937; }
+                        .blog-section ul { margin: 8px 0 12px; padding-left: 22px; }
+                        .blog-section li { margin-bottom: 7px; color: #1f2937; }
+                        .faq {
+                            margin-top: 20px;
+                            padding-top: 16px;
+                            border-top: 1px dashed #cfd8e3;
+                        }
+                        .faq h4 {
+                            margin: 0 0 10px;
+                            font-size: 1rem;
+                            color: #1f2937;
+                        }
+                        .faq-q { margin: 0 0 6px; font-weight: 700; }
+                        .faq-a { margin: 0; color: #374151; }
             pre {
-              background-color: #f8f8f8;
-              border: 1px solid #ddd;
-              padding: 15px;
+                            margin: 0;
+                            background-color: #fafbfc;
+                            border: 1px solid #e5e7eb;
+                            padding: 16px;
               white-space: pre-wrap;
               word-wrap: break-word;
-              font-family: Consolas, 'Courier New', monospace;
-              font-size: 0.95em;
-              border-radius: 4px;
+                            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+                            font-size: 0.9rem;
+                            line-height: 1.55;
+                            border-radius: 10px;
               overflow-x: auto;
             }
-            div.structured-content { border: 1px solid #ddd; padding: 15px; border-radius: 4px; background-color: #fdfdfd; }
-            ul { margin-top: 5px; }
-            div { margin-bottom: 20px; }
+                        @media print {
+                            body { background: #fff; padding: 0; }
+                            .container { box-shadow: none; border: 0; border-radius: 0; }
+                        }
           </style>
         </head>
         <body>
-          <h1>Generated Marketing Copies</h1>
+                    <main class="container">
+                        <header class="page-header">
+                            <h1>Generated Marketing Copies</h1>
+                            <p>Client-ready marketing deliverables prepared for presentation and handoff.</p>
+                        </header>
       `;
 
       copies.forEach(copy => {
         let marketingText;
-        const itemText = getItemText(copy, editedCopy);
 
-        if (copy.value === 'podcast outline' || copy.value === 'blog post') {
-            const rawHtml = itemText
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;")
-              .replace(/\n/g, '<br>');
-            marketingText = `<div class="structured-content">${rawHtml}</div>`;
+                if (copy.value === 'blog post' && isBlogPostSeries(copy.marketingCopy)) {
+                        marketingText = (copy.marketingCopy as BlogPostStructure[])
+                            .map((post, index, arr) => blogPostToHtml(post, `Part ${index + 1} of ${arr.length}`))
+                            .join('');
+                } else if (copy.value === 'blog post' && isBlogPostStructure(copy.marketingCopy)) {
+                        marketingText = blogPostToHtml(copy.marketingCopy as BlogPostStructure);
         } else {
+                        const itemText = getItemText(copy, editedCopy);
             const rawText = itemText;
-            marketingText = `<pre>${rawText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+                        marketingText = `<pre>${escapeHtml(rawText)}</pre>`;
         }
         
         htmlContent += `
-          <div>
-            <h2>Content Type: ${copy.label}</h2>
+                    <section class="content-block">
+                        <h2 class="content-type">Content Type: ${escapeHtml(copy.label)}</h2>
         `;
         if (copy.imageSuggestion) {
-            htmlContent += `<p class="suggestion"><b>Image Suggestion:</b> ${copy.imageSuggestion.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+                        htmlContent += `<p class="suggestion"><strong>Image Suggestion:</strong> ${escapeHtml(copy.imageSuggestion)}</p>`;
         }
         htmlContent += marketingText;
-        htmlContent += `</div>`;
+                htmlContent += `</section>`;
       });
 
       htmlContent += `
+                    </main>
         </body>
         </html>
       `;
