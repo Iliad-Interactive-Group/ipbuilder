@@ -390,42 +390,66 @@ const renderBlogPostToPdf = (
     return yPosition;
 };
 
+const renderPdfReportHeader = (
+        doc: jsPDF,
+        reportTitle: string,
+        startY: number,
+        margin: number,
+        maxLineWidth: number
+): number => {
+        let yPosition = startY;
+        const generatedOn = new Date().toLocaleDateString();
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(92, 104, 123);
+        doc.text('Marketing Report', margin, yPosition);
+        yPosition += 6;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor(18, 18, 18);
+        const titleLines = doc.splitTextToSize(reportTitle, maxLineWidth);
+        doc.text(titleLines, margin, yPosition);
+        yPosition += titleLines.length * 7.2;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(96, 96, 96);
+        doc.text(`Generated: ${generatedOn}`, margin, yPosition);
+        yPosition += 4;
+
+        doc.setDrawColor(224, 228, 235);
+        doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+        yPosition += 5;
+
+        doc.setTextColor(0, 0, 0);
+        return yPosition;
+};
+
 export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
     try {
       const doc = new jsPDF();
-      let yPosition = 15;
+            let yPosition = 15;
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
       const margin = 15;
       const maxLineWidth = pageWidth - margin * 2;
-    const bodyLineHeight = 5.2;
+            const bodyLineHeight = 5.2;
 
-      doc.setFontSize(18);
-      const mainTitle = "Generated Marketing Copies";
-      const mainTitleWidth = doc.getTextWidth(mainTitle);
-      doc.text(mainTitle, (pageWidth - mainTitleWidth) / 2, yPosition);
-      yPosition += 10;
+            copies.forEach((copy, copyIndex) => {
+                if (copyIndex > 0) {
+                    doc.addPage();
+                }
+                yPosition = margin;
+                yPosition = renderPdfReportHeader(doc, copy.label, yPosition, margin, maxLineWidth);
 
-      copies.forEach((copy) => {
         const ensureSpace = (neededHeight: number) => {
           if (yPosition + neededHeight > pageHeight - margin) {
             doc.addPage();
             yPosition = margin;
           }
         };
-
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(24, 24, 24);
-        const labelLineHeight = 6;
-        const contentTypeLabel = `Content Type: ${copy.label}`;
-        const labelLines = doc.splitTextToSize(contentTypeLabel, maxLineWidth);
-        ensureSpace(labelLines.length * labelLineHeight);
-        doc.text(labelLines, margin, yPosition);
-        yPosition += (labelLines.length * labelLineHeight) + 1;
-        doc.setDrawColor(230, 230, 230);
-        doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
-        yPosition += 4;
 
         if (copy.imageSuggestion) {
             doc.setFontSize(10);
@@ -453,13 +477,27 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             'sections' in (copy.marketingCopy as object);
 
         if (isBlogSeries) {
-            (copy.marketingCopy as BlogPostStructure[]).forEach((post, idx) => {
-                // Part separator with a horizontal rule
+            const posts = copy.marketingCopy as BlogPostStructure[];
+            posts.forEach((post, idx) => {
+                if (idx > 0) {
+                    doc.addPage();
+                    yPosition = margin;
+                    yPosition = renderPdfReportHeader(
+                        doc,
+                        `${copy.label} — Part ${idx + 1} of ${posts.length}`,
+                        yPosition,
+                        margin,
+                        maxLineWidth
+                    );
+                }
+
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
-                ensureSpace(20);
-                const partLabel = `\u2014\u2014 Part ${idx + 1} of ${(copy.marketingCopy as BlogPostStructure[]).length} \u2014\u2014`;
+                doc.setTextColor(48, 57, 72);
+                ensureSpace(10);
+                const partLabel = `Part ${idx + 1} of ${posts.length}`;
                 doc.text(partLabel, margin, yPosition);
+                doc.setTextColor(0, 0, 0);
                 yPosition += 8;
 
                 yPosition = renderBlogPostToPdf(doc, post, yPosition, margin, maxLineWidth, pageHeight, 1.15);
@@ -484,7 +522,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             });
         }
 
-                doc.setTextColor(0, 0, 0);
+            doc.setTextColor(0, 0, 0);
         yPosition += 10;
       });
 
@@ -498,6 +536,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
 
 export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
     try {
+            const generatedOn = new Date().toLocaleDateString();
       let htmlContent = `
         <!DOCTYPE html>
         <html lang="en">
@@ -515,30 +554,48 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                             line-height: 1.65;
                             padding: 32px 18px;
                         }
-                        .container {
+                        .reports-root {
                             max-width: 960px;
                             margin: 0 auto;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 24px;
+                        }
+                        .report-sheet {
                             background: #ffffff;
                             border: 1px solid #e6e8ed;
                             border-radius: 16px;
                             box-shadow: 0 8px 30px rgba(17, 24, 39, 0.07);
                             overflow: hidden;
+                            break-inside: avoid;
+                            page-break-inside: avoid;
                         }
-                        .page-header {
+                        .report-header {
                             padding: 30px 36px 20px;
                             border-bottom: 1px solid #eceef3;
                             background: linear-gradient(180deg, #fcfcfd 0%, #ffffff 100%);
                         }
-                        .page-header h1 {
+                        .report-kicker {
+                            margin: 0 0 8px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.08em;
+                            font-size: 0.76rem;
+                            font-weight: 700;
+                            color: #64748b;
+                        }
+                        .report-header h1 {
                             margin: 0;
                             font-size: 2rem;
                             line-height: 1.2;
                             letter-spacing: -0.02em;
                         }
-                        .page-header p {
+                        .report-header p {
                             margin: 10px 0 0;
                             color: #5b6472;
                             font-size: 0.95rem;
+                        }
+                        .report-body {
+                            padding: 26px 36px;
                         }
                         .content-block {
                             padding: 26px 36px;
@@ -667,16 +724,23 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
             }
                         @media print {
                             body { background: #fff; padding: 0; }
-                            .container { box-shadow: none; border: 0; border-radius: 0; }
+                            .reports-root { gap: 0; max-width: none; }
+                            .report-sheet {
+                                box-shadow: none;
+                                border: 0;
+                                border-radius: 0;
+                                break-after: page;
+                                page-break-after: always;
+                            }
+                            .report-sheet:last-child {
+                                break-after: auto;
+                                page-break-after: auto;
+                            }
                         }
           </style>
         </head>
         <body>
-                    <main class="container">
-                        <header class="page-header">
-                            <h1>Generated Marketing Copies</h1>
-                            <p>Client-ready marketing deliverables prepared for presentation and handoff.</p>
-                        </header>
+                    <main class="reports-root">
       `;
 
       copies.forEach(copy => {
@@ -695,14 +759,19 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
         }
         
         htmlContent += `
-                    <section class="content-block">
-                        <h2 class="content-type">Content Type: ${escapeHtml(copy.label)}</h2>
+                    <section class="report-sheet">
+                        <header class="report-header">
+                            <p class="report-kicker">Marketing Report</p>
+                            <h1>${escapeHtml(copy.label)}</h1>
+                            <p>Generated: ${escapeHtml(generatedOn)}</p>
+                        </header>
+                        <div class="report-body">
         `;
         if (copy.imageSuggestion) {
                         htmlContent += `<p class="suggestion"><strong>Image Suggestion:</strong> ${escapeHtml(copy.imageSuggestion)}</p>`;
         }
         htmlContent += marketingText;
-                htmlContent += `</section>`;
+                htmlContent += `</div></section>`;
       });
 
       htmlContent += `
