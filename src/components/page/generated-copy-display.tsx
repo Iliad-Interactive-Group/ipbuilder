@@ -1,16 +1,18 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info } from 'lucide-react';
+import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info, Pencil, AlertTriangle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation } from '@/ai/flows/generate-marketing-copy';
+import { validateGeneratedText, type BusinessFacts, type ValidationWarning } from '@/lib/validation-utils';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
@@ -37,10 +39,12 @@ interface GeneratedCopyDisplayProps {
   editedCopy: Record<string, string>;
   onCopy: (textToCopy: any, label: string) => void;
   onEdit: (itemValue: string, newText: string) => void;
+  onEditBillboard: (itemValue: string, field: keyof BillboardAdStructure, value: string) => void;
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
   onGenerateAudio: (item: GeneratedCopyItem) => void;
+  businessFacts?: BusinessFacts;
 }
 
 
@@ -116,29 +120,170 @@ const SingleBlogPostDisplay: React.FC<{ post: BlogPostStructure }> = ({ post }) 
   </div>
 );
 
-// Billboard Ad structured display component
-const BillboardAdDisplay: React.FC<{ ad: BillboardAdStructure }> = ({ ad }) => (
-  <div className="space-y-5 text-left animate-in fade-in duration-500">
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-8 shadow-lg">
-      <p className="text-xs uppercase tracking-widest text-slate-400 mb-3 font-semibold">Billboard Concept</p>
-      <h2 className="text-4xl font-extrabold leading-tight mb-3 tracking-tight">{ad.headline}</h2>
-      <p className="text-lg text-slate-300 leading-relaxed">{ad.subheadline}</p>
-      <div className="mt-6 inline-block bg-amber-400 text-slate-900 font-bold px-6 py-2.5 rounded-lg text-sm uppercase tracking-wider">
-        {ad.cta}
-      </div>
+// Word count helper
+const countWords = (text: string): number => text.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+// Word count badge component
+const WordCountBadge: React.FC<{ text: string; limit: number }> = ({ text, limit }) => {
+  const count = countWords(text);
+  const isOver = count > limit;
+  const isClose = count === limit;
+  return (
+    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
+      isOver ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' :
+      isClose ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' :
+      'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+    }`}>
+      {count}/{limit} words
+    </span>
+  );
+};
+
+// Validation warnings display component
+const ValidationWarnings: React.FC<{ warnings: ValidationWarning[] }> = ({ warnings }) => {
+  if (warnings.length === 0) return null;
+  return (
+    <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg space-y-1.5">
+      <p className="text-xs font-bold uppercase tracking-wider text-yellow-700 dark:text-yellow-400 flex items-center gap-1.5">
+        <AlertTriangle className="w-3.5 h-3.5" /> Factual Data Warnings
+      </p>
+      {warnings.map((w, i) => (
+        <p key={i} className="text-xs text-yellow-800 dark:text-yellow-300">
+          {w.type === 'fabricated_url' && `Potential fabricated URL found: "${w.found}" — No website URL was provided in the form.`}
+          {w.type === 'wrong_url' && `URL mismatch: Found "${w.found}" but expected "${w.expected}".`}
+          {w.type === 'fabricated_phone' && `Potential fabricated phone found: "${w.found}" — No phone number was provided in the form.`}
+          {w.type === 'wrong_phone' && `Phone mismatch: Found "${w.found}" but expected "${w.expected}".`}
+        </p>
+      ))}
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-      <div className="bg-muted/50 rounded-lg p-4 border">
-        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">Visual Notes</p>
-        <p className="text-foreground">{ad.visualNotes}</p>
+  );
+};
+
+// Editable Billboard Ad display component
+const EditableBillboardAdDisplay: React.FC<{
+  ad: BillboardAdStructure;
+  onFieldChange: (field: keyof BillboardAdStructure, value: string) => void;
+  businessFacts?: BusinessFacts;
+}> = ({ ad, onFieldChange, businessFacts }) => {
+  const [editingField, setEditingField] = useState<string | null>(null);
+  
+  // Compute validation warnings from all text fields
+  const allText = `${ad.headline} ${ad.subheadline} ${ad.cta}`;
+  const warnings = businessFacts ? validateGeneratedText(allText, businessFacts) : [];
+
+  const EditableField: React.FC<{
+    fieldKey: keyof BillboardAdStructure;
+    value: string;
+    label: string;
+    wordLimit?: number;
+    className?: string;
+    inputType?: 'input' | 'textarea';
+  }> = ({ fieldKey, value, label, wordLimit, className = '', inputType = 'input' }) => {
+    const isEditing = editingField === fieldKey;
+    
+    return (
+      <div className="group relative">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="font-semibold text-xs uppercase tracking-wider text-slate-400">{label}</p>
+          {wordLimit && <WordCountBadge text={value} limit={wordLimit} />}
+          {!isEditing && (
+            <button 
+              onClick={() => setEditingField(fieldKey)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              title={`Edit ${label}`}
+            >
+              <Pencil className="w-3 h-3 text-slate-400 hover:text-white" />
+            </button>
+          )}
+        </div>
+        {isEditing ? (
+          inputType === 'textarea' ? (
+            <Textarea
+              value={value}
+              onChange={(e) => onFieldChange(fieldKey, e.target.value)}
+              onBlur={() => setEditingField(null)}
+              rows={3}
+              autoFocus
+              className={`bg-slate-700/80 border-amber-400/50 text-white text-sm focus:ring-amber-400 ${className}`}
+            />
+          ) : (
+            <Input
+              value={value}
+              onChange={(e) => onFieldChange(fieldKey, e.target.value)}
+              onBlur={() => setEditingField(null)}
+              autoFocus
+              className={`bg-slate-700/80 border-amber-400/50 text-white focus:ring-amber-400 ${className}`}
+            />
+          )
+        ) : (
+          <div 
+            onClick={() => setEditingField(fieldKey)}
+            className={`cursor-pointer hover:bg-slate-700/50 rounded px-1 -mx-1 transition-colors ${className}`}
+          >
+            {value || <span className="italic text-slate-500">Click to edit...</span>}
+          </div>
+        )}
       </div>
-      <div className="bg-muted/50 rounded-lg p-4 border">
-        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">Overall Concept</p>
-        <p className="text-foreground">{ad.overallConcept}</p>
+    );
+  };
+
+  return (
+    <div className="space-y-5 text-left animate-in fade-in duration-500">
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-8 shadow-lg">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Billboard Concept</p>
+          <p className="text-xs text-slate-500 flex items-center gap-1"><Pencil className="w-3 h-3" /> Click any field to edit</p>
+        </div>
+        <EditableField 
+          fieldKey="headline" 
+          value={ad.headline} 
+          label="Headline" 
+          wordLimit={7}
+          className="text-4xl font-extrabold leading-tight tracking-tight"
+        />
+        <div className="mt-3">
+          <EditableField 
+            fieldKey="subheadline" 
+            value={ad.subheadline} 
+            label="Subheadline" 
+            wordLimit={10}
+            className="text-lg text-slate-300 leading-relaxed"
+          />
+        </div>
+        <div className="mt-6">
+          <EditableField 
+            fieldKey="cta" 
+            value={ad.cta} 
+            label="Call to Action" 
+            wordLimit={5}
+            className="inline-block bg-amber-400 text-slate-900 font-bold px-6 py-2.5 rounded-lg text-sm uppercase tracking-wider"
+          />
+        </div>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div className="bg-muted/50 rounded-lg p-4 border group">
+          <EditableField
+            fieldKey="visualNotes"
+            value={ad.visualNotes}
+            label="Visual Notes"
+            inputType="textarea"
+            className="text-foreground"
+          />
+        </div>
+        <div className="bg-muted/50 rounded-lg p-4 border group">
+          <EditableField
+            fieldKey="overallConcept"
+            value={ad.overallConcept}
+            label="Overall Concept"
+            inputType="textarea"
+            className="text-foreground"
+          />
+        </div>
+      </div>
+      <ValidationWarnings warnings={warnings} />
     </div>
-  </div>
-);
+  );
+};
 
 // Display Ad variation card
 const DisplayAdVariationCard: React.FC<{ variation: DisplayAdVariation; index: number; total: number }> = ({ variation, index, total }) => (
@@ -227,10 +372,12 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   editedCopy,
   onCopy,
   onEdit,
+  onEditBillboard,
   onExportTxt,
   onExportPdf,
   onExportHtml,
   onGenerateAudio,
+  businessFacts,
 }) => {
   if (!generatedCopy || generatedCopy.length === 0) {
     return null;
@@ -331,7 +478,11 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         ) : isGenericBlogPost ? (
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
                         ) : isBillboardAd ? (
-                           <BillboardAdDisplay ad={item.marketingCopy as BillboardAdStructure} />
+                           <EditableBillboardAdDisplay 
+                             ad={item.marketingCopy as BillboardAdStructure} 
+                             onFieldChange={(field, value) => onEditBillboard(item.value, field, value)}
+                             businessFacts={businessFacts}
+                           />
                         ) : isDisplayAd ? (
                            <div className="space-y-4">
                              <p className="text-sm text-muted-foreground font-medium">
@@ -369,11 +520,21 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                              ))}
                            </Tabs>
                         ) : isEditableContent(item) ? (
-                           <EditableTextDisplay 
-                                item={item} 
-                                editedText={editedCopy[item.value]} 
-                                onEdit={(newText) => onEdit(item.value, newText)}
-                           />
+                           <>
+                             <EditableTextDisplay 
+                                  item={item} 
+                                  editedText={editedCopy[item.value]} 
+                                  onEdit={(newText) => onEdit(item.value, newText)}
+                             />
+                             {businessFacts && (
+                               <ValidationWarnings 
+                                 warnings={validateGeneratedText(
+                                   editedCopy[item.value] || (typeof item.marketingCopy === 'string' ? item.marketingCopy : ''),
+                                   businessFacts
+                                 )} 
+                               />
+                             )}
+                           </>
                         ) : null}
                         
                         {/* Single image display */}

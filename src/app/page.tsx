@@ -28,7 +28,7 @@ import { Loader2, Download } from 'lucide-react';
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopyAction, generateImageAction, generateAudioAction } from '@/app/actions';
-import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput } from '@/ai/flows/generate-marketing-copy';
+import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput, BillboardAdStructure } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 import ProtectedRoute from '@/components/protected-route';
@@ -40,6 +40,7 @@ import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/gener
 import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
 import { isVariantsArray } from '@/lib/variant-utils';
+import type { BusinessFacts } from '@/lib/validation-utils';
 import { Terminal } from 'lucide-react';
 
 interface GenerationProgress {
@@ -78,6 +79,8 @@ function IPBuilderPageContent() {
     defaultValues: {
       companyName: "",
       productDescription: "",
+      websiteUrl: "",
+      businessPhone: "",
       keywords: "",
       contentType: [],
       tone: "_no_tone_selected_",
@@ -135,6 +138,8 @@ function IPBuilderPageContent() {
     form.reset({
       companyName: "",
       productDescription: "",
+      websiteUrl: "",
+      businessPhone: "",
       keywords: "",
       contentType: [],
       tone: "_no_tone_selected_",
@@ -170,6 +175,28 @@ function IPBuilderPageContent() {
 
   const handleCopyEdit = (itemValue: string, newText: string) => {
     setEditedCopy(prev => ({...prev, [itemValue]: newText}));
+  };
+
+  const handleEditBillboard = (itemValue: string, field: keyof BillboardAdStructure, value: string) => {
+    setGeneratedCopy(prev => prev.map(copy => {
+      if (copy.value === itemValue && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'headline' in (copy.marketingCopy as object)) {
+        return {
+          ...copy,
+          marketingCopy: {
+            ...(copy.marketingCopy as BillboardAdStructure),
+            [field]: value,
+          }
+        };
+      }
+      return copy;
+    }));
+  };
+
+  // Compute business facts from form data for validation
+  const businessFacts: BusinessFacts = {
+    companyName: form.getValues('companyName') || undefined,
+    websiteUrl: form.getValues('websiteUrl') || undefined,
+    businessPhone: form.getValues('businessPhone') || undefined,
   };
 
   const onSubmit = async (data: MarketingBriefFormData) => {
@@ -248,6 +275,8 @@ function IPBuilderPageContent() {
             additionalInstructions: data.additionalInstructions || undefined,
             companyName: data.companyName,
             productDescription: data.productDescription,
+            websiteUrl: data.websiteUrl || undefined,
+            businessPhone: data.businessPhone || undefined,
           };
 
           if (typeValue === "social media post" && platformForAI) {
@@ -664,10 +693,12 @@ function IPBuilderPageContent() {
               editedCopy={editedCopy}
               onCopy={handleCopy}
               onEdit={handleCopyEdit}
+              onEditBillboard={handleEditBillboard}
               onExportTxt={handleExportTxt}
               onExportPdf={handleExportPdf}
               onExportHtml={handleExportHtml}
               onGenerateAudio={handleGenerateAudio}
+              businessFacts={businessFacts}
             />
           )}
 

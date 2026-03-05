@@ -63,7 +63,15 @@ const GenerateMarketingCopyInputSchema = z.object({
   blogFormat: z
     .string()
     .optional()
-    .describe("The format of the blog post to generate ('single' or 'series'). Defaults to 'series' if not specified.")
+    .describe("The format of the blog post to generate ('single' or 'series'). Defaults to 'series' if not specified."),
+  websiteUrl: z
+    .string()
+    .optional()
+    .describe("The client's actual website URL. Must be used EXACTLY as provided — never fabricated or modified."),
+  businessPhone: z
+    .string()
+    .optional()
+    .describe("The client's actual business phone number. Must be used EXACTLY as provided — never fabricated or modified."),
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -124,9 +132,9 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 // --- Billboard Ad structured schema ---
 const BillboardAdStructureSchema = z.object({
-  headline: z.string().describe("A short, punchy headline (under 10 words) that hooks instantly."),
-  subheadline: z.string().describe("1-2 lines of supporting copy for clarity and persuasion."),
-  cta: z.string().describe("A clear, action-oriented call-to-action."),
+  headline: z.string().describe("A punchy headline of MAXIMUM 7 words that hooks instantly. Count your words — 7 is the hard limit."),
+  subheadline: z.string().describe("Supporting copy of MAXIMUM 10 words for clarity and persuasion."),
+  cta: z.string().describe("A clear call-to-action of MAXIMUM 5 words (e.g., 'Visit us today', 'Call now')."),
   visualNotes: z.string().describe("Suggestions for imagery, colors, or design elements."),
   overallConcept: z.string().describe("Brief description of the layout strategy for maximum visibility (e.g., large fonts, high contrast)."),
 });
@@ -199,6 +207,15 @@ const socialMediaPrompt = ai.definePrompt({
     Company Name (if provided): {{companyName}}
     Product Description (if provided): {{productDescription}}
 
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
+
     {{#if additionalInstructions}}
     Additional instructions: {{additionalInstructions}}
     {{/if}}
@@ -218,6 +235,15 @@ const podcastPrompt = ai.definePrompt({
     - Product Description: {{productDescription}}
     - Tone: {{tone}}
     - Additional Instructions: {{additionalInstructions}}
+
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
     
     Structure the podcast outline according to the provided JSON output schema. Ensure the outline is listener-focused (flowing narrative, varied pacing), monetizable (sponsor integrations), and actionable.
     Flesh out all the fields in the JSON schema to create a comprehensive and logical episode plan. This is for an audio-only format, so do not generate an image suggestion.
@@ -252,6 +278,15 @@ const blogPostSeriesPrompt = ai.definePrompt({
     - Keywords: {{keywords}}
     - Additional instructions: {{additionalInstructions}}
 
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
+
     REQUIREMENTS FOR EACH POST:
     1.  **Dual Optimization**: Write for humans (engaging hook, clear value) AND for AI Search/SGE (Clear definitions, structured data).
     2.  **Key Takeaways**: Include 3 specific bullet points at the very top summarizing the value (Crucial for AI Snapshots).
@@ -277,6 +312,15 @@ const blogPostSinglePrompt = ai.definePrompt({
     - Tone: {{tone}}
     - Keywords: {{keywords}}
     - Additional instructions: {{additionalInstructions}}
+
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
 
     REQUIREMENTS:
     1.  **Dual Optimization**: Write for humans (engaging hook, clear value) AND for AI Search/SGE (Clear definitions, structured data).
@@ -306,6 +350,8 @@ const billboardPrompt = ai.definePrompt({
     })},
     prompt: `You are a legendary billboard ad creator, channeling David Ogilvy (for concise, benefit-driven copy that captures attention instantly), Dan Kennedy (for direct-response messaging that provokes action), and Gary Halbert (for clever, provocative headlines that stand out). Generate a standout billboard ad concept for the client, crafted to deliver high-impact, memorable content that stops traffic and drives results.
 
+    CRITICAL CONTEXT: This billboard will be read by drivers at 40-65 mph. They have roughly 5-7 seconds of viewing time. Every extra word KILLS readability. Brevity is not optional — it is the #1 success factor.
+
     Inputs to incorporate:
     - Client's business summary: {{productDescription}}
     - Company: {{companyName}}
@@ -317,13 +363,22 @@ const billboardPrompt = ai.definePrompt({
     - Additional instructions: {{additionalInstructions}}
     {{/if}}
 
-    Return a structured JSON object with these fields:
-    - headline: A short, punchy phrase (under 10 words) that hooks with a problem or benefit.
-    - subheadline: 1-2 lines of supporting copy for clarity and persuasion.
-    - cta: A clear call-to-action.
-    - visualNotes: Suggestions for imagery or design elements.
-    - overallConcept: Describe the layout strategy for maximum visibility (e.g., large fonts, high contrast).
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    {{/if}}
 
+    STRICT WORD COUNT RULES (these are HARD LIMITS, not suggestions):
+    - headline: MAXIMUM 7 words. Aim for 4-6 words. A punchy phrase that hooks with a problem or benefit.
+    - subheadline: MAXIMUM 10 words. One short supporting line for clarity.
+    - cta: MAXIMUM 5 words. A direct call-to-action (e.g., "Visit acme.com today", "Call 555-1234").
+    - visualNotes: Suggestions for imagery or design elements (no word limit).
+    - overallConcept: Layout strategy for maximum visibility (no word limit).
+
+    Count your words carefully. If the headline has 8+ words, it is WRONG. Rewrite until it fits.
     Keep it ultra-concise, visually oriented, and focused on instant impact.
     {{#if numberOfImageVariations}}
     You MUST also generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
@@ -356,6 +411,15 @@ const displayAdPrompt = ai.definePrompt({
     - Additional instructions: {{additionalInstructions}}
     {{/if}}
 
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
+
     Return a JSON object with 'marketingCopy' as an array of 3-5 variation objects. Each object must have:
     - headline: Short, attention-grabbing phrase (under 10 words).
     - body: 1-2 sentences of persuasive detail.
@@ -385,6 +449,15 @@ const genericPrompt = ai.definePrompt({
   
   {{#if tone}}
   Adapt all generated copy to have a {{tone}} tone.
+  {{/if}}
+
+  {{#if websiteUrl}}
+  FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+  - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+  {{#if businessPhone}}
+  - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+  {{/if}}
+  If no URL or phone is provided above, do NOT make one up. Simply omit it.
   {{/if}}
 
   {{#if isRadioScript}}

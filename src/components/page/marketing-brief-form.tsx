@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Wand2, Loader2, Palette, Lightbulb, Save, History, Clock, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail, Volume2 } from 'lucide-react';
+import { FileText, Wand2, Loader2, Palette, Lightbulb, Save, History, Clock, Monitor, Users, Mic, Tv, Podcast, Presentation, LayoutDashboard, Image as ImageIconLucide, Mail, Volume2, Globe, Phone } from 'lucide-react';
 import { suggestKeywords } from '@/ai/flows/suggest-keywords-flow';
 import { useToast } from "@/hooks/use-toast";
 
@@ -122,6 +122,8 @@ const LOCAL_STORAGE_BRIEF_KEY = 'ipbuilder_saved_brief';
 export const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   productDescription: z.string().min(1, "Product description is required"),
+  websiteUrl: z.string().optional(),
+  businessPhone: z.string().optional(),
   keywords: z.string().min(1, "Keywords are required (comma-separated)"),
   contentType: z.array(z.string()).min(1, "Please select at least one content type."),
   blogFormat: z.string().optional(),
@@ -216,6 +218,8 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
       const briefData: SavedBriefData = {
         companyName: form.getValues("companyName"),
         productDescription: form.getValues("productDescription"),
+        websiteUrl: form.getValues("websiteUrl") || "",
+        businessPhone: form.getValues("businessPhone") || "",
         keywords: form.getValues("keywords"),
         tone: form.getValues("tone") || NO_TONE_SELECTED_VALUE,
         blogFormat: form.getValues("blogFormat") || NO_BLOG_FORMAT_SELECTED_VALUE,
@@ -242,6 +246,8 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
         form.reset({
             companyName: savedBrief.companyName || "",
             productDescription: savedBrief.productDescription || "",
+            websiteUrl: (savedBrief as any).websiteUrl || "",
+            businessPhone: (savedBrief as any).businessPhone || "",
             keywords: savedBrief.keywords || "",
             contentType: form.getValues('contentType'), 
             tone: savedBrief.tone || NO_TONE_SELECTED_VALUE,
@@ -299,6 +305,40 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="websiteUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Globe className="w-4 h-4 mr-2 text-muted-foreground"/>Website URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., www.acme.com" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      AI will use this exact URL instead of fabricating one.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="businessPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Phone className="w-4 h-4 mr-2 text-muted-foreground"/>Business Phone (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., (555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      AI will use this exact phone number instead of fabricating one.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="keywords"
