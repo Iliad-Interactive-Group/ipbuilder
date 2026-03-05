@@ -252,16 +252,18 @@ const blogPostToHtml = (post: BlogPostStructure, partLabel?: string): string => 
 
 /**
  * Get the individual social media posts as a string array.
- * Falls back to splitting the edited text if available.
+ * Prefers the original marketingCopy array (which has the correct post boundaries).
+ * Only falls back to splitting editedCopy if the user has actually edited the text.
  */
 const getSocialMediaPosts = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string[] => {
-    const editedText = editedCopy[item.value];
-    if (editedText !== undefined) {
-        // User may have edited; split on double-newline to recover individual posts
-        return editedText.split(/\n\n+/).filter(p => p.trim().length > 0);
-    }
+    // If the original data is an array, always use it — it has perfect post boundaries
     if (Array.isArray(item.marketingCopy)) {
         return item.marketingCopy.map(p => typeof p === 'string' ? p : String(p));
+    }
+    // Fallback: user may have edited or data arrived as single string
+    const editedText = editedCopy[item.value];
+    if (editedText !== undefined) {
+        return [editedText];
     }
     return [String(item.marketingCopy)];
 };
@@ -659,7 +661,15 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
         const addImageToPdf = (dataUri: string, caption: string) => {
             try {
                 const imgW = maxLineWidth * 0.65;
-                const imgH = imgW;
+                // Determine actual aspect ratio from the data URI
+                let imgH = imgW * 0.75; // default 4:3 fallback
+                try {
+                    const img = new Image();
+                    img.src = dataUri;
+                    if (img.naturalWidth && img.naturalHeight) {
+                        imgH = imgW * (img.naturalHeight / img.naturalWidth);
+                    }
+                } catch { /* use default ratio */ }
                 if (yPosition + imgH + 12 > pageHeight - margin) {
                     doc.addPage();
                     yPosition = margin;
