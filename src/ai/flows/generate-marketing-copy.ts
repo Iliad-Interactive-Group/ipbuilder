@@ -122,6 +122,25 @@ const BlogPostStructureSchema = z.object({
 });
 export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
+// --- Billboard Ad structured schema ---
+const BillboardAdStructureSchema = z.object({
+  headline: z.string().describe("A short, punchy headline (under 10 words) that hooks instantly."),
+  subheadline: z.string().describe("1-2 lines of supporting copy for clarity and persuasion."),
+  cta: z.string().describe("A clear, action-oriented call-to-action."),
+  visualNotes: z.string().describe("Suggestions for imagery, colors, or design elements."),
+  overallConcept: z.string().describe("Brief description of the layout strategy for maximum visibility (e.g., large fonts, high contrast)."),
+});
+export type BillboardAdStructure = z.infer<typeof BillboardAdStructureSchema>;
+
+// --- Display Ad Copy structured schema (3-5 variations) ---
+const DisplayAdVariationSchema = z.object({
+  headline: z.string().describe("Short, attention-grabbing headline (under 10 words)."),
+  body: z.string().describe("1-2 sentences of persuasive detail."),
+  cta: z.string().describe("Urgent, action-oriented button text."),
+  visualNotes: z.string().describe("Suggest imagery or layout for the ad."),
+});
+export type DisplayAdVariation = z.infer<typeof DisplayAdVariationSchema>;
+
 
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
@@ -130,6 +149,8 @@ const GenerateMarketingCopyOutputSchema = z.object({
     PodcastOutlineStructureSchema,
     BlogPostStructureSchema,
     z.array(BlogPostStructureSchema).describe('An array of blog posts for a content series'),
+    BillboardAdStructureSchema,
+    z.array(DisplayAdVariationSchema).describe('An array of 3-5 display ad variations'),
     z.array(z.object({
       variant: z.number().describe('The variant number'),
       copy: z.string().describe('The marketing copy for this variant')
@@ -274,6 +295,84 @@ const blogPostSinglePrompt = ai.definePrompt({
 });
 
 
+// --- Billboard Ad dedicated prompt (structured output) ---
+const billboardPrompt = ai.definePrompt({
+    name: 'generateBillboardAdPrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({
+        marketingCopy: BillboardAdStructureSchema,
+        imageSuggestion: z.string().optional(),
+        imageSuggestions: z.array(z.string()).optional(),
+    })},
+    prompt: `You are a legendary billboard ad creator, channeling David Ogilvy (for concise, benefit-driven copy that captures attention instantly), Dan Kennedy (for direct-response messaging that provokes action), and Gary Halbert (for clever, provocative headlines that stand out). Generate a standout billboard ad concept for the client, crafted to deliver high-impact, memorable content that stops traffic and drives results.
+
+    Inputs to incorporate:
+    - Client's business summary: {{productDescription}}
+    - Company: {{companyName}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords: {{keywords}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    Return a structured JSON object with these fields:
+    - headline: A short, punchy phrase (under 10 words) that hooks with a problem or benefit.
+    - subheadline: 1-2 lines of supporting copy for clarity and persuasion.
+    - cta: A clear call-to-action.
+    - visualNotes: Suggestions for imagery or design elements.
+    - overallConcept: Describe the layout strategy for maximum visibility (e.g., large fonts, high contrast).
+
+    Keep it ultra-concise, visually oriented, and focused on instant impact.
+    {{#if numberOfImageVariations}}
+    You MUST also generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
+    {{else}}
+    You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+    {{/if}}
+    Output only the structured JSON.
+    `,
+});
+
+// --- Display Ad Copy dedicated prompt (structured output: array of 3-5 variations) ---
+const displayAdPrompt = ai.definePrompt({
+    name: 'generateDisplayAdCopyPrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({
+        marketingCopy: z.array(DisplayAdVariationSchema).describe('An array of 3-5 display ad copy variations.'),
+        imageSuggestion: z.string().optional(),
+        imageSuggestions: z.array(z.string()).optional(),
+    })},
+    prompt: `You are a top display ad copywriter, drawing from Joanna Wiebe (for persuasive, tested variations that maximize clicks), Lianna Patch (for humorous, targeted ads that boost engagement), and Neville Medhora (for short-form copy that excels in ad networks with A/B insights). Create 3-5 standout display ad copy variations for the client, crafted to grab attention, resonate, and convert in digital spaces.
+
+    Inputs to incorporate:
+    - Client's business summary: {{productDescription}}
+    - Company: {{companyName}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords: {{keywords}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    Return a JSON object with 'marketingCopy' as an array of 3-5 variation objects. Each object must have:
+    - headline: Short, attention-grabbing phrase (under 10 words).
+    - body: 1-2 sentences of persuasive detail.
+    - cta: Urgent, action-oriented button text.
+    - visualNotes: Suggest imagery or layout for the ad.
+
+    Keep it concise, benefit-focused, and optimized for clicks.
+    {{#if numberOfImageVariations}}
+    You MUST also generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
+    {{else}}
+    You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+    {{/if}}
+    Output only the structured JSON.
+    `,
+});
+
+
 const genericPrompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
   input: {schema: z.any()},
@@ -288,34 +387,7 @@ const genericPrompt = ai.definePrompt({
   Adapt all generated copy to have a {{tone}} tone.
   {{/if}}
 
-  {{#if isDisplayAdCopy}}
-  You are a top display ad copywriter, drawing from Joanna Wiebe (for persuasive, tested variations that maximize clicks), Lianna Patch (for humorous, targeted ads that boost engagement), and Neville Medhora (for short-form copy that excels in ad networks with A/B insights). Create 3-5 standout display ad copy variations for the client, crafted to grab attention, resonate, and convert in digital spaces.
-  Keep it concise (headlines under 10 words), benefit-focused, and optimized for clicks. Output only the formatted ads, without extra explanation.
-
-  Inputs to incorporate:
-  - Client's business summary: {{productDescription}}
-  - Company: {{companyName}}
-  {{#if tone}}
-  - Tone: {{tone}}
-  {{/if}}
-  - Keywords: {{keywords}}
-  {{#if additionalInstructions}}
-  - Additional instructions: {{additionalInstructions}}
-  {{/if}}
-  
-  Structure the display ad copy like this, providing 3-5 distinct variations:
-  
-  Headline: Short, attention-grabbing phrases.
-  Body: 1-2 sentences of persuasive detail.
-  CTA: Urgent, action-oriented button text.
-  Visual Notes: Suggest imagery or layout for the ad.
-
-  {{#if numberOfImageVariations}}
-  You MUST generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
-  {{else}}
-  You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
-  {{/if}}
-  {{else if isRadioScript}}
+  {{#if isRadioScript}}
   You are a master radio scriptwriter, embodying the styles of Melissa D'Anzieri (for memorable, audience-targeted narratives with emotional impact), Dan Kennedy (for direct-response persuasion focused on ROI and customer psychology), and John Carlton (for bold, story-based techniques that convert). 
   Generate a radio script for the specified length, crafted to deliver standout, attention-grabbing content that resonates and drives action.
   Output only the formatted script (e.g., [NARRATOR:], [SFX:]), without extra explanation.
@@ -435,33 +507,6 @@ const genericPrompt = ai.definePrompt({
   Signature: Professional sign-off with contact info.
 
   Ensure it's personalized, mobile-friendly (short paragraphs), and compliance-ready (e.g., unsubscribe note). Output only the formatted email (e.g., Subject:, Greeting:, Body Paragraphs:, CTA:, Signature:), without any meta-commentary.
-  {{else if isBillboard}}
-  You are a legendary billboard ad creator, channeling David Ogilvy (for concise, benefit-driven copy that captures attention instantly), Dan Kennedy (for direct-response messaging that provokes action), and Gary Halbert (for clever, provocative headlines that stand out). Generate a standout billboard ad concept for the client, crafted to deliver high-impact, memorable content that stops traffic and drives results.
-  
-  Inputs to incorporate:
-  - Client's business summary: {{productDescription}}
-  - Company: {{companyName}}
-  {{#if tone}}
-  - Tone: {{tone}}
-  {{/if}}
-  {{#if additionalInstructions}}
-  - Additional instructions: {{additionalInstructions}}
-  {{/if}}
-
-  Structure the billboard ad like this:
-  Headline: A short, punchy phrase that hooks with a problem or benefit.
-  Subheadline/Body: 1-2 lines of supporting copy for clarity and persuasion.
-  CTA/Visuals: A clear call to action and suggestions for imagery or design elements.
-  Overall Concept: Describe layout for maximum visibility (e.g., large fonts, high contrast).
-
-  Keep it ultra-concise (under 10 words ideally), visually oriented, and focused on instant impact.
-  Output only the formatted ad (e.g., Headline:, Subheadline:, CTA:, Visual Notes:), without extra explanation.
-  {{#if numberOfImageVariations}}
-  You MUST generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
-  {{else}}
-  You MUST generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
-  {{/if}}
-
   {{else if isWebsiteWireframe}}
   You are a premier UX/UI strategist, embodying Don Norman (for intuitive, user-centered design principles), Jakob Nielsen (for usability-optimized navigation and conversion flows), and Aurélien Salomon (for minimalist, high-fidelity wireframes that enhance experiences). Generate a detailed textual description of a website wireframe for the client, designed to outline standout, user-friendly structures that engage and convert.
 
@@ -522,9 +567,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
             currentYear: new Date().getFullYear().toString(),
             isRadioScript: input.contentType === "radio script",
             isTvScript: input.contentType === "tv script",
-            isBillboard: input.contentType === "billboard",
             isWebsiteWireframe: input.contentType === "website wireframe",
-            isDisplayAdCopy: input.contentType === "display ad copy",
             isLeadGenerationEmail: input.contentType === "lead generation email",
             isWebsiteCopy: input.contentType === "website copy",
             is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
@@ -593,6 +636,26 @@ const generateMarketingCopyFlow = ai.defineFlow(
               return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
           }
       }
+
+      // Isolate billboard ad generation for its structured JSON output
+      if (input.contentType === "billboard") {
+          const { output } = await billboardPrompt(input);
+          if (!output) {
+              throw new Error("The AI failed to generate the billboard ad.");
+          }
+          console.log('[MktgCopy Flow] Generated structured billboard ad');
+          return output;
+      }
+
+      // Isolate display ad copy generation for its structured JSON output (array of variations)
+      if (input.contentType === "display ad copy") {
+          const { output } = await displayAdPrompt(input);
+          if (!output) {
+              throw new Error("The AI failed to generate display ad copy.");
+          }
+          console.log('[MktgCopy Flow] Generated structured display ad copy with', Array.isArray(output.marketingCopy) ? output.marketingCopy.length : 0, 'variations');
+          return output;
+      }
       
       // For all other content types, use the generic prompt
       const promptData = {
@@ -600,9 +663,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
         currentYear: new Date().getFullYear().toString(),
         isRadioScript: input.contentType === "radio script",
         isTvScript: input.contentType === "tv script",
-        isBillboard: input.contentType === "billboard",
         isWebsiteWireframe: input.contentType === "website wireframe",
-        isDisplayAdCopy: input.contentType === "display ad copy",
         isLeadGenerationEmail: input.contentType === "lead generation email",
         isWebsiteCopy: input.contentType === "website copy",
         is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",

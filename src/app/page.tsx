@@ -314,11 +314,12 @@ function IPBuilderPageContent() {
       // Also initialize the editedCopy state with the generated copy
       const initialEdits: Record<string, string> = {};
       initialResults.forEach(item => {
-          // Skip structured content types (blog posts, podcast outlines) - these are
-          // rendered from their structured data and should NOT be flattened to strings.
-          // Flattening BlogPostStructure[] with .join() produces "[object Object]" which
-          // corrupts the export output.
-          if (item.value === 'blog post' || item.value === 'podcast outline') {
+          // Skip structured content types - these are rendered from their
+          // structured data and should NOT be flattened to strings.
+          // Flattening structured objects with .join() produces "[object Object]"
+          // which corrupts the export output.
+          if (item.value === 'blog post' || item.value === 'podcast outline' ||
+              item.value === 'billboard' || item.value === 'display ad copy') {
               return; // Do not add to editedCopy - export functions handle these natively
           }
           if (typeof item.marketingCopy === 'string') {

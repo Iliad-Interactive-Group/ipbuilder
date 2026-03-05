@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation } from '@/ai/flows/generate-marketing-copy';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
 import { CONTENT_TYPES } from '@/lib/content-types';
@@ -20,7 +20,7 @@ import { isVariantsArray, VariantCopy } from '@/lib/variant-utils';
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | VariantCopy[];
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | BillboardAdStructure | DisplayAdVariation[] | VariantCopy[];
   imageSuggestion?: string;
   imageSuggestions?: string[];
   isError?: boolean;
@@ -113,6 +113,51 @@ const SingleBlogPostDisplay: React.FC<{ post: BlogPostStructure }> = ({ post }) 
             </div>
         </div>
     )}
+  </div>
+);
+
+// Billboard Ad structured display component
+const BillboardAdDisplay: React.FC<{ ad: BillboardAdStructure }> = ({ ad }) => (
+  <div className="space-y-5 text-left animate-in fade-in duration-500">
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-8 shadow-lg">
+      <p className="text-xs uppercase tracking-widest text-slate-400 mb-3 font-semibold">Billboard Concept</p>
+      <h2 className="text-4xl font-extrabold leading-tight mb-3 tracking-tight">{ad.headline}</h2>
+      <p className="text-lg text-slate-300 leading-relaxed">{ad.subheadline}</p>
+      <div className="mt-6 inline-block bg-amber-400 text-slate-900 font-bold px-6 py-2.5 rounded-lg text-sm uppercase tracking-wider">
+        {ad.cta}
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div className="bg-muted/50 rounded-lg p-4 border">
+        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">Visual Notes</p>
+        <p className="text-foreground">{ad.visualNotes}</p>
+      </div>
+      <div className="bg-muted/50 rounded-lg p-4 border">
+        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">Overall Concept</p>
+        <p className="text-foreground">{ad.overallConcept}</p>
+      </div>
+    </div>
+  </div>
+);
+
+// Display Ad variation card
+const DisplayAdVariationCard: React.FC<{ variation: DisplayAdVariation; index: number; total: number }> = ({ variation, index, total }) => (
+  <div className="border rounded-xl p-5 bg-card shadow-sm space-y-3 animate-in fade-in duration-500">
+    <div className="flex items-center justify-between">
+      <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+        Variation {index + 1} of {total}
+      </span>
+    </div>
+    <h3 className="text-xl font-bold text-foreground leading-snug">{variation.headline}</h3>
+    <p className="text-sm text-muted-foreground leading-relaxed">{variation.body}</p>
+    <div className="flex items-center gap-3 pt-2">
+      <span className="inline-block bg-primary text-primary-foreground font-semibold px-4 py-1.5 rounded-md text-xs uppercase tracking-wide">
+        {variation.cta}
+      </span>
+    </div>
+    <div className="text-xs text-muted-foreground pt-2 border-t mt-3">
+      <span className="font-semibold">Visual Notes:</span> {variation.visualNotes}
+    </div>
   </div>
 );
 
@@ -219,6 +264,20 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
 
               // Fallback for old single posts
               const isGenericBlogPost = item.value === 'blog post' && !isBlogSeries && typeof item.marketingCopy === 'object';
+
+              // Billboard Ad structured detection
+              const isBillboardAd = item.value === 'billboard' &&
+                                    typeof item.marketingCopy === 'object' &&
+                                    !Array.isArray(item.marketingCopy) &&
+                                    'headline' in (item.marketingCopy as object);
+
+              // Display Ad Copy structured detection (array of variations with headline)
+              const isDisplayAd = item.value === 'display ad copy' &&
+                                  Array.isArray(item.marketingCopy) &&
+                                  item.marketingCopy.length > 0 &&
+                                  typeof item.marketingCopy[0] === 'object' &&
+                                  'headline' in (item.marketingCopy[0] as object) &&
+                                  'body' in (item.marketingCopy[0] as object);
               
               const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
@@ -271,6 +330,24 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                             </Tabs>
                         ) : isGenericBlogPost ? (
                            <BlogPostDisplay post={item.marketingCopy as BlogPostStructure} />
+                        ) : isBillboardAd ? (
+                           <BillboardAdDisplay ad={item.marketingCopy as BillboardAdStructure} />
+                        ) : isDisplayAd ? (
+                           <div className="space-y-4">
+                             <p className="text-sm text-muted-foreground font-medium">
+                               {(item.marketingCopy as DisplayAdVariation[]).length} ad variations generated for A/B testing
+                             </p>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               {(item.marketingCopy as DisplayAdVariation[]).map((variation, idx) => (
+                                 <DisplayAdVariationCard
+                                   key={idx}
+                                   variation={variation}
+                                   index={idx}
+                                   total={(item.marketingCopy as DisplayAdVariation[]).length}
+                                 />
+                               ))}
+                             </div>
+                           </div>
                         ) : hasVariants ? (
                            <Tabs defaultValue="1" className="w-full">
                              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as VariantCopy[]).length}, 1fr)` }}>

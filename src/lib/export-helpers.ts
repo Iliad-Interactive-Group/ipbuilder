@@ -1,7 +1,7 @@
 
 import jsPDF from 'jspdf';
 import type { GeneratedCopyItem } from '@/components/page/generated-copy-display';
-import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation } from '@/ai/flows/generate-marketing-copy';
 
 /**
  * Sanitize text for jsPDF rendering.
@@ -123,6 +123,76 @@ const isBlogPostStructure = (value: unknown): value is BlogPostStructure => {
 
 const isBlogPostSeries = (value: unknown): value is BlogPostStructure[] => {
         return Array.isArray(value) && value.length > 0 && isBlogPostStructure(value[0]);
+};
+
+// --- Billboard Ad type guard + helpers ---
+const isBillboardAdStructure = (value: unknown): value is BillboardAdStructure => {
+    return typeof value === 'object' && value !== null && 'headline' in value && 'cta' in value && 'overallConcept' in value;
+};
+
+const billboardAdToString = (ad: BillboardAdStructure): string => {
+    let text = 'BILLBOARD AD CONCEPT\n';
+    text += '====================\n\n';
+    text += `Headline: ${ad.headline}\n\n`;
+    text += `Subheadline: ${ad.subheadline}\n\n`;
+    text += `CTA: ${ad.cta}\n\n`;
+    text += `Visual Notes: ${ad.visualNotes}\n\n`;
+    text += `Overall Concept: ${ad.overallConcept}\n`;
+    return text;
+};
+
+const billboardAdToHtml = (ad: BillboardAdStructure): string => {
+    return `
+        <article class="billboard-card">
+            <div class="billboard-preview">
+                <p class="billboard-kicker">Billboard Concept</p>
+                <h2 class="billboard-headline">${escapeHtml(ad.headline)}</h2>
+                <p class="billboard-subheadline">${escapeHtml(ad.subheadline)}</p>
+                <div class="billboard-cta">${escapeHtml(ad.cta)}</div>
+            </div>
+            <div class="billboard-details">
+                <div class="billboard-detail-block">
+                    <p class="billboard-detail-label">Visual Notes</p>
+                    <p>${escapeHtml(ad.visualNotes)}</p>
+                </div>
+                <div class="billboard-detail-block">
+                    <p class="billboard-detail-label">Overall Concept</p>
+                    <p>${escapeHtml(ad.overallConcept)}</p>
+                </div>
+            </div>
+        </article>
+    `;
+};
+
+// --- Display Ad Copy type guard + helpers ---
+const isDisplayAdVariations = (value: unknown): value is DisplayAdVariation[] => {
+    return Array.isArray(value) && value.length > 0 &&
+           typeof value[0] === 'object' && value[0] !== null &&
+           'headline' in value[0] && 'body' in value[0] && 'cta' in value[0];
+};
+
+const displayAdVariationsToString = (variations: DisplayAdVariation[]): string => {
+    return variations.map((v, idx) => {
+        let text = `--- Variation ${idx + 1} of ${variations.length} ---\n`;
+        text += `Headline: ${v.headline}\n`;
+        text += `Body: ${v.body}\n`;
+        text += `CTA: ${v.cta}\n`;
+        text += `Visual Notes: ${v.visualNotes}\n`;
+        return text;
+    }).join('\n');
+};
+
+const displayAdVariationsToHtml = (variations: DisplayAdVariation[]): string => {
+    const cards = variations.map((v, idx) => `
+        <article class="display-ad-card">
+            <div class="display-ad-label">Variation ${idx + 1} of ${variations.length}</div>
+            <h3 class="display-ad-headline">${escapeHtml(v.headline)}</h3>
+            <p class="display-ad-body">${escapeHtml(v.body)}</p>
+            <div class="display-ad-cta">${escapeHtml(v.cta)}</div>
+            <p class="display-ad-visual-notes"><strong>Visual Notes:</strong> ${escapeHtml(v.visualNotes)}</p>
+        </article>
+    `).join('');
+    return `<div class="display-ad-grid">${cards}</div>`;
 };
 
 const blogPostToHtml = (post: BlogPostStructure, partLabel?: string): string => {
@@ -316,6 +386,10 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
             textContent += `${post}\n`;
         });
         textContent += `\n\n`;
+    } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
+        textContent += `${billboardAdToString(copy.marketingCopy)}\n\n`;
+    } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
+        textContent += `${displayAdVariationsToString(copy.marketingCopy)}\n\n`;
     } else {
         const itemText = getItemText(copy, editedCopy);
         textContent += `${itemText}\n\n\n`;
@@ -687,6 +761,108 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
 
                 yPosition += 6;
             });
+        } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
+            // Structured billboard ad rendering
+            const ad = copy.marketingCopy;
+            const fieldLineHeight = 5.2;
+
+            // Headline (large, bold)
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(18, 18, 18);
+            const headlineLines = doc.splitTextToSize(sanitizeForPdf(ad.headline), maxLineWidth);
+            ensureSpace(headlineLines.length * 7 + 4);
+            doc.text(headlineLines, margin, yPosition);
+            yPosition += (headlineLines.length * 7) + 4;
+
+            // Subheadline
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+            const subLines = doc.splitTextToSize(sanitizeForPdf(ad.subheadline), maxLineWidth);
+            ensureSpace(subLines.length * fieldLineHeight + 3);
+            doc.text(subLines, margin, yPosition);
+            yPosition += (subLines.length * fieldLineHeight) + 5;
+
+            // CTA (bold, indigo-ish)
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(79, 70, 229);
+            const ctaLines = doc.splitTextToSize(sanitizeForPdf('CTA: ' + ad.cta), maxLineWidth);
+            ensureSpace(ctaLines.length * fieldLineHeight + 3);
+            doc.text(ctaLines, margin, yPosition);
+            yPosition += (ctaLines.length * fieldLineHeight) + 5;
+
+            // Visual Notes
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(80, 80, 80);
+            const vnLines = doc.splitTextToSize(sanitizeForPdf('Visual Notes: ' + ad.visualNotes), maxLineWidth);
+            ensureSpace(vnLines.length * fieldLineHeight + 2);
+            doc.text(vnLines, margin, yPosition);
+            yPosition += (vnLines.length * fieldLineHeight) + 4;
+
+            // Overall Concept
+            const ocLines = doc.splitTextToSize(sanitizeForPdf('Overall Concept: ' + ad.overallConcept), maxLineWidth);
+            ensureSpace(ocLines.length * fieldLineHeight + 2);
+            doc.text(ocLines, margin, yPosition);
+            yPosition += (ocLines.length * fieldLineHeight) + 4;
+
+        } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
+            // Structured display ad rendering with numbered variation cards
+            const variations = copy.marketingCopy;
+            const fieldLineHeight = 5.0;
+
+            variations.forEach((v: DisplayAdVariation, idx: number) => {
+                // Variation header
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(79, 70, 229);
+                ensureSpace(14);
+                doc.text(`Variation ${idx + 1} of ${variations.length}`, margin, yPosition);
+                yPosition += 5.5;
+
+                // Separator line
+                doc.setDrawColor(210, 215, 225);
+                doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+                yPosition += 4;
+
+                // Headline
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(18, 18, 18);
+                const hlLines = doc.splitTextToSize(sanitizeForPdf(v.headline), maxLineWidth);
+                ensureSpace(hlLines.length * 5.5 + 2);
+                doc.text(hlLines, margin, yPosition);
+                yPosition += (hlLines.length * 5.5) + 3;
+
+                // Body
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(40, 40, 40);
+                const bodyLines = doc.splitTextToSize(sanitizeForPdf(v.body), maxLineWidth);
+                ensureSpace(bodyLines.length * fieldLineHeight + 2);
+                doc.text(bodyLines, margin, yPosition);
+                yPosition += (bodyLines.length * fieldLineHeight) + 3;
+
+                // CTA
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(79, 70, 229);
+                const ctaLines = doc.splitTextToSize(sanitizeForPdf('CTA: ' + v.cta), maxLineWidth);
+                ensureSpace(ctaLines.length * fieldLineHeight + 2);
+                doc.text(ctaLines, margin, yPosition);
+                yPosition += (ctaLines.length * fieldLineHeight) + 3;
+
+                // Visual Notes
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(100, 100, 100);
+                const vnLines = doc.splitTextToSize(sanitizeForPdf('Visual Notes: ' + v.visualNotes), maxLineWidth);
+                ensureSpace(vnLines.length * fieldLineHeight + 2);
+                doc.text(vnLines, margin, yPosition);
+                yPosition += (vnLines.length * fieldLineHeight) + 8;
+            });
         } else {
             // Default: render as plain text (all other content types)
             doc.setFontSize(10);
@@ -961,6 +1137,124 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                             border-radius: 12px;
                             border: 1px solid #e5e7eb;
                         }
+                        /* Billboard Ad styles */
+                        .billboard-card { margin-top: 14px; }
+                        .billboard-preview {
+                            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                            color: #fff;
+                            border-radius: 14px;
+                            padding: 32px 28px;
+                            margin-bottom: 16px;
+                        }
+                        .billboard-kicker {
+                            font-size: 0.72rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.1em;
+                            color: #94a3b8;
+                            margin: 0 0 10px;
+                            font-weight: 700;
+                        }
+                        .billboard-headline {
+                            font-size: 2.2rem;
+                            font-weight: 800;
+                            margin: 0 0 10px;
+                            line-height: 1.15;
+                            letter-spacing: -0.02em;
+                        }
+                        .billboard-subheadline {
+                            font-size: 1.05rem;
+                            color: #cbd5e1;
+                            margin: 0 0 18px;
+                            line-height: 1.5;
+                        }
+                        .billboard-cta {
+                            display: inline-block;
+                            background: #fbbf24;
+                            color: #1e293b;
+                            font-weight: 700;
+                            padding: 8px 20px;
+                            border-radius: 8px;
+                            font-size: 0.88rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                        }
+                        .billboard-details {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 14px;
+                        }
+                        .billboard-detail-block {
+                            background: #f8fafc;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                        }
+                        .billboard-detail-label {
+                            font-size: 0.78rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                            font-weight: 700;
+                            color: #64748b;
+                            margin: 0 0 6px;
+                        }
+                        .billboard-detail-block p:last-child {
+                            margin: 0;
+                            color: #1f2937;
+                            font-size: 0.93rem;
+                        }
+                        /* Display Ad styles */
+                        .display-ad-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 16px;
+                            margin-top: 14px;
+                        }
+                        .display-ad-card {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 20px;
+                            background: #fff;
+                        }
+                        .display-ad-label {
+                            font-size: 0.78rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                            color: #6366f1;
+                            margin: 0 0 10px;
+                        }
+                        .display-ad-headline {
+                            font-size: 1.3rem;
+                            font-weight: 700;
+                            margin: 0 0 8px;
+                            color: #111827;
+                            line-height: 1.25;
+                        }
+                        .display-ad-body {
+                            font-size: 0.93rem;
+                            color: #374151;
+                            margin: 0 0 12px;
+                            line-height: 1.55;
+                        }
+                        .display-ad-cta {
+                            display: inline-block;
+                            background: #6366f1;
+                            color: #fff;
+                            font-weight: 600;
+                            padding: 6px 16px;
+                            border-radius: 6px;
+                            font-size: 0.82rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.04em;
+                            margin-bottom: 10px;
+                        }
+                        .display-ad-visual-notes {
+                            font-size: 0.82rem;
+                            color: #6b7280;
+                            margin: 0;
+                            padding-top: 8px;
+                            border-top: 1px solid #f0f2f6;
+                        }
                         @media print {
                             body { background: #fff; padding: 0; }
                             .reports-root { gap: 0; max-width: none; }
@@ -994,6 +1288,10 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                         marketingText = blogPostToHtml(copy.marketingCopy as BlogPostStructure);
                 } else if (isSocialMedia) {
                         marketingText = socialMediaPostsToHtml(copy, editedCopy);
+                } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
+                        marketingText = billboardAdToHtml(copy.marketingCopy);
+                } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
+                        marketingText = displayAdVariationsToHtml(copy.marketingCopy);
         } else {
                         const itemText = getItemText(copy, editedCopy);
             const rawText = itemText;
