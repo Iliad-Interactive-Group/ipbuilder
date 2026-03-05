@@ -93,6 +93,8 @@ function IPBuilderPageContent() {
       numberOfImageVariations: undefined,
       voiceGender: undefined,
       voiceName: undefined,
+      websiteCopyType: "standard_5_page",
+      websiteFlexPage: "blog",
     },
   });
 
@@ -309,16 +311,30 @@ function IPBuilderPageContent() {
               marketingInput.blogFormat = blogFormatForAI;
               console.log('[Form Submit] Blog format selected:', blogFormatForAI);
           }
+          // Pass website copy type and flex page for both website copy and wireframe (auto-link)
+          if (typeValue === "website copy" || typeValue === "website wireframe") {
+              const websiteCopyTypeForAI = data.websiteCopyType === 'landing_page' ? 'landing_page' : 'standard_5_page';
+              marketingInput.websiteCopyType = websiteCopyTypeForAI;
+              if (websiteCopyTypeForAI === 'standard_5_page') {
+                  marketingInput.websiteFlexPage = (data.websiteFlexPage || 'blog') as 'blog' | 'portfolio' | 'testimonials' | 'faq' | 'pricing';
+              }
+              console.log('[Form Submit] Website copy type:', websiteCopyTypeForAI, 'flex page:', data.websiteFlexPage);
+          }
 
           const result: GenerateMarketingCopyOutput = await generateMarketingCopyAction(marketingInput);
           
+          // Suppress image generation for non-visual content types
+          const suppressImages = ['website wireframe', 'radio script', 'tv script', 'podcast outline', 'blog post', 'lead generation email', 'website copy'].includes(typeValue);
+          const imageSuggestion = suppressImages ? undefined : result.imageSuggestion;
+          const imageSuggestions = suppressImages ? undefined : result.imageSuggestions;
+
           return {
             value: typeValue,
             label: currentLabel,
             marketingCopy: result.marketingCopy,
-            imageSuggestion: result.imageSuggestion,
-            imageSuggestions: result.imageSuggestions,
-            isGeneratingImage: !!(result.imageSuggestion || result.imageSuggestions),
+            imageSuggestion,
+            imageSuggestions,
+            isGeneratingImage: !!(imageSuggestion || (imageSuggestions && imageSuggestions.length > 0)),
           };
         } catch (error) {
           console.error(`Error generating copy for ${typeValue}:`, error);
@@ -348,7 +364,8 @@ function IPBuilderPageContent() {
           // Flattening structured objects with .join() produces "[object Object]"
           // which corrupts the export output.
           if (item.value === 'blog post' || item.value === 'podcast outline' ||
-              item.value === 'billboard' || item.value === 'display ad copy') {
+              item.value === 'billboard' || item.value === 'display ad copy' ||
+              item.value === 'website copy' || item.value === 'website wireframe') {
               return; // Do not add to editedCopy - export functions handle these natively
           }
           if (typeof item.marketingCopy === 'string') {

@@ -72,6 +72,14 @@ const GenerateMarketingCopyInputSchema = z.object({
     .string()
     .optional()
     .describe("The client's actual business phone number. Must be used EXACTLY as provided — never fabricated or modified."),
+  websiteCopyType: z
+    .enum(['landing_page', 'standard_5_page'])
+    .optional()
+    .describe("The type of website copy to generate: 'landing_page' for a high-conversion single-page, or 'standard_5_page' for a full multi-page website."),
+  websiteFlexPage: z
+    .enum(['blog', 'portfolio', 'testimonials', 'faq', 'pricing'])
+    .optional()
+    .describe("The 5th flexible page for a standard 5-page website (Home, About, Services, Contact + this page)."),
 });
 export type GenerateMarketingCopyInput = z.infer<
   typeof GenerateMarketingCopyInputSchema
@@ -140,6 +148,86 @@ const BillboardAdStructureSchema = z.object({
 });
 export type BillboardAdStructure = z.infer<typeof BillboardAdStructureSchema>;
 
+// --- Landing Page structured schema ---
+const LandingPageSchema = z.object({
+  headline: z.string().describe("A powerful, benefit-driven headline that immediately communicates the core value proposition."),
+  subheadline: z.string().describe("A supporting statement that adds clarity and reinforces the headline."),
+  heroCtaText: z.string().describe("The primary CTA button text in the hero section (e.g., 'Get Started Free', 'Book a Demo')."),
+  heroCtaDestination: z.string().optional().describe("Where the hero CTA should link to."),
+  problemStatement: z.string().describe("A compelling paragraph articulating the target audience's pain point."),
+  solutionOverview: z.string().describe("A paragraph explaining how the product/service solves the problem."),
+  features: z.array(z.object({
+    title: z.string().describe("Feature or benefit title."),
+    description: z.string().describe("1-2 sentence description of this feature/benefit."),
+  })).describe("3-5 key features or benefits."),
+  socialProof: z.string().describe("A testimonial, stat, or trust signal (e.g., '10,000+ businesses trust us')."),
+  urgencyElement: z.string().describe("A line creating urgency or scarcity (e.g., 'Limited spots available')."),
+  finalCtaText: z.string().describe("The final CTA button text at the bottom of the page."),
+  finalCtaDestination: z.string().optional().describe("Where the final CTA should link to."),
+  designNotes: z.string().describe("Visual/layout recommendations for the landing page."),
+  metaTitle: z.string().describe("SEO meta title for the page (under 60 chars)."),
+  metaDescription: z.string().describe("SEO meta description (under 160 chars)."),
+});
+export type LandingPageStructure = z.infer<typeof LandingPageSchema>;
+
+// --- Standard Website Page structured schema ---
+const WebsitePageSectionSchema = z.object({
+  sectionType: z.string().describe("The type of section (e.g., 'hero', 'features', 'testimonials', 'cta', 'content', 'faq', 'pricing-table', 'team', 'portfolio-grid')."),
+  heading: z.string().describe("The section heading."),
+  subheading: z.string().optional().describe("Optional subheading for the section."),
+  bodyContent: z.string().describe("The main content/copy for this section. For lists, separate items with newlines."),
+  ctaText: z.string().optional().describe("CTA button text if this section has one."),
+  ctaDestination: z.string().optional().describe("Where the CTA links to (e.g., '/contact', '#pricing')."),
+  designNotes: z.string().optional().describe("Layout or visual recommendations for this section."),
+});
+
+const WebsitePageSchema = z.object({
+  pageName: z.string().describe("The page name (e.g., 'Home', 'About', 'Services', 'Contact', 'Blog')."),
+  pageSlug: z.string().describe("URL slug for this page (e.g., '/', '/about', '/services')."),
+  metaTitle: z.string().describe("SEO meta title for the page (under 60 chars)."),
+  metaDescription: z.string().describe("SEO meta description (under 160 chars)."),
+  sections: z.array(WebsitePageSectionSchema).describe("The content sections for this page, in order."),
+});
+export type WebsitePageStructure = z.infer<typeof WebsitePageSchema>;
+
+// --- Website Wireframe Page structured schema ---
+const WireframePageSectionSchema = z.object({
+  sectionName: z.string().describe("The name of this wireframe section (e.g., 'Hero Banner', 'Feature Grid', 'CTA Block')."),
+  layoutType: z.string().describe("Layout description (e.g., 'full-width banner', '3-column grid', 'centered text block')."),
+  contentPlaceholder: z.string().describe("What content goes here (e.g., 'Headline + subheadline + CTA button', '3 feature cards with icons')."),
+  functionalNotes: z.string().optional().describe("Interactive or functional notes (e.g., 'Form with name/email fields', 'Accordion FAQ')."),
+  designSpecs: z.string().optional().describe("Spacing, hierarchy, and visual notes (e.g., '80px top padding, dark background, white text')."),
+});
+
+const WireframePageSchema = z.object({
+  pageName: z.string().describe("The page name (e.g., 'Home', 'About', 'Services')."),
+  pageSlug: z.string().describe("URL slug (e.g., '/', '/about')."),
+  sections: z.array(WireframePageSectionSchema).describe("The wireframe sections for this page, in order."),
+});
+
+const WireframeSiteSchema = z.object({
+  siteNavigation: z.object({
+    logoPosition: z.string().describe("Where the logo goes (e.g., 'top-left')."),
+    menuItems: z.array(z.string()).describe("Navigation menu items."),
+    ctaButton: z.string().optional().describe("Navigation CTA button text if any."),
+  }),
+  pages: z.array(WireframePageSchema).describe("The wireframe for each page."),
+  footer: z.object({
+    columns: z.array(z.object({
+      heading: z.string().describe("Footer column heading."),
+      items: z.array(z.string()).describe("Items/links in this column."),
+    })).describe("Footer columns."),
+    copyright: z.string().describe("Copyright text."),
+  }),
+  designSystem: z.object({
+    colorScheme: z.string().describe("Recommended color scheme."),
+    typography: z.string().describe("Font recommendations."),
+    spacing: z.string().describe("Spacing/grid notes."),
+  }),
+  userFlowNotes: z.string().describe("Key user flow and conversion path notes."),
+});
+export type WireframeSiteStructure = z.infer<typeof WireframeSiteSchema>;
+
 // --- Display Ad Copy structured schema (3-5 variations) ---
 const DisplayAdVariationSchema = z.object({
   headline: z.string().describe("Short, attention-grabbing headline (under 10 words)."),
@@ -159,6 +247,9 @@ const GenerateMarketingCopyOutputSchema = z.object({
     z.array(BlogPostStructureSchema).describe('An array of blog posts for a content series'),
     BillboardAdStructureSchema,
     z.array(DisplayAdVariationSchema).describe('An array of 3-5 display ad variations'),
+    LandingPageSchema,
+    z.array(WebsitePageSchema).describe('An array of website pages for a standard 5-page site'),
+    WireframeSiteSchema,
     z.array(z.object({
       variant: z.number().describe('The variant number'),
       copy: z.string().describe('The marketing copy for this variant')
@@ -437,6 +528,183 @@ const displayAdPrompt = ai.definePrompt({
 });
 
 
+// --- Website Landing Page dedicated prompt (structured output) ---
+const websiteLandingPagePrompt = ai.definePrompt({
+    name: 'generateWebsiteLandingPagePrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: LandingPageSchema }) },
+    prompt: `You are an elite landing page copywriter, channeling the expertise of Joanna Wiebe (for data-driven, conversion-focused copy), Peep Laja (for CRO-optimized page structures), and Donald Miller (for StoryBrand clarity frameworks). Your goal is to create a high-conversion landing page that drives a SINGLE clear action.
+
+    CRITICAL: This is a focused landing page, NOT a full website. Every word must push toward ONE conversion goal.
+
+    Business Context:
+    - Company: {{companyName}}
+    - Product/Service: {{productDescription}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords: {{keywords}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
+
+    LANDING PAGE STRUCTURE:
+    1. **Hero Section**: High-impact headline (benefit-driven, under 10 words), supporting subheadline, primary CTA button
+    2. **Problem Statement**: Articulate the audience's pain point with empathy
+    3. **Solution Overview**: Position the product/service as the answer
+    4. **Features/Benefits**: 3-5 key features with benefit-focused descriptions
+    5. **Social Proof**: Testimonial, stat, or trust signal
+    6. **Urgency Element**: Create urgency or scarcity
+    7. **Final CTA**: Reinforce the single conversion action
+
+    REQUIREMENTS:
+    - Single CTA repeated throughout (hero + final)
+    - Copy should be scannable (short paragraphs, benefit-focused)
+    - Include SEO meta title (under 60 chars) and meta description (under 160 chars) 
+    - Include design/layout recommendations
+
+    Output only the structured JSON.
+    `,
+});
+
+// --- Website Standard 5-Page prompt (structured output) ---
+const websiteStandard5PagePrompt = ai.definePrompt({
+    name: 'generateWebsiteStandard5PagePrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: z.array(WebsitePageSchema) }) },
+    prompt: `You are an elite website copywriter, channeling Joanna Wiebe (for conversion-focused writing), Ann Handley (for audience-centric storytelling), and Jacob McMillen (for persuasive B2B/SaaS copy). Create comprehensive website copy for a standard 5-page website.
+
+    Business Context:
+    - Company: {{companyName}}
+    - Product/Service: {{productDescription}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords: {{keywords}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided:
+    - Website URL: {{websiteUrl}}
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}}
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
+
+    PAGES TO CREATE (5 pages total):
+    1. **Home** (/) — Hero section, value proposition, key features/benefits, social proof, CTA
+    2. **About** (/about) — Company story, mission/vision, team overview, trust elements
+    3. **Services** (/services) — Service/product offerings with descriptions, benefits, pricing hints
+    4. **Contact** (/contact) — Contact form intro, location/hours, phone/email, map placeholder
+    {{#if websiteFlexPage}}
+    5. **{{websiteFlexPage}}** (/{{websiteFlexPage}}) — Content tailored to a {{websiteFlexPage}} page
+    {{else}}
+    5. **Blog** (/blog) — Blog landing page with featured post teasers, categories, subscription CTA
+    {{/if}}
+
+    FOR EACH PAGE:
+    - Include 3-6 content sections in logical order
+    - Each section needs: sectionType, heading, bodyContent, and optional CTA
+    - Include SEO meta title (under 60 chars) and meta description (under 160 chars)
+    - Copy should be scannable, benefit-focused, and conversion-oriented
+    - Ensure consistent brand voice across all pages
+
+    Output EXACTLY 5 page objects in the JSON array.
+    `,
+});
+
+// --- Website Landing Page Wireframe prompt (structured output) ---
+const websiteLandingPageWireframePrompt = ai.definePrompt({
+    name: 'generateWebsiteLandingPageWireframePrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: WireframeSiteSchema }) },
+    prompt: `You are a premier UX/UI strategist, embodying Don Norman (for user-centered design), Jakob Nielsen (for usability), and Aurélien Salomon (for high-fidelity wireframes). Generate a detailed wireframe for a high-conversion landing page.
+
+    Business Context:
+    - Company: {{companyName}}
+    - Product/Service: {{productDescription}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords: {{keywords}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    WIREFRAME STRUCTURE:
+    Create a single-page wireframe with these sections:
+    1. **Navigation**: Minimal — logo + single CTA button
+    2. **Hero Banner**: Full-width, headline placeholder, subheadline, CTA button
+    3. **Problem/Solution Block**: Two-column or stacked layout
+    4. **Features Grid**: 3-5 feature cards with icon placeholders
+    5. **Social Proof**: Testimonial slider or stats bar
+    6. **Final CTA Block**: Full-width with urgency copy + button
+    7. **Footer**: Minimal — copyright + privacy link
+
+    Include:
+    - Site navigation (minimal for landing page)
+    - Footer structure
+    - Design system recommendations (colors, typography, spacing)
+    - User flow notes (conversion path from hero CTA to thank-you page)
+
+    Each section should include layout type, content placeholder, functional notes, and design specs.
+    Output only the structured JSON.
+    `,
+});
+
+// --- Website Standard 5-Page Wireframe prompt (structured output) ---
+const websiteStandard5PageWireframePrompt = ai.definePrompt({
+    name: 'generateWebsiteStandard5PageWireframePrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: WireframeSiteSchema }) },
+    prompt: `You are a premier UX/UI strategist, embodying Don Norman (for user-centered design), Jakob Nielsen (for usability), and Aurélien Salomon (for high-fidelity wireframes). Generate a detailed wireframe for a standard 5-page website.
+
+    Business Context:
+    - Company: {{companyName}}
+    - Product/Service: {{productDescription}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords: {{keywords}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    PAGES TO WIREFRAME (5 pages total):
+    1. **Home** (/) — Hero banner, features grid, testimonials, CTA block
+    2. **About** (/about) — Story section, team grid, mission/values, trust badges
+    3. **Services** (/services) — Service cards, comparison table placeholder, CTA
+    4. **Contact** (/contact) — Contact form, map placeholder, business hours, social links
+    {{#if websiteFlexPage}}
+    5. **{{websiteFlexPage}}** (/{{websiteFlexPage}}) — Layout tailored to a {{websiteFlexPage}} page
+    {{else}}
+    5. **Blog** (/blog) — Featured post, post grid, categories sidebar, newsletter signup
+    {{/if}}
+
+    Include:
+    - Site navigation with menu items for all 5 pages
+    - Footer with columns (Company, Resources, Contact, Social)
+    - Design system (color scheme, typography, spacing)
+    - User flow notes (primary conversion paths, accessibility considerations)
+
+    Each page should have 3-6 wireframe sections with layout type, content placeholder, functional notes, and design specs.
+    Output only the structured JSON.
+    `,
+});
+
+
 const genericPrompt = ai.definePrompt({
   name: 'generateMarketingCopyPrompt',
   input: {schema: z.any()},
@@ -532,30 +800,6 @@ const genericPrompt = ai.definePrompt({
   Confrontation (Act 2 - Guide and Plan): Show the client as a guide, demonstrating transformation through quick scenes.
   Resolution (Act 3 - CTA and Success): Depict positive outcomes, warn of failure subtly, end with strong CTA for action.
   Visual/Production Notes: Detail shots, voiceover, music, text overlays for full production.
-  {{else if isWebsiteCopy}}
-  You are an elite website copywriter, channeling the expertise of Joanna Wiebe (for data-driven, conversion-focused writing that boosts engagement), Ann Handley (for audience-centric storytelling that's authentic and compelling), and Jacob McMillen (for persuasive B2B/SaaS copy that drives sales with clear narratives). Your goal is to generate high-quality, standout website copy tailored to the client's business, designed to captivate visitors, build trust, and convert with irresistible, memorable content.
-  
-  Inputs to incorporate:
-  - Client's business summary: {{productDescription}}
-  - Company Name: {{companyName}}
-  {{#if tone}}
-  - Tone: {{tone}}
-  {{/if}}
-  - Keywords to include: {{keywords}}
-  - Additional instructions: {{additionalInstructions}}
-
-  Length: Aim for 300-600 words total unless specified otherwise.
-  
-  Structure the website copy like this:
-
-  Hero Section: Start with a compelling headline and subheadline that hooks with a problem-solution angle, empathizing with audience pain points.
-  Body Sections: Use narrative flow to detail benefits, features, and social proof, backed by data where possible, positioning the client as the solution provider.
-  CTA Sections: Include multiple clear, urgent calls to action throughout, focused on conversions.
-  Footer/Closing: End with reinforcing trust elements like guarantees or contact info.
-
-  Ensure the copy is SEO-friendly (natural keywords, scannable with subheads and bullets), persuasive (active voice, benefit-oriented), and aligned with the client's voice. 
-  Output only the formatted website copy (e.g., Hero Headline:, Subheadline:, Body Paragraph:), without any meta-commentary.
-  
   {{else if isLeadGenerationEmail}}
   You are an expert lead gen email strategist, channeling Ian Brodie (for trust-building sequences that nurture prospects), Alex Berman (for personalized, high-response cold emails in B2B), and Jay Feldman (for scalable strategies that integrate with funnels). Generate a high-impact lead generation email (or sequence) for the client, designed to engage, provide value, and convert leads with compelling, results-driven content.
   
@@ -580,23 +824,6 @@ const genericPrompt = ai.definePrompt({
   Signature: Professional sign-off with contact info.
 
   Ensure it's personalized, mobile-friendly (short paragraphs), and compliance-ready (e.g., unsubscribe note). Output only the formatted email (e.g., Subject:, Greeting:, Body Paragraphs:, CTA:, Signature:), without any meta-commentary.
-  {{else if isWebsiteWireframe}}
-  You are a premier UX/UI strategist, embodying Don Norman (for intuitive, user-centered design principles), Jakob Nielsen (for usability-optimized navigation and conversion flows), and Aurélien Salomon (for minimalist, high-fidelity wireframes that enhance experiences). Generate a detailed textual description of a website wireframe for the client, designed to outline standout, user-friendly structures that engage and convert.
-
-  Inputs to incorporate:
-  - Company: {{companyName}}
-  - Product/Business Summary: {{productDescription}}
-  - Tone: {{tone}}
-  - Keywords: {{keywords}}
-  - Additional Instructions: {{additionalInstructions}}
-
-  Structure the wireframe description like this:
-  Overall Layout: Describe header, footer, navigation (e.g., menu items, search bar).
-  Page-Specific Sections: Break down each page (e.g., Homepage, About, Product) into zones (hero, content blocks, CTAs) with placement and functionality notes.
-  User Flow: Outline interactions, accessibility features, and conversion paths.
-  Design Notes: Suggest hierarchy, spacing, and usability best practices.
-
-  Ensure it's functional (clear paths to goals), accessible, and described vividly for easy visualization. Output only the formatted wireframe (e.g., Homepage:, Header:, Hero Section:, User Flow Notes:), without any meta-commentary.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -640,9 +867,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
             currentYear: new Date().getFullYear().toString(),
             isRadioScript: input.contentType === "radio script",
             isTvScript: input.contentType === "tv script",
-            isWebsiteWireframe: input.contentType === "website wireframe",
             isLeadGenerationEmail: input.contentType === "lead generation email",
-            isWebsiteCopy: input.contentType === "website copy",
             is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
           };
           
@@ -729,6 +954,46 @@ const generateMarketingCopyFlow = ai.defineFlow(
           console.log('[MktgCopy Flow] Generated structured display ad copy with', Array.isArray(output.marketingCopy) ? output.marketingCopy.length : 0, 'variations');
           return output;
       }
+
+      // Website Copy — route to landing page or standard 5-page prompt
+      if (input.contentType === "website copy") {
+          if (input.websiteCopyType === 'landing_page') {
+              const { output } = await websiteLandingPagePrompt(input);
+              if (!output) {
+                  throw new Error("The AI failed to generate the landing page copy.");
+              }
+              console.log('[MktgCopy Flow] Generated structured landing page copy');
+              return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+          } else {
+              // Default to standard 5-page
+              const { output } = await websiteStandard5PagePrompt(input);
+              if (!output) {
+                  throw new Error("The AI failed to generate the website copy.");
+              }
+              console.log('[MktgCopy Flow] Generated structured 5-page website copy with', Array.isArray(output.marketingCopy) ? output.marketingCopy.length : 0, 'pages');
+              return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+          }
+      }
+
+      // Website Wireframe — route to landing page or standard 5-page wireframe prompt
+      if (input.contentType === "website wireframe") {
+          if (input.websiteCopyType === 'landing_page') {
+              const { output } = await websiteLandingPageWireframePrompt(input);
+              if (!output) {
+                  throw new Error("The AI failed to generate the landing page wireframe.");
+              }
+              console.log('[MktgCopy Flow] Generated structured landing page wireframe');
+              return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+          } else {
+              // Default to standard 5-page wireframe
+              const { output } = await websiteStandard5PageWireframePrompt(input);
+              if (!output) {
+                  throw new Error("The AI failed to generate the website wireframe.");
+              }
+              console.log('[MktgCopy Flow] Generated structured 5-page website wireframe');
+              return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+          }
+      }
       
       // For all other content types, use the generic prompt
       const promptData = {
@@ -736,9 +1001,7 @@ const generateMarketingCopyFlow = ai.defineFlow(
         currentYear: new Date().getFullYear().toString(),
         isRadioScript: input.contentType === "radio script",
         isTvScript: input.contentType === "tv script",
-        isWebsiteWireframe: input.contentType === "website wireframe",
         isLeadGenerationEmail: input.contentType === "lead generation email",
-        isWebsiteCopy: input.contentType === "website copy",
         is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
       };
       

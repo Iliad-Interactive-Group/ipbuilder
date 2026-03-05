@@ -1,7 +1,7 @@
 
 import jsPDF from 'jspdf';
 import type { GeneratedCopyItem } from '@/components/page/generated-copy-display';
-import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure } from '@/ai/flows/generate-marketing-copy';
 
 /**
  * Sanitize text for jsPDF rendering.
@@ -195,6 +195,240 @@ const displayAdVariationsToHtml = (variations: DisplayAdVariation[]): string => 
     return `<div class="display-ad-grid">${cards}</div>`;
 };
 
+// --- Landing Page type guard + helpers ---
+const isLandingPageStructure = (value: unknown): value is LandingPageStructure => {
+    return typeof value === 'object' && value !== null && 'heroCtaText' in value && 'headline' in value && 'problemStatement' in value;
+};
+
+const landingPageToString = (lp: LandingPageStructure): string => {
+    let text = 'LANDING PAGE COPY\n';
+    text += '==================\n\n';
+    text += `Headline: ${lp.headline}\n`;
+    text += `Subheadline: ${lp.subheadline}\n\n`;
+    text += `Hero CTA: ${lp.heroCtaText}`;
+    if (lp.heroCtaDestination) text += ` → ${lp.heroCtaDestination}`;
+    text += `\n\n`;
+    text += `--- Problem ---\n${lp.problemStatement}\n\n`;
+    text += `--- Solution ---\n${lp.solutionOverview}\n\n`;
+    text += `--- Features ---\n`;
+    lp.features.forEach((f, idx) => {
+        text += `  ${idx + 1}. ${f.title}: ${f.description}\n`;
+    });
+    text += `\nSocial Proof: ${lp.socialProof}\n`;
+    text += `Urgency: ${lp.urgencyElement}\n\n`;
+    text += `Final CTA: ${lp.finalCtaText}`;
+    if (lp.finalCtaDestination) text += ` → ${lp.finalCtaDestination}`;
+    text += `\n\n`;
+    text += `Design Notes: ${lp.designNotes}\n`;
+    text += `Meta Title: ${lp.metaTitle}\n`;
+    text += `Meta Description: ${lp.metaDescription}\n`;
+    return text;
+};
+
+const landingPageToHtml = (lp: LandingPageStructure): string => {
+    const featuresHtml = lp.features.map(f => `
+        <div class="lp-feature-card">
+            <h4>${escapeHtml(f.title)}</h4>
+            <p>${escapeHtml(f.description)}</p>
+        </div>
+    `).join('');
+
+    return `
+        <div class="lp-hero">
+            <h2 class="lp-headline">${escapeHtml(lp.headline)}</h2>
+            <p class="lp-subheadline">${escapeHtml(lp.subheadline)}</p>
+            <div class="lp-cta-btn">${escapeHtml(lp.heroCtaText)}</div>
+            ${lp.heroCtaDestination ? `<p class="lp-cta-dest">Links to: ${escapeHtml(lp.heroCtaDestination)}</p>` : ''}
+        </div>
+        <div class="lp-problem-solution">
+            <div class="lp-problem">
+                <p class="lp-section-label">Problem</p>
+                <p>${escapeHtml(lp.problemStatement)}</p>
+            </div>
+            <div class="lp-solution">
+                <p class="lp-section-label">Solution</p>
+                <p>${escapeHtml(lp.solutionOverview)}</p>
+            </div>
+        </div>
+        <div class="lp-features">
+            <p class="lp-section-label">Key Features &amp; Benefits</p>
+            <div class="lp-features-grid">${featuresHtml}</div>
+        </div>
+        <div class="lp-social-proof">
+            <p class="lp-section-label">Social Proof</p>
+            <p class="lp-social-proof-text">${escapeHtml(lp.socialProof)}</p>
+        </div>
+        <div class="lp-urgency">
+            <p>${escapeHtml(lp.urgencyElement)}</p>
+        </div>
+        <div class="lp-final-cta">
+            <div class="lp-cta-btn">${escapeHtml(lp.finalCtaText)}</div>
+            ${lp.finalCtaDestination ? `<p class="lp-cta-dest">Links to: ${escapeHtml(lp.finalCtaDestination)}</p>` : ''}
+        </div>
+        <div class="lp-meta">
+            <p><strong>Design Notes:</strong> ${escapeHtml(lp.designNotes)}</p>
+            <p><strong>Meta Title:</strong> ${escapeHtml(lp.metaTitle)}</p>
+            <p><strong>Meta Description:</strong> ${escapeHtml(lp.metaDescription)}</p>
+        </div>
+    `;
+};
+
+// --- Standard Website type guard + helpers ---
+const isStandardWebsitePages = (value: unknown): value is WebsitePageStructure[] => {
+    return Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null && 'pageName' in value[0] && 'sections' in value[0];
+};
+
+const standardWebsiteToString = (pages: WebsitePageStructure[]): string => {
+    return pages.map((page, idx) => {
+        let text = `${'='.repeat(50)}\n`;
+        text += `PAGE ${idx + 1}: ${page.pageName} (${page.pageSlug})\n`;
+        text += `${'='.repeat(50)}\n`;
+        text += `Meta Title: ${page.metaTitle}\n`;
+        text += `Meta Description: ${page.metaDescription}\n\n`;
+        page.sections.forEach((section, sIdx) => {
+            text += `--- ${section.sectionType.toUpperCase()}: ${section.heading} ---\n`;
+            if (section.subheading) text += `Subheading: ${section.subheading}\n`;
+            text += `${section.bodyContent}\n`;
+            if (section.ctaText) text += `CTA: ${section.ctaText}`;
+            if (section.ctaDestination) text += ` → ${section.ctaDestination}`;
+            if (section.ctaText) text += `\n`;
+            if (section.designNotes) text += `Design: ${section.designNotes}\n`;
+            text += '\n';
+        });
+        return text;
+    }).join('\n');
+};
+
+const standardWebsitePageToHtml = (page: WebsitePageStructure): string => {
+    const sectionsHtml = page.sections.map(s => `
+        <div class="ws-section">
+            <div class="ws-section-type">${escapeHtml(s.sectionType)}</div>
+            <h3 class="ws-section-heading">${escapeHtml(s.heading)}</h3>
+            ${s.subheading ? `<p class="ws-section-subheading">${escapeHtml(s.subheading)}</p>` : ''}
+            <div class="ws-section-body">${escapeHtml(s.bodyContent).replace(/\n/g, '<br>')}</div>
+            ${s.ctaText ? `<div class="ws-section-cta">${escapeHtml(s.ctaText)}${s.ctaDestination ? ` <span class="ws-cta-dest">→ ${escapeHtml(s.ctaDestination)}</span>` : ''}</div>` : ''}
+            ${s.designNotes ? `<p class="ws-design-note">${escapeHtml(s.designNotes)}</p>` : ''}
+        </div>
+    `).join('');
+
+    return `
+        <article class="ws-page">
+            <div class="ws-page-header">
+                <h2 class="ws-page-name">${escapeHtml(page.pageName)}</h2>
+                <span class="ws-page-slug">${escapeHtml(page.pageSlug)}</span>
+            </div>
+            <div class="ws-page-meta">
+                <p><strong>Meta Title:</strong> ${escapeHtml(page.metaTitle)}</p>
+                <p><strong>Meta Desc:</strong> ${escapeHtml(page.metaDescription)}</p>
+            </div>
+            ${sectionsHtml}
+        </article>
+    `;
+};
+
+// --- Website Wireframe type guard + helpers ---
+const isWireframeSiteStructure = (value: unknown): value is WireframeSiteStructure => {
+    return typeof value === 'object' && value !== null && 'siteNavigation' in value && 'pages' in value && 'footer' in value;
+};
+
+const wireframeSiteToString = (wf: WireframeSiteStructure): string => {
+    let text = 'WEBSITE WIREFRAME\n';
+    text += '==================\n\n';
+    text += `Navigation: ${wf.siteNavigation.menuItems.join(' | ')}`;
+    if (wf.siteNavigation.ctaButton) text += ` | [${wf.siteNavigation.ctaButton}]`;
+    text += `\nLogo: ${wf.siteNavigation.logoPosition}\n\n`;
+    
+    wf.pages.forEach((page, idx) => {
+        text += `${'='.repeat(50)}\n`;
+        text += `PAGE ${idx + 1}: ${page.pageName} (${page.pageSlug})\n`;
+        text += `${'='.repeat(50)}\n`;
+        page.sections.forEach(section => {
+            text += `\n  [${section.sectionName}] — ${section.layoutType}\n`;
+            text += `  Content: ${section.contentPlaceholder}\n`;
+            if (section.functionalNotes) text += `  Functional: ${section.functionalNotes}\n`;
+            if (section.designSpecs) text += `  Design: ${section.designSpecs}\n`;
+        });
+        text += '\n';
+    });
+
+    text += `\nFOOTER:\n`;
+    wf.footer.columns.forEach(col => {
+        text += `  ${col.heading}: ${col.items.join(', ')}\n`;
+    });
+    text += `  ${wf.footer.copyright}\n\n`;
+
+    text += `DESIGN SYSTEM:\n`;
+    text += `  Colors: ${wf.designSystem.colorScheme}\n`;
+    text += `  Typography: ${wf.designSystem.typography}\n`;
+    text += `  Spacing: ${wf.designSystem.spacing}\n\n`;
+    text += `USER FLOW NOTES:\n${wf.userFlowNotes}\n`;
+    return text;
+};
+
+const wireframeSiteToHtml = (wf: WireframeSiteStructure): string => {
+    const navHtml = `
+        <div class="wf-nav">
+            <span class="wf-logo">[LOGO] ${escapeHtml(wf.siteNavigation.logoPosition)}</span>
+            <div class="wf-nav-items">
+                ${wf.siteNavigation.menuItems.map(i => `<span class="wf-nav-item">${escapeHtml(i)}</span>`).join('')}
+                ${wf.siteNavigation.ctaButton ? `<span class="wf-nav-cta">${escapeHtml(wf.siteNavigation.ctaButton)}</span>` : ''}
+            </div>
+        </div>
+    `;
+
+    const pagesHtml = wf.pages.map(page => {
+        const sectionsHtml = page.sections.map(s => `
+            <div class="wf-section">
+                <div class="wf-section-header">
+                    <span class="wf-section-name">${escapeHtml(s.sectionName)}</span>
+                    <span class="wf-layout-type">${escapeHtml(s.layoutType)}</span>
+                </div>
+                <p class="wf-placeholder">${escapeHtml(s.contentPlaceholder)}</p>
+                ${s.functionalNotes ? `<p class="wf-functional">⚙ ${escapeHtml(s.functionalNotes)}</p>` : ''}
+                ${s.designSpecs ? `<p class="wf-design-spec">🎨 ${escapeHtml(s.designSpecs)}</p>` : ''}
+            </div>
+        `).join('');
+        return `
+            <div class="wf-page">
+                <h3 class="wf-page-title">${escapeHtml(page.pageName)} <span class="wf-page-slug">${escapeHtml(page.pageSlug)}</span></h3>
+                ${sectionsHtml}
+            </div>
+        `;
+    }).join('');
+
+    const footerHtml = `
+        <div class="wf-footer">
+            <p class="wf-section-label">Footer</p>
+            <div class="wf-footer-grid">
+                ${wf.footer.columns.map(col => `
+                    <div class="wf-footer-col">
+                        <p class="wf-footer-heading">${escapeHtml(col.heading)}</p>
+                        ${col.items.map(i => `<p class="wf-footer-item">${escapeHtml(i)}</p>`).join('')}
+                    </div>
+                `).join('')}
+            </div>
+            <p class="wf-copyright">${escapeHtml(wf.footer.copyright)}</p>
+        </div>
+    `;
+
+    const designHtml = `
+        <div class="wf-design-system">
+            <div class="wf-design-block">
+                <p class="wf-section-label">Design System</p>
+                <p><strong>Colors:</strong> ${escapeHtml(wf.designSystem.colorScheme)}</p>
+                <p><strong>Typography:</strong> ${escapeHtml(wf.designSystem.typography)}</p>
+                <p><strong>Spacing:</strong> ${escapeHtml(wf.designSystem.spacing)}</p>
+            </div>
+            <div class="wf-design-block">
+                <p class="wf-section-label">User Flow Notes</p>
+                <p>${escapeHtml(wf.userFlowNotes)}</p>
+            </div>
+        </div>
+    `;
+
+    return `${navHtml}${pagesHtml}${footerHtml}${designHtml}`;
+};
+
 const blogPostToHtml = (post: BlogPostStructure, partLabel?: string): string => {
         const keywordsHtml = post.seoKeywords && post.seoKeywords.length > 0
                 ? `<div class="chip-row">${post.seoKeywords.map(kw => `<span class="chip">${escapeHtml(kw)}</span>`).join('')}</div>`
@@ -330,6 +564,21 @@ const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>
     if (item.value === 'podcast outline' && typeof item.marketingCopy === 'object' && !Array.isArray(item.marketingCopy) && 'episodeTitle' in item.marketingCopy) {
        return podcastOutlineToString(item.marketingCopy as PodcastOutlineStructure);
     }
+
+    // Handle website copy — landing page
+    if (item.value === 'website copy' && isLandingPageStructure(item.marketingCopy)) {
+        return landingPageToString(item.marketingCopy);
+    }
+
+    // Handle website copy — standard 5-page
+    if (item.value === 'website copy' && isStandardWebsitePages(item.marketingCopy)) {
+        return standardWebsiteToString(item.marketingCopy);
+    }
+
+    // Handle website wireframe
+    if (item.value === 'website wireframe' && isWireframeSiteStructure(item.marketingCopy)) {
+        return wireframeSiteToString(item.marketingCopy);
+    }
     
     // Handle blog posts
     if (item.value === 'blog post') {
@@ -392,6 +641,12 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
         textContent += `${billboardAdToString(copy.marketingCopy)}\n\n`;
     } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
         textContent += `${displayAdVariationsToString(copy.marketingCopy)}\n\n`;
+    } else if (copy.value === 'website copy' && isLandingPageStructure(copy.marketingCopy)) {
+        textContent += `${landingPageToString(copy.marketingCopy)}\n\n`;
+    } else if (copy.value === 'website copy' && isStandardWebsitePages(copy.marketingCopy)) {
+        textContent += `${standardWebsiteToString(copy.marketingCopy)}\n\n`;
+    } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
+        textContent += `${wireframeSiteToString(copy.marketingCopy)}\n\n`;
     } else {
         const itemText = getItemText(copy, editedCopy);
         textContent += `${itemText}\n\n\n`;
@@ -906,6 +1161,360 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 doc.text(vnLines, margin, yPosition);
                 yPosition += (vnLines.length * fieldLineHeight) + 8;
             });
+        } else if (copy.value === 'website copy' && isLandingPageStructure(copy.marketingCopy)) {
+            // Structured landing page PDF rendering
+            const lp = copy.marketingCopy;
+            const fieldLH = 5.2;
+
+            // Headline
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(18, 18, 18);
+            const hlLines = doc.splitTextToSize(sanitizeForPdf(lp.headline), maxLineWidth);
+            ensureSpace(hlLines.length * 7 + 3);
+            doc.text(hlLines, margin, yPosition);
+            yPosition += (hlLines.length * 7) + 3;
+
+            // Subheadline
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+            const shLines = doc.splitTextToSize(sanitizeForPdf(lp.subheadline), maxLineWidth);
+            ensureSpace(shLines.length * fieldLH + 3);
+            doc.text(shLines, margin, yPosition);
+            yPosition += (shLines.length * fieldLH) + 3;
+
+            // Hero CTA
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(79, 70, 229);
+            ensureSpace(fieldLH + 5);
+            doc.text(sanitizeForPdf('CTA: ' + lp.heroCtaText), margin, yPosition);
+            yPosition += fieldLH + 5;
+
+            // Problem
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(180, 40, 40);
+            ensureSpace(6 + 3);
+            doc.text('Problem', margin, yPosition);
+            yPosition += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(30, 30, 30);
+            const probLines = doc.splitTextToSize(sanitizeForPdf(lp.problemStatement), maxLineWidth);
+            probLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 4;
+
+            // Solution
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 120, 60);
+            ensureSpace(6 + 3);
+            doc.text('Solution', margin, yPosition);
+            yPosition += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(30, 30, 30);
+            const solLines = doc.splitTextToSize(sanitizeForPdf(lp.solutionOverview), maxLineWidth);
+            solLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 4;
+
+            // Features
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(18, 18, 18);
+            ensureSpace(6 + 3);
+            doc.text('Features & Benefits', margin, yPosition);
+            yPosition += 6;
+            lp.features.forEach((feat, idx) => {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 30, 30);
+                const fTitle = sanitizeForPdf(`${idx + 1}. ${feat.title}`);
+                ensureSpace(fieldLH + 2);
+                doc.text(fTitle, margin, yPosition);
+                yPosition += fieldLH;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(50, 50, 50);
+                const fDesc = doc.splitTextToSize(sanitizeForPdf(feat.description), maxLineWidth - 8);
+                fDesc.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin + 4, yPosition); yPosition += fieldLH; });
+                yPosition += 2;
+            });
+            yPosition += 3;
+
+            // Social Proof
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(60, 60, 120);
+            const spLines = doc.splitTextToSize(sanitizeForPdf('Social Proof: ' + lp.socialProof), maxLineWidth);
+            spLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 3;
+
+            // Urgency
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(180, 100, 0);
+            const urgLines = doc.splitTextToSize(sanitizeForPdf(lp.urgencyElement), maxLineWidth);
+            urgLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 3;
+
+            // Final CTA
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(79, 70, 229);
+            ensureSpace(fieldLH + 3);
+            doc.text(sanitizeForPdf('Final CTA: ' + lp.finalCtaText), margin, yPosition);
+            yPosition += fieldLH + 3;
+
+            // Meta
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(90, 90, 90);
+            ensureSpace(fieldLH * 3);
+            doc.text(sanitizeForPdf('Design: ' + lp.designNotes), margin, yPosition);
+            yPosition += fieldLH;
+            doc.text(sanitizeForPdf('Meta Title: ' + lp.metaTitle), margin, yPosition);
+            yPosition += fieldLH;
+            doc.text(sanitizeForPdf('Meta Desc: ' + lp.metaDescription), margin, yPosition);
+            yPosition += fieldLH + 3;
+
+        } else if (copy.value === 'website copy' && isStandardWebsitePages(copy.marketingCopy)) {
+            // Structured standard 5-page website PDF rendering
+            const pages = copy.marketingCopy;
+            const fieldLH = 5.2;
+
+            pages.forEach((page, pIdx) => {
+                if (pIdx > 0) {
+                    doc.addPage();
+                    yPosition = margin;
+                    yPosition = renderPdfReportHeader(
+                        doc,
+                        `${copy.label} -- ${page.pageName}`,
+                        yPosition, margin, maxLineWidth
+                    );
+                }
+
+                // Page name heading
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(18, 18, 18);
+                ensureSpace(8);
+                doc.text(sanitizeForPdf(`${page.pageName} (${page.pageSlug})`), margin, yPosition);
+                yPosition += 7;
+
+                // Meta
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(90, 90, 90);
+                ensureSpace(fieldLH * 2 + 4);
+                doc.text(sanitizeForPdf(`Meta Title: ${page.metaTitle}`), margin, yPosition);
+                yPosition += fieldLH;
+                doc.text(sanitizeForPdf(`Meta Desc: ${page.metaDescription}`), margin, yPosition);
+                yPosition += fieldLH + 4;
+
+                // Sections
+                page.sections.forEach((section) => {
+                    // Section type badge + heading
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(79, 70, 229);
+                    ensureSpace(fieldLH + 2);
+                    doc.text(sanitizeForPdf(section.sectionType.toUpperCase()), margin, yPosition);
+                    yPosition += fieldLH;
+
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(18, 18, 18);
+                    const headLines = doc.splitTextToSize(sanitizeForPdf(section.heading), maxLineWidth);
+                    ensureSpace(headLines.length * 5.8 + 3);
+                    doc.text(headLines, margin, yPosition);
+                    yPosition += (headLines.length * 5.8) + 2;
+
+                    if (section.subheading) {
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'italic');
+                        doc.setTextColor(80, 80, 80);
+                        const subLines = doc.splitTextToSize(sanitizeForPdf(section.subheading), maxLineWidth);
+                        ensureSpace(subLines.length * fieldLH + 2);
+                        doc.text(subLines, margin, yPosition);
+                        yPosition += (subLines.length * fieldLH) + 2;
+                    }
+
+                    // Body content
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(30, 30, 30);
+                    const bodyLines = doc.splitTextToSize(sanitizeForPdf(section.bodyContent), maxLineWidth);
+                    bodyLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+                    yPosition += 2;
+
+                    if (section.ctaText) {
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(79, 70, 229);
+                        ensureSpace(fieldLH + 2);
+                        doc.text(sanitizeForPdf('CTA: ' + section.ctaText + (section.ctaDestination ? ' -> ' + section.ctaDestination : '')), margin, yPosition);
+                        yPosition += fieldLH + 2;
+                    }
+
+                    if (section.designNotes) {
+                        doc.setFontSize(9);
+                        doc.setFont('helvetica', 'italic');
+                        doc.setTextColor(100, 100, 100);
+                        const dnLines = doc.splitTextToSize(sanitizeForPdf('Design: ' + section.designNotes), maxLineWidth);
+                        ensureSpace(dnLines.length * 4.5 + 2);
+                        doc.text(dnLines, margin, yPosition);
+                        yPosition += (dnLines.length * 4.5) + 4;
+                    } else {
+                        yPosition += 4;
+                    }
+                });
+            });
+
+        } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
+            // Structured wireframe PDF rendering
+            const wf = copy.marketingCopy;
+            const fieldLH = 5.0;
+
+            // Navigation bar
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(60, 60, 80);
+            ensureSpace(6);
+            doc.text('Navigation', margin, yPosition);
+            yPosition += 5.5;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
+            const navText = sanitizeForPdf(`[LOGO ${wf.siteNavigation.logoPosition}]  ${wf.siteNavigation.menuItems.join('  |  ')}${wf.siteNavigation.ctaButton ? '  |  [' + wf.siteNavigation.ctaButton + ']' : ''}`);
+            const navLines = doc.splitTextToSize(navText, maxLineWidth);
+            ensureSpace(navLines.length * fieldLH + 4);
+            doc.text(navLines, margin, yPosition);
+            yPosition += (navLines.length * fieldLH) + 6;
+
+            // Pages
+            wf.pages.forEach((page, pIdx) => {
+                if (pIdx > 0) {
+                    doc.addPage();
+                    yPosition = margin;
+                    yPosition = renderPdfReportHeader(
+                        doc,
+                        `${copy.label} -- ${page.pageName} Wireframe`,
+                        yPosition, margin, maxLineWidth
+                    );
+                }
+
+                doc.setFontSize(13);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(18, 18, 18);
+                ensureSpace(7);
+                doc.text(sanitizeForPdf(`${page.pageName} (${page.pageSlug})`), margin, yPosition);
+                yPosition += 7;
+
+                // Draw separator
+                doc.setDrawColor(200, 200, 210);
+                doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+                yPosition += 4;
+
+                page.sections.forEach((section) => {
+                    // Pre-calc section height
+                    const nameLines = doc.splitTextToSize(sanitizeForPdf(section.sectionName + ' -- ' + section.layoutType), maxLineWidth);
+                    const contentLines = doc.splitTextToSize(sanitizeForPdf(section.contentPlaceholder), maxLineWidth);
+                    let sectionHeight = (nameLines.length * fieldLH) + (contentLines.length * fieldLH) + 8;
+                    if (section.functionalNotes) sectionHeight += fieldLH + 2;
+                    if (section.designSpecs) sectionHeight += fieldLH + 2;
+
+                    if (yPosition + sectionHeight > pageHeight - margin) {
+                        doc.addPage();
+                        yPosition = margin;
+                    }
+
+                    // Section name + layout type
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(30, 30, 30);
+                    doc.text(nameLines, margin, yPosition);
+                    yPosition += (nameLines.length * fieldLH) + 1;
+
+                    // Content placeholder
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(50, 50, 50);
+                    doc.text(contentLines, margin + 4, yPosition);
+                    yPosition += (contentLines.length * fieldLH) + 1;
+
+                    // Functional notes
+                    if (section.functionalNotes) {
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'italic');
+                        doc.setTextColor(40, 80, 160);
+                        const fnLines = doc.splitTextToSize(sanitizeForPdf('Functional: ' + section.functionalNotes), maxLineWidth - 8);
+                        doc.text(fnLines, margin + 4, yPosition);
+                        yPosition += (fnLines.length * (fieldLH - 0.5)) + 1;
+                    }
+
+                    // Design specs
+                    if (section.designSpecs) {
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'italic');
+                        doc.setTextColor(100, 40, 140);
+                        const dsLines = doc.splitTextToSize(sanitizeForPdf('Design: ' + section.designSpecs), maxLineWidth - 8);
+                        doc.text(dsLines, margin + 4, yPosition);
+                        yPosition += (dsLines.length * (fieldLH - 0.5)) + 1;
+                    }
+
+                    yPosition += 4;
+                });
+            });
+
+            // Footer
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(60, 60, 80);
+            ensureSpace(20);
+            doc.text('Footer', margin, yPosition);
+            yPosition += 5.5;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
+            wf.footer.columns.forEach(col => {
+                ensureSpace(fieldLH * 2);
+                doc.text(sanitizeForPdf(`${col.heading}: ${col.items.join(', ')}`), margin, yPosition);
+                yPosition += fieldLH;
+            });
+            yPosition += 3;
+
+            // Design System
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(60, 60, 80);
+            ensureSpace(fieldLH * 5);
+            doc.text('Design System', margin, yPosition);
+            yPosition += 5;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
+            doc.text(sanitizeForPdf('Colors: ' + wf.designSystem.colorScheme), margin, yPosition);
+            yPosition += fieldLH;
+            doc.text(sanitizeForPdf('Typography: ' + wf.designSystem.typography), margin, yPosition);
+            yPosition += fieldLH;
+            doc.text(sanitizeForPdf('Spacing: ' + wf.designSystem.spacing), margin, yPosition);
+            yPosition += fieldLH + 3;
+
+            // User Flow
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(60, 60, 80);
+            ensureSpace(15);
+            doc.text('User Flow Notes', margin, yPosition);
+            yPosition += 5;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(30, 30, 30);
+            const ufLines = doc.splitTextToSize(sanitizeForPdf(wf.userFlowNotes), maxLineWidth);
+            ufLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+
         } else {
             // Default: render as plain text (all other content types)
             doc.setFontSize(10);
@@ -1298,6 +1907,151 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                             padding-top: 8px;
                             border-top: 1px solid #f0f2f6;
                         }
+                        /* Landing Page styles */
+                        .lp-hero {
+                            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                            color: #fff;
+                            border-radius: 14px;
+                            padding: 32px 28px;
+                            margin-bottom: 16px;
+                        }
+                        .lp-hero h2 { margin: 0 0 8px; font-size: 2rem; font-weight: 800; line-height: 1.15; }
+                        .lp-hero p { margin: 0 0 14px; color: #e0e7ff; font-size: 1.05rem; }
+                        .lp-hero .lp-cta { display: inline-block; background: #fbbf24; color: #1e293b; font-weight: 700; padding: 8px 20px; border-radius: 8px; font-size: 0.88rem; text-transform: uppercase; }
+                        .lp-section {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 20px 24px;
+                            margin-bottom: 14px;
+                            background: #fff;
+                        }
+                        .lp-section h3 { margin: 0 0 10px; font-size: 1.15rem; color: #111827; }
+                        .lp-section p { margin: 0 0 8px; color: #374151; font-size: 0.93rem; line-height: 1.55; }
+                        .lp-section ul { margin: 8px 0; padding-left: 22px; }
+                        .lp-section li { margin-bottom: 6px; color: #374151; }
+                        .lp-features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+                        .lp-feature-card {
+                            background: #f8fafc;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                        }
+                        .lp-feature-card strong { display: block; margin-bottom: 4px; color: #111827; }
+                        .lp-feature-card p { margin: 0; font-size: 0.88rem; color: #4b5563; }
+                        .lp-meta {
+                            background: #f0fdf4;
+                            border: 1px solid #bbf7d0;
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                            margin-top: 14px;
+                        }
+                        .lp-meta h4 { margin: 0 0 8px; color: #15803d; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; }
+                        .lp-meta p { margin: 0 0 4px; font-size: 0.88rem; color: #374151; }
+                        /* Standard Website styles */
+                        .ws-page {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 14px;
+                            margin-bottom: 18px;
+                            overflow: hidden;
+                            background: #fff;
+                        }
+                        .ws-page-header {
+                            background: #f1f5f9;
+                            padding: 14px 20px;
+                            border-bottom: 1px solid #e5e7eb;
+                        }
+                        .ws-page-header h3 { margin: 0; font-size: 1.15rem; color: #111827; }
+                        .ws-page-body { padding: 20px; }
+                        .ws-section {
+                            border-left: 3px solid #6366f1;
+                            padding: 12px 16px;
+                            margin-bottom: 14px;
+                            background: #fafbff;
+                            border-radius: 0 8px 8px 0;
+                        }
+                        .ws-section-type {
+                            display: inline-block;
+                            padding: 2px 8px;
+                            border-radius: 4px;
+                            background: #eef2ff;
+                            color: #4338ca;
+                            font-size: 0.72rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                            margin-bottom: 8px;
+                        }
+                        .ws-section h4 { margin: 0 0 6px; font-size: 1.05rem; color: #111827; }
+                        .ws-section p { margin: 0 0 6px; color: #374151; font-size: 0.93rem; line-height: 1.55; }
+                        .ws-section ul { margin: 6px 0; padding-left: 20px; }
+                        .ws-section li { margin-bottom: 4px; color: #374151; font-size: 0.9rem; }
+                        /* Wireframe styles */
+                        .wf-container {
+                            border: 2px dashed #94a3b8;
+                            border-radius: 14px;
+                            padding: 20px;
+                            background: #f8fafc;
+                        }
+                        .wf-nav {
+                            background: #e2e8f0;
+                            border-radius: 8px;
+                            padding: 12px 16px;
+                            margin-bottom: 16px;
+                            display: flex;
+                            gap: 16px;
+                            flex-wrap: wrap;
+                        }
+                        .wf-nav span { font-size: 0.88rem; font-weight: 600; color: #334155; }
+                        .wf-page {
+                            border: 1px dashed #cbd5e1;
+                            border-radius: 10px;
+                            margin-bottom: 16px;
+                            overflow: hidden;
+                        }
+                        .wf-page-header {
+                            background: #e2e8f0;
+                            padding: 10px 16px;
+                            border-bottom: 1px dashed #cbd5e1;
+                        }
+                        .wf-page-header h3 { margin: 0; font-size: 1.05rem; color: #1e293b; }
+                        .wf-page-body { padding: 16px; }
+                        .wf-section {
+                            border: 1px dotted #94a3b8;
+                            border-radius: 6px;
+                            padding: 10px 14px;
+                            margin-bottom: 10px;
+                            background: #fff;
+                        }
+                        .wf-section-type {
+                            display: inline-block;
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            background: #f1f5f9;
+                            color: #475569;
+                            font-size: 0.7rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                            margin-bottom: 6px;
+                        }
+                        .wf-section h4 { margin: 0 0 4px; font-size: 0.95rem; color: #1e293b; }
+                        .wf-section p { margin: 0 0 4px; color: #475569; font-size: 0.88rem; }
+                        .wf-footer {
+                            background: #e2e8f0;
+                            border-radius: 8px;
+                            padding: 12px 16px;
+                            margin-top: 16px;
+                        }
+                        .wf-footer p { margin: 0 0 4px; font-size: 0.88rem; color: #475569; }
+                        .wf-design-system {
+                            background: #fefce8;
+                            border: 1px solid #fde68a;
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                            margin-top: 14px;
+                        }
+                        .wf-design-system h4 { margin: 0 0 8px; color: #a16207; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; }
+                        .wf-design-system p { margin: 0 0 4px; font-size: 0.88rem; color: #374151; }
                         @media print {
                             body { background: #fff; padding: 0; }
                             .reports-root { gap: 0; max-width: none; }
@@ -1335,6 +2089,12 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                         marketingText = billboardAdToHtml(copy.marketingCopy);
                 } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
                         marketingText = displayAdVariationsToHtml(copy.marketingCopy);
+                } else if (copy.value === 'website copy' && isLandingPageStructure(copy.marketingCopy)) {
+                        marketingText = landingPageToHtml(copy.marketingCopy);
+                } else if (copy.value === 'website copy' && isStandardWebsitePages(copy.marketingCopy)) {
+                        marketingText = (copy.marketingCopy as WebsitePageStructure[]).map(page => standardWebsitePageToHtml(page)).join('');
+                } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
+                        marketingText = wireframeSiteToHtml(copy.marketingCopy);
         } else {
                         const itemText = getItemText(copy, editedCopy);
             const rawText = itemText;

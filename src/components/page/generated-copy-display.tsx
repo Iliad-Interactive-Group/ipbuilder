@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info, Pencil, AlertTriangle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure } from '@/ai/flows/generate-marketing-copy';
 import { validateGeneratedText, type BusinessFacts, type ValidationWarning } from '@/lib/validation-utils';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
@@ -22,7 +22,7 @@ import { isVariantsArray, VariantCopy } from '@/lib/variant-utils';
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | BillboardAdStructure | DisplayAdVariation[] | VariantCopy[];
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | BillboardAdStructure | DisplayAdVariation[] | LandingPageStructure | WebsitePageStructure[] | WireframeSiteStructure | VariantCopy[];
   imageSuggestion?: string;
   imageSuggestions?: string[];
   isError?: boolean;
@@ -367,6 +367,230 @@ const EditableTextDisplay: React.FC<{
 };
 
 
+// Landing Page Display component
+const LandingPageDisplay: React.FC<{ page: LandingPageStructure }> = ({ page }) => (
+  <div className="space-y-6 text-left animate-in fade-in duration-500">
+    {/* Hero Section */}
+    <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-8 border border-primary/20">
+      <p className="text-xs font-bold uppercase tracking-widest text-primary/60 mb-3">Hero Section</p>
+      <h2 className="text-3xl font-extrabold text-foreground leading-tight mb-3">{page.headline}</h2>
+      <p className="text-lg text-muted-foreground leading-relaxed mb-5">{page.subheadline}</p>
+      <span className="inline-block bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-lg text-sm uppercase tracking-wider">
+        {page.heroCtaText}
+      </span>
+      {page.heroCtaDestination && (
+        <p className="text-xs text-muted-foreground mt-2">Links to: {page.heroCtaDestination}</p>
+      )}
+    </div>
+
+    {/* Problem / Solution */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-6 border border-red-100 dark:border-red-900">
+        <p className="text-xs font-bold uppercase tracking-widest text-red-500 dark:text-red-400 mb-3">Problem</p>
+        <p className="text-sm text-foreground/90 leading-relaxed">{page.problemStatement}</p>
+      </div>
+      <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-6 border border-green-100 dark:border-green-900">
+        <p className="text-xs font-bold uppercase tracking-widest text-green-500 dark:text-green-400 mb-3">Solution</p>
+        <p className="text-sm text-foreground/90 leading-relaxed">{page.solutionOverview}</p>
+      </div>
+    </div>
+
+    {/* Features */}
+    {page.features && page.features.length > 0 && (
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Key Features & Benefits</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {page.features.map((feat, idx) => (
+            <div key={idx} className="border rounded-lg p-4 bg-card shadow-sm">
+              <h4 className="font-bold text-sm text-foreground mb-1">{feat.title}</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">{feat.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Social Proof */}
+    <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-6 border border-blue-100 dark:border-blue-900 text-center">
+      <p className="text-xs font-bold uppercase tracking-widest text-blue-500 dark:text-blue-400 mb-2">Social Proof</p>
+      <p className="text-sm text-foreground italic leading-relaxed">{page.socialProof}</p>
+    </div>
+
+    {/* Urgency */}
+    <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800 text-center">
+      <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{page.urgencyElement}</p>
+    </div>
+
+    {/* Final CTA */}
+    <div className="text-center py-4">
+      <span className="inline-block bg-primary text-primary-foreground font-bold px-8 py-3 rounded-lg text-base uppercase tracking-wider">
+        {page.finalCtaText}
+      </span>
+      {page.finalCtaDestination && (
+        <p className="text-xs text-muted-foreground mt-2">Links to: {page.finalCtaDestination}</p>
+      )}
+    </div>
+
+    {/* Design Notes + Meta */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div className="bg-muted/50 rounded-lg p-4 border">
+        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">Design Notes</p>
+        <p className="text-foreground text-sm">{page.designNotes}</p>
+      </div>
+      <div className="bg-muted/50 rounded-lg p-4 border">
+        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">SEO</p>
+        <p className="text-foreground text-sm"><strong>Title:</strong> {page.metaTitle}</p>
+        <p className="text-foreground text-sm"><strong>Meta:</strong> {page.metaDescription}</p>
+      </div>
+    </div>
+  </div>
+);
+
+// Standard Website Page section display
+const WebsitePageSectionDisplay: React.FC<{ section: WebsitePageStructure['sections'][0] }> = ({ section }) => (
+  <div className="border rounded-lg p-4 bg-card shadow-sm">
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded">{section.sectionType}</span>
+    </div>
+    <h4 className="font-bold text-foreground mb-1">{section.heading}</h4>
+    {section.subheading && <p className="text-sm text-muted-foreground italic mb-2">{section.subheading}</p>}
+    <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{section.bodyContent}</p>
+    {section.ctaText && (
+      <div className="mt-3">
+        <span className="inline-block bg-primary/10 text-primary font-semibold px-3 py-1 rounded text-xs">
+          {section.ctaText}
+        </span>
+        {section.ctaDestination && <span className="text-xs text-muted-foreground ml-2">→ {section.ctaDestination}</span>}
+      </div>
+    )}
+    {section.designNotes && (
+      <p className="text-xs text-muted-foreground mt-2 italic border-t pt-2">Design: {section.designNotes}</p>
+    )}
+  </div>
+);
+
+// Standard 5-Page Website Display component (tabbed)
+const StandardWebsiteDisplay: React.FC<{ pages: WebsitePageStructure[] }> = ({ pages }) => (
+  <div className="space-y-4 text-left animate-in fade-in duration-500">
+    <Tabs defaultValue={pages[0]?.pageSlug || '/'} className="w-full">
+      <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(pages.length, 5)}, 1fr)` }}>
+        {pages.map((page) => (
+          <TabsTrigger key={page.pageSlug} value={page.pageSlug} className="text-xs py-2">
+            {page.pageName}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {pages.map((page) => (
+        <TabsContent key={page.pageSlug} value={page.pageSlug} className="mt-0 p-6 border rounded-xl bg-card shadow-sm">
+          <div className="mb-6 border-b pb-4">
+            <h3 className="text-2xl font-bold text-foreground mb-2">{page.pageName}</h3>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-mono bg-muted px-2 py-0.5 rounded">{page.pageSlug}</span>
+            </p>
+            <div className="mt-2 text-xs text-muted-foreground">
+              <p><strong>Meta Title:</strong> {page.metaTitle}</p>
+              <p><strong>Meta Desc:</strong> {page.metaDescription}</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {page.sections.map((section, idx) => (
+              <WebsitePageSectionDisplay key={idx} section={section} />
+            ))}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
+  </div>
+);
+
+// Website Wireframe Display component (blueprint-style)
+const WebsiteWireframeDisplay: React.FC<{ wireframe: WireframeSiteStructure }> = ({ wireframe }) => (
+  <div className="space-y-6 text-left animate-in fade-in duration-500">
+    {/* Navigation */}
+    <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-5 border-2 border-dashed border-slate-300 dark:border-slate-700">
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Site Navigation</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="bg-slate-300 dark:bg-slate-600 px-3 py-1 rounded text-xs font-bold">[LOGO]</span>
+          <span className="text-xs text-muted-foreground">{wireframe.siteNavigation.logoPosition}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {wireframe.siteNavigation.menuItems.map((item, idx) => (
+            <span key={idx} className="text-xs font-medium text-foreground bg-white dark:bg-slate-800 px-2 py-1 rounded border">{item}</span>
+          ))}
+          {wireframe.siteNavigation.ctaButton && (
+            <span className="text-xs font-bold text-white bg-primary px-3 py-1 rounded">{wireframe.siteNavigation.ctaButton}</span>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* Pages */}
+    <Tabs defaultValue={wireframe.pages[0]?.pageSlug || '/'} className="w-full">
+      <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(wireframe.pages.length, 5)}, 1fr)` }}>
+        {wireframe.pages.map((page) => (
+          <TabsTrigger key={page.pageSlug} value={page.pageSlug} className="text-xs py-2">
+            {page.pageName}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {wireframe.pages.map((page) => (
+        <TabsContent key={page.pageSlug} value={page.pageSlug} className="mt-0">
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-foreground mb-2">{page.pageName} <span className="text-xs font-mono text-muted-foreground">{page.pageSlug}</span></h3>
+            {page.sections.map((section, idx) => (
+              <div key={idx} className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 bg-slate-50 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-sm text-foreground">{section.sectionName}</span>
+                  <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">{section.layoutType}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-1">{section.contentPlaceholder}</p>
+                {section.functionalNotes && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400">⚙ {section.functionalNotes}</p>
+                )}
+                {section.designSpecs && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">🎨 {section.designSpecs}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
+
+    {/* Footer Wireframe */}
+    <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-5 border-2 border-dashed border-slate-300 dark:border-slate-700">
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Footer</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {wireframe.footer.columns.map((col, idx) => (
+          <div key={idx}>
+            <p className="font-bold text-xs text-foreground mb-1">{col.heading}</p>
+            {col.items.map((item, i) => (
+              <p key={i} className="text-xs text-muted-foreground">{item}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground mt-3 border-t pt-2">{wireframe.footer.copyright}</p>
+    </div>
+
+    {/* Design System + User Flow */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-muted/50 rounded-lg p-4 border">
+        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">Design System</p>
+        <p className="text-xs text-foreground"><strong>Colors:</strong> {wireframe.designSystem.colorScheme}</p>
+        <p className="text-xs text-foreground"><strong>Typography:</strong> {wireframe.designSystem.typography}</p>
+        <p className="text-xs text-foreground"><strong>Spacing:</strong> {wireframe.designSystem.spacing}</p>
+      </div>
+      <div className="bg-muted/50 rounded-lg p-4 border">
+        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">User Flow Notes</p>
+        <p className="text-xs text-foreground leading-relaxed">{wireframe.userFlowNotes}</p>
+      </div>
+    </div>
+  </div>
+);
+
+
 const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   generatedCopy,
   editedCopy,
@@ -425,6 +649,26 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                   typeof item.marketingCopy[0] === 'object' &&
                                   'headline' in (item.marketingCopy[0] as object) &&
                                   'body' in (item.marketingCopy[0] as object);
+
+              // Website Copy — Landing Page (single object with heroCtaText)
+              const isLandingPage = item.value === 'website copy' &&
+                                    typeof item.marketingCopy === 'object' &&
+                                    !Array.isArray(item.marketingCopy) &&
+                                    'heroCtaText' in (item.marketingCopy as object);
+
+              // Website Copy — Standard 5-Page (array of page objects with pageName)
+              const isStandardWebsite = item.value === 'website copy' &&
+                                        Array.isArray(item.marketingCopy) &&
+                                        item.marketingCopy.length > 0 &&
+                                        typeof item.marketingCopy[0] === 'object' &&
+                                        'pageName' in (item.marketingCopy[0] as object);
+
+              // Website Wireframe (object with siteNavigation + pages)
+              const isWireframe = item.value === 'website wireframe' &&
+                                  typeof item.marketingCopy === 'object' &&
+                                  !Array.isArray(item.marketingCopy) &&
+                                  'siteNavigation' in (item.marketingCopy as object) &&
+                                  'pages' in (item.marketingCopy as object);
               
               const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
@@ -499,6 +743,12 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                ))}
                              </div>
                            </div>
+                        ) : isLandingPage ? (
+                           <LandingPageDisplay page={item.marketingCopy as LandingPageStructure} />
+                        ) : isStandardWebsite ? (
+                           <StandardWebsiteDisplay pages={item.marketingCopy as WebsitePageStructure[]} />
+                        ) : isWireframe ? (
+                           <WebsiteWireframeDisplay wireframe={item.marketingCopy as WireframeSiteStructure} />
                         ) : hasVariants ? (
                            <Tabs defaultValue="1" className="w-full">
                              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as VariantCopy[]).length}, 1fr)` }}>

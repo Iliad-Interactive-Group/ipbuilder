@@ -115,6 +115,21 @@ const BLOG_FORMATS = [
 ];
 const NO_BLOG_FORMAT_SELECTED_VALUE = "series";
 
+const WEBSITE_COPY_TYPES = [
+  { value: "landing_page", label: "Landing Page (High-Conversion, Single CTA)" },
+  { value: "standard_5_page", label: "Standard 5-Page Website" },
+];
+const NO_WEBSITE_COPY_TYPE_VALUE = "standard_5_page";
+
+const WEBSITE_FLEX_PAGES = [
+  { value: "blog", label: "Blog" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "testimonials", label: "Testimonials" },
+  { value: "faq", label: "FAQ" },
+  { value: "pricing", label: "Pricing" },
+];
+const NO_WEBSITE_FLEX_PAGE_VALUE = "blog";
+
 const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
 const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
 const LOCAL_STORAGE_BRIEF_KEY = 'ipbuilder_saved_brief';
@@ -127,6 +142,8 @@ export const formSchema = z.object({
   keywords: z.string().min(1, "Keywords are required (comma-separated)"),
   contentType: z.array(z.string()).min(1, "Please select at least one content type."),
   blogFormat: z.string().optional(),
+  websiteCopyType: z.string().optional(),
+  websiteFlexPage: z.string().optional(),
   tone: z.string().optional(),
   socialMediaPlatform: z.string().optional(),
   tvScriptLength: z.string().optional(),
@@ -177,6 +194,9 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
   const selectedContentTypes = form.watch('contentType');
   const showSocialMediaPlatformSelector = selectedContentTypes?.includes('social media post');
   const showBlogFormatSelector = selectedContentTypes?.includes('blog post');
+  const showWebsiteCopyTypeSelector = selectedContentTypes?.some((ct: string) => ['website copy', 'website wireframe'].includes(ct));
+  const selectedWebsiteCopyType = form.watch('websiteCopyType');
+  const showWebsiteFlexPageSelector = showWebsiteCopyTypeSelector && (selectedWebsiteCopyType === 'standard_5_page' || !selectedWebsiteCopyType);
   const showTvScriptLengthSelector = selectedContentTypes?.includes('tv script');
   const showRadioScriptLengthSelector = selectedContentTypes?.includes('radio script');
   const showEmailTypeSelector = selectedContentTypes?.includes('lead generation email');
@@ -223,6 +243,8 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
         keywords: form.getValues("keywords"),
         tone: form.getValues("tone") || NO_TONE_SELECTED_VALUE,
         blogFormat: form.getValues("blogFormat") || NO_BLOG_FORMAT_SELECTED_VALUE,
+        websiteCopyType: form.getValues("websiteCopyType") || NO_WEBSITE_COPY_TYPE_VALUE,
+        websiteFlexPage: form.getValues("websiteFlexPage") || NO_WEBSITE_FLEX_PAGE_VALUE,
         socialMediaPlatform: form.getValues("socialMediaPlatform") || NO_PLATFORM_SELECTED_VALUE,
         tvScriptLength: form.getValues("tvScriptLength") || NO_TV_LENGTH_SELECTED_VALUE,
         radioScriptLength: form.getValues("radioScriptLength") || NO_RADIO_LENGTH_SELECTED_VALUE,
@@ -252,6 +274,8 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
             contentType: form.getValues('contentType'), 
             tone: savedBrief.tone || NO_TONE_SELECTED_VALUE,
             blogFormat: savedBrief.blogFormat || NO_BLOG_FORMAT_SELECTED_VALUE,
+            websiteCopyType: (savedBrief as any).websiteCopyType || NO_WEBSITE_COPY_TYPE_VALUE,
+            websiteFlexPage: (savedBrief as any).websiteFlexPage || NO_WEBSITE_FLEX_PAGE_VALUE,
             socialMediaPlatform: savedBrief.socialMediaPlatform || NO_PLATFORM_SELECTED_VALUE,
             tvScriptLength: savedBrief.tvScriptLength || NO_TV_LENGTH_SELECTED_VALUE,
             radioScriptLength: savedBrief.radioScriptLength || NO_RADIO_LENGTH_SELECTED_VALUE,
@@ -498,6 +522,66 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                     </Select>
                     <FormDescription>
                       Choose between a single deep-dive post or a 4-part monthly series.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showWebsiteCopyTypeSelector && (
+              <FormField
+                control={form.control}
+                name="websiteCopyType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Monitor className="w-4 h-4 mr-2 text-muted-foreground"/>Website Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || NO_WEBSITE_COPY_TYPE_VALUE} defaultValue={NO_WEBSITE_COPY_TYPE_VALUE}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select website type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {WEBSITE_COPY_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose a high-conversion landing page or a full 5-page website. Applies to both Website Copy and Website Wireframe.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showWebsiteFlexPageSelector && (
+              <FormField
+                control={form.control}
+                name="websiteFlexPage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><LayoutDashboard className="w-4 h-4 mr-2 text-muted-foreground"/>5th Page</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || NO_WEBSITE_FLEX_PAGE_VALUE} defaultValue={NO_WEBSITE_FLEX_PAGE_VALUE}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select 5th page type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {WEBSITE_FLEX_PAGES.map((page) => (
+                          <SelectItem key={page.value} value={page.value}>
+                            {page.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Home, About, Services, Contact + this page. Choose the 5th page for your website.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
