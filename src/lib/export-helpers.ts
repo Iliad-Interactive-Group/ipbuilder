@@ -3,6 +3,27 @@ import jsPDF from 'jspdf';
 import type { GeneratedCopyItem } from '@/components/page/generated-copy-display';
 import type { PodcastOutlineStructure, BlogPostStructure } from '@/ai/flows/generate-marketing-copy';
 
+/**
+ * Sanitize text for jsPDF rendering.
+ * jsPDF's built-in Helvetica only supports WinAnsi (Latin-1) encoding.
+ * This strips emojis and maps common Unicode chars to safe equivalents.
+ */
+const sanitizeForPdf = (text: string): string => {
+    return text
+        // Common typographic replacements
+        .replace(/[\u2018\u2019\u201A]/g, "'")   // smart single quotes
+        .replace(/[\u201C\u201D\u201E]/g, '"')    // smart double quotes
+        .replace(/\u2026/g, '...')                 // ellipsis
+        .replace(/\u2013/g, '-')                   // en-dash
+        .replace(/\u2014/g, '--')                  // em-dash
+        .replace(/\u00A0/g, ' ')                   // non-breaking space
+        // Strip emoji and other non-Latin-1 characters (keep U+0000–U+00FF + bullet U+2022)
+        .replace(/[\u2022]/g, '\u2022')            // preserve bullet (handled by jsPDF)
+        .replace(/[^\x00-\xFF\u2022]/g, '')        // strip everything else outside Latin-1
+        .replace(/\s{2,}/g, ' ')                   // collapse double spaces from stripped chars
+        .trim();
+};
+
 const podcastOutlineToString = (outline: PodcastOutlineStructure): string => {
   let content = `Podcast Episode Outline\n\n`;
   content += `Title: ${outline.episodeTitle}\n`;
@@ -159,6 +180,74 @@ const blogPostToHtml = (post: BlogPostStructure, partLabel?: string): string => 
         `;
 };
 
+/**
+ * Get the individual social media posts as a string array.
+ * Falls back to splitting the edited text if available.
+ */
+const getSocialMediaPosts = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string[] => {
+    const editedText = editedCopy[item.value];
+    if (editedText !== undefined) {
+        // User may have edited; split on double-newline to recover individual posts
+        return editedText.split(/\n\n+/).filter(p => p.trim().length > 0);
+    }
+    if (Array.isArray(item.marketingCopy)) {
+        return item.marketingCopy.map(p => typeof p === 'string' ? p : String(p));
+    }
+    return [String(item.marketingCopy)];
+};
+
+/**
+ * Build structured HTML for social media posts with per-post cards and embedded images.
+ */
+const socialMediaPostsToHtml = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string => {
+    const posts = getSocialMediaPosts(item, editedCopy);
+
+    let html = '';
+
+    // Image suggestion(s) header
+    if (item.imageSuggestions && item.imageSuggestions.length > 0) {
+        html += `<div class="sm-images-header"><strong>Image Prompts for A/B Testing</strong></div>`;
+        item.imageSuggestions.forEach((suggestion, idx) => {
+            html += `<p class="suggestion"><strong>Variant ${idx + 1}:</strong> ${escapeHtml(suggestion)}</p>`;
+        });
+    } else if (item.imageSuggestion) {
+        html += `<p class="suggestion"><strong>Image Suggestion:</strong> ${escapeHtml(item.imageSuggestion)}</p>`;
+    }
+
+    // Embedded generated images
+    if (item.generatedImages && item.generatedImages.length > 0) {
+        html += `<div class="sm-images-grid">`;
+        item.generatedImages.forEach((dataUri, idx) => {
+            html += `
+                <figure class="sm-image-figure">
+                    <img src="${dataUri}" alt="Image Variant ${idx + 1}" />
+                    <figcaption>Image Variant ${idx + 1}</figcaption>
+                </figure>
+            `;
+        });
+        html += `</div>`;
+    } else if (item.generatedImage) {
+        html += `
+            <figure class="sm-image-figure sm-image-single">
+                <img src="${item.generatedImage}" alt="Generated Image" />
+                <figcaption>Generated Image</figcaption>
+            </figure>
+        `;
+    }
+
+    // Individual post cards
+    posts.forEach((post, idx) => {
+        html += `
+            <article class="sm-post-card">
+                <div class="sm-post-label">Post ${idx + 1} of ${posts.length}</div>
+                <div class="sm-post-body">${escapeHtml(post).replace(/\n/g, '<br>')}</div>
+            </article>
+        `;
+    });
+
+    return html;
+};
+
 const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string => {
     const editedText = editedCopy[item.value];
     if (editedText !== undefined) {
@@ -209,13 +298,28 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
   let textContent = "";
   copies.forEach(copy => {
     textContent += `Content Type: ${copy.label}\n`;
-    if (copy.imageSuggestion) {
+    // imageSuggestions (plural) + singular fallback
+    if (copy.imageSuggestions && copy.imageSuggestions.length > 0) {
+      copy.imageSuggestions.forEach((s: string, idx: number) => {
+        textContent += `Image Variant ${idx + 1}: ${s}\n`;
+      });
+    } else if (copy.imageSuggestion) {
       textContent += `Image Suggestion: ${copy.imageSuggestion}\n`;
     }
     textContent += `------------------------------------------\n`;
-    
-    const itemText = getItemText(copy, editedCopy);
-    textContent += `${itemText}\n\n\n`;
+
+    // Social media: numbered posts
+    if (copy.value === 'social media post') {
+        const smPosts = getSocialMediaPosts(copy, editedCopy);
+        smPosts.forEach((post: string, idx: number) => {
+            textContent += `\n--- Post ${idx + 1} of ${smPosts.length} ---\n`;
+            textContent += `${post}\n`;
+        });
+        textContent += `\n\n`;
+    } else {
+        const itemText = getItemText(copy, editedCopy);
+        textContent += `${itemText}\n\n\n`;
+    }
   });
 
   const element = document.createElement("a");
@@ -451,19 +555,65 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
           }
         };
 
-        if (copy.imageSuggestion) {
+        // --- Image suggestion text (singular + plural) ---
+        if (copy.imageSuggestions && copy.imageSuggestions.length > 0) {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'italic');
             doc.setTextColor(85, 85, 85);
-            const suggestionLineHeight = 4.8;
-            const suggestionText = `Image Suggestion: ${copy.imageSuggestion}`;
-            const suggestionLines = doc.splitTextToSize(suggestionText, maxLineWidth);
-            ensureSpace(suggestionLines.length * suggestionLineHeight + 4);
-            doc.text(suggestionLines, margin, yPosition);
-            yPosition += (suggestionLines.length * suggestionLineHeight) + 3;
+            const slh = 4.8;
+            copy.imageSuggestions.forEach((suggestion: string, idx: number) => {
+                const sText = sanitizeForPdf(`Image Variant ${idx + 1}: ${suggestion}`);
+                const sLines = doc.splitTextToSize(sText, maxLineWidth);
+                ensureSpace(sLines.length * slh + 2);
+                doc.text(sLines, margin, yPosition);
+                yPosition += (sLines.length * slh) + 2;
+            });
+            yPosition += 2;
+        } else if (copy.imageSuggestion) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(85, 85, 85);
+            const slh = 4.8;
+            const sText = sanitizeForPdf(`Image Suggestion: ${copy.imageSuggestion}`);
+            const sLines = doc.splitTextToSize(sText, maxLineWidth);
+            ensureSpace(sLines.length * slh + 4);
+            doc.text(sLines, margin, yPosition);
+            yPosition += (sLines.length * slh) + 3;
         }
 
-        // Blog posts get structured PDF rendering with proper formatting
+        // --- Embed generated images ---
+        const addImageToPdf = (dataUri: string, caption: string) => {
+            try {
+                const imgW = maxLineWidth * 0.65;
+                const imgH = imgW;
+                if (yPosition + imgH + 12 > pageHeight - margin) {
+                    doc.addPage();
+                    yPosition = margin;
+                }
+                const imgX = margin + (maxLineWidth - imgW) / 2;
+                doc.addImage(dataUri, 'PNG', imgX, yPosition, imgW, imgH);
+                yPosition += imgH + 2;
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(100, 100, 100);
+                const cw = doc.getTextWidth(caption);
+                doc.text(caption, margin + (maxLineWidth - cw) / 2, yPosition);
+                yPosition += 6;
+                doc.setTextColor(0, 0, 0);
+            } catch (imgErr) {
+                console.warn('[PDF Export] Could not embed image:', imgErr);
+            }
+        };
+
+        if (copy.generatedImages && copy.generatedImages.length > 0) {
+            copy.generatedImages.forEach((dataUri: string, idx: number) => {
+                addImageToPdf(dataUri, `Image Variant ${idx + 1}`);
+            });
+        } else if (copy.generatedImage) {
+            addImageToPdf(copy.generatedImage, 'Generated Image');
+        }
+
+        // --- Content body ---
         const isBlogSeries = copy.value === 'blog post' &&
             Array.isArray(copy.marketingCopy) &&
             copy.marketingCopy.length > 0 &&
@@ -475,6 +625,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             typeof copy.marketingCopy === 'object' &&
             copy.marketingCopy !== null &&
             'sections' in (copy.marketingCopy as object);
+        const isSocialMedia = copy.value === 'social media post';
 
         if (isBlogSeries) {
             const posts = copy.marketingCopy as BlogPostStructure[];
@@ -484,7 +635,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                     yPosition = margin;
                     yPosition = renderPdfReportHeader(
                         doc,
-                        `${copy.label} — Part ${idx + 1} of ${posts.length}`,
+                        `${copy.label} -- Part ${idx + 1} of ${posts.length}`,
                         yPosition,
                         margin,
                         maxLineWidth
@@ -505,20 +656,50 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             });
         } else if (isSingleBlog) {
             yPosition = renderBlogPostToPdf(doc, copy.marketingCopy as BlogPostStructure, yPosition, margin, maxLineWidth, pageHeight, 1.15);
+        } else if (isSocialMedia) {
+            // Structured social media rendering with numbered posts
+            const smPosts = getSocialMediaPosts(copy, editedCopy);
+            smPosts.forEach((post: string, idx: number) => {
+                // Post header
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 30, 30);
+                ensureSpace(14);
+                doc.text(`Post ${idx + 1} of ${smPosts.length}`, margin, yPosition);
+                yPosition += 5.5;
+
+                // Separator line
+                doc.setDrawColor(210, 215, 225);
+                doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+                yPosition += 4;
+
+                // Post body
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(28, 28, 28);
+                const sanitized = sanitizeForPdf(post);
+                const postLines = doc.splitTextToSize(sanitized, maxLineWidth);
+                postLines.forEach((line: string) => {
+                    ensureSpace(bodyLineHeight);
+                    doc.text(line, margin, yPosition);
+                    yPosition += bodyLineHeight;
+                });
+
+                yPosition += 6;
+            });
         } else {
             // Default: render as plain text (all other content types)
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(30, 30, 30);
-            const textLineHeight = bodyLineHeight;
-            
-            const marketingText = getItemText(copy, editedCopy);
+
+            const marketingText = sanitizeForPdf(getItemText(copy, editedCopy));
             const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
-            
+
             textLines.forEach((line: string) => {
-              ensureSpace(textLineHeight);
+              ensureSpace(bodyLineHeight);
               doc.text(line, margin, yPosition);
-              yPosition += textLineHeight;
+              yPosition += bodyLineHeight;
             });
         }
 
@@ -722,6 +903,64 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                             border-radius: 10px;
               overflow-x: auto;
             }
+                        .sm-post-card {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 20px 24px;
+                            margin-bottom: 16px;
+                            background: #fff;
+                        }
+                        .sm-post-label {
+                            margin: 0 0 10px;
+                            font-size: 0.85rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                            color: #6366f1;
+                        }
+                        .sm-post-body {
+                            margin: 0;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                            color: #1f2937;
+                            font-size: 0.95rem;
+                            line-height: 1.65;
+                        }
+                        .sm-images-header {
+                            margin: 18px 0 10px;
+                            font-size: 0.88rem;
+                            font-weight: 700;
+                            color: #374151;
+                        }
+                        .sm-images-grid {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 14px;
+                            margin: 12px 0;
+                        }
+                        .sm-image-figure {
+                            margin: 0;
+                            text-align: center;
+                        }
+                        .sm-image-figure img {
+                            max-width: 320px;
+                            border-radius: 10px;
+                            border: 1px solid #e5e7eb;
+                        }
+                        .sm-image-figure figcaption {
+                            font-size: 0.78rem;
+                            color: #6b7280;
+                            margin-top: 4px;
+                        }
+                        .sm-image-single {
+                            margin: 14px 0;
+                            text-align: center;
+                        }
+                        .sm-image-single img {
+                            max-width: 420px;
+                            border-radius: 12px;
+                            border: 1px solid #e5e7eb;
+                        }
                         @media print {
                             body { background: #fff; padding: 0; }
                             .reports-root { gap: 0; max-width: none; }
@@ -745,6 +984,7 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
 
       copies.forEach(copy => {
         let marketingText;
+        const isSocialMedia = copy.value === 'social media post';
 
                 if (copy.value === 'blog post' && isBlogPostSeries(copy.marketingCopy)) {
                         marketingText = (copy.marketingCopy as BlogPostStructure[])
@@ -752,6 +992,8 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                             .join('');
                 } else if (copy.value === 'blog post' && isBlogPostStructure(copy.marketingCopy)) {
                         marketingText = blogPostToHtml(copy.marketingCopy as BlogPostStructure);
+                } else if (isSocialMedia) {
+                        marketingText = socialMediaPostsToHtml(copy, editedCopy);
         } else {
                         const itemText = getItemText(copy, editedCopy);
             const rawText = itemText;
@@ -767,8 +1009,23 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                         </header>
                         <div class="report-body">
         `;
-        if (copy.imageSuggestion) {
+        // Image suggestions (plural + singular)
+        if (copy.imageSuggestions && copy.imageSuggestions.length > 0) {
+            copy.imageSuggestions.forEach((suggestion: string, idx: number) => {
+                htmlContent += `<p class="suggestion"><strong>Image Variant ${idx + 1}:</strong> ${escapeHtml(suggestion)}</p>`;
+            });
+        } else if (copy.imageSuggestion) {
                         htmlContent += `<p class="suggestion"><strong>Image Suggestion:</strong> ${escapeHtml(copy.imageSuggestion)}</p>`;
+        }
+        // Embed generated images
+        if (copy.generatedImages && copy.generatedImages.length > 0) {
+            htmlContent += `<div class="sm-images-grid">`;
+            copy.generatedImages.forEach((dataUri: string, idx: number) => {
+                htmlContent += `<figure class="sm-image-figure"><img src="${dataUri}" alt="Image variant ${idx + 1}" /><figcaption>Variant ${idx + 1}</figcaption></figure>`;
+            });
+            htmlContent += `</div>`;
+        } else if (copy.generatedImage) {
+            htmlContent += `<div class="sm-image-single"><img src="${copy.generatedImage}" alt="Generated image" /></div>`;
         }
         htmlContent += marketingText;
                 htmlContent += `</div></section>`;

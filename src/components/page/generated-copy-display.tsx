@@ -315,14 +315,23 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                         <p className="text-xs text-center text-muted-foreground animate-pulse">Generating image...</p>
                                     </div>
                                 ) : item.generatedImage ? (
-                                    <Image 
-                                      src={item.generatedImage} 
-                                      alt={item.imageSuggestion}
-                                      width={512}
-                                      height={512}
-                                      className="rounded-lg border-2 border-border object-cover w-full"
-                                      data-ai-hint="generated image"
-                                    />
+                                    <div className="space-y-2">
+                                      <Image 
+                                        src={item.generatedImage} 
+                                        alt={item.imageSuggestion}
+                                        width={512}
+                                        height={512}
+                                        className="rounded-lg border-2 border-border object-cover w-full"
+                                        data-ai-hint="generated image"
+                                      />
+                                      <a
+                                        href={item.generatedImage}
+                                        download={`${item.label.replace(/\s+/g, '_')}_image.png`}
+                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                                      >
+                                        <Download className="w-3.5 h-3.5" /> Download Image
+                                      </a>
+                                    </div>
                                 ) : (
                                     <div className="p-4 bg-destructive/10 text-destructive text-center text-sm rounded-md">
                                         Failed to generate image. Please try again or check your internet connection.
@@ -371,6 +380,13 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                               className="rounded-lg border-2 border-border object-cover w-full"
                                               data-ai-hint="generated image"
                                             />
+                                            <a
+                                              href={imgUrl}
+                                              download={`${item.label.replace(/\s+/g, '_')}_variant_${idx + 1}.png`}
+                                              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                                            >
+                                              <Download className="w-3.5 h-3.5" /> Download Variant {idx + 1}
+                                            </a>
                                           </div>
                                         </TabsContent>
                                       ))}
