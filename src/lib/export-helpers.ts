@@ -742,13 +742,28 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             yPosition = renderBlogPostToPdf(doc, copy.marketingCopy as BlogPostStructure, yPosition, margin, maxLineWidth, pageHeight, 1.15);
         } else if (isSocialMedia) {
             // Structured social media rendering with numbered posts
+            // Each post is kept together on a single page (no mid-post breaks)
             const smPosts = getSocialMediaPosts(copy, editedCopy);
             smPosts.forEach((post: string, idx: number) => {
+                // Pre-calculate total height of this post
+                const sanitized = sanitizeForPdf(post);
+                const postLines = doc.splitTextToSize(sanitized, maxLineWidth);
+                const postHeight = 
+                    14 +                                    // header
+                    5.5 + 4 +                               // separator
+                    (postLines.length * bodyLineHeight) +   // body
+                    6;                                      // trailing space
+
+                // If the whole post won't fit, start a new page
+                if (yPosition + postHeight > pageHeight - margin) {
+                    doc.addPage();
+                    yPosition = margin;
+                }
+
                 // Post header
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(30, 30, 30);
-                ensureSpace(14);
                 doc.text(`Post ${idx + 1} of ${smPosts.length}`, margin, yPosition);
                 yPosition += 5.5;
 
@@ -761,10 +776,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(28, 28, 28);
-                const sanitized = sanitizeForPdf(post);
-                const postLines = doc.splitTextToSize(sanitized, maxLineWidth);
                 postLines.forEach((line: string) => {
-                    ensureSpace(bodyLineHeight);
                     doc.text(line, margin, yPosition);
                     yPosition += bodyLineHeight;
                 });
@@ -772,16 +784,33 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 yPosition += 6;
             });
         } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
-            // Structured billboard ad rendering
+            // Structured billboard ad rendering — entire ad kept on one page
             const ad = copy.marketingCopy;
             const fieldLineHeight = 5.2;
+
+            // Pre-calculate total height
+            const headlineLines = doc.splitTextToSize(sanitizeForPdf(ad.headline), maxLineWidth);
+            const subLines = doc.splitTextToSize(sanitizeForPdf(ad.subheadline), maxLineWidth);
+            const ctaLines = doc.splitTextToSize(sanitizeForPdf('CTA: ' + ad.cta), maxLineWidth);
+            const vnLines = doc.splitTextToSize(sanitizeForPdf('Visual Notes: ' + ad.visualNotes), maxLineWidth);
+            const ocLines = doc.splitTextToSize(sanitizeForPdf('Overall Concept: ' + ad.overallConcept), maxLineWidth);
+
+            const totalHeight =
+                (headlineLines.length * 7) + 4 +
+                (subLines.length * fieldLineHeight) + 5 +
+                (ctaLines.length * fieldLineHeight) + 5 +
+                (vnLines.length * fieldLineHeight) + 4 +
+                (ocLines.length * fieldLineHeight) + 4;
+
+            if (yPosition + totalHeight > pageHeight - margin) {
+                doc.addPage();
+                yPosition = margin;
+            }
 
             // Headline (large, bold)
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(18, 18, 18);
-            const headlineLines = doc.splitTextToSize(sanitizeForPdf(ad.headline), maxLineWidth);
-            ensureSpace(headlineLines.length * 7 + 4);
             doc.text(headlineLines, margin, yPosition);
             yPosition += (headlineLines.length * 7) + 4;
 
@@ -789,8 +818,6 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             doc.setFontSize(11);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(60, 60, 60);
-            const subLines = doc.splitTextToSize(sanitizeForPdf(ad.subheadline), maxLineWidth);
-            ensureSpace(subLines.length * fieldLineHeight + 3);
             doc.text(subLines, margin, yPosition);
             yPosition += (subLines.length * fieldLineHeight) + 5;
 
@@ -798,8 +825,6 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(79, 70, 229);
-            const ctaLines = doc.splitTextToSize(sanitizeForPdf('CTA: ' + ad.cta), maxLineWidth);
-            ensureSpace(ctaLines.length * fieldLineHeight + 3);
             doc.text(ctaLines, margin, yPosition);
             yPosition += (ctaLines.length * fieldLineHeight) + 5;
 
@@ -807,28 +832,44 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             doc.setFontSize(10);
             doc.setFont('helvetica', 'italic');
             doc.setTextColor(80, 80, 80);
-            const vnLines = doc.splitTextToSize(sanitizeForPdf('Visual Notes: ' + ad.visualNotes), maxLineWidth);
-            ensureSpace(vnLines.length * fieldLineHeight + 2);
             doc.text(vnLines, margin, yPosition);
             yPosition += (vnLines.length * fieldLineHeight) + 4;
 
             // Overall Concept
-            const ocLines = doc.splitTextToSize(sanitizeForPdf('Overall Concept: ' + ad.overallConcept), maxLineWidth);
-            ensureSpace(ocLines.length * fieldLineHeight + 2);
             doc.text(ocLines, margin, yPosition);
             yPosition += (ocLines.length * fieldLineHeight) + 4;
 
         } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
             // Structured display ad rendering with numbered variation cards
+            // Each variation is kept together on a single page (no mid-card breaks)
             const variations = copy.marketingCopy;
             const fieldLineHeight = 5.0;
 
             variations.forEach((v: DisplayAdVariation, idx: number) => {
+                // Pre-calculate total height of this variation card
+                const hlLines = doc.splitTextToSize(sanitizeForPdf(v.headline), maxLineWidth);
+                const bodyTextLines = doc.splitTextToSize(sanitizeForPdf(v.body), maxLineWidth);
+                const ctaLines = doc.splitTextToSize(sanitizeForPdf('CTA: ' + v.cta), maxLineWidth);
+                const vnLines = doc.splitTextToSize(sanitizeForPdf('Visual Notes: ' + v.visualNotes), maxLineWidth);
+                
+                const cardHeight = 
+                    14 +                                    // header + gap
+                    5.5 + 4 +                               // separator area
+                    (hlLines.length * 5.5) + 3 +            // headline
+                    (bodyTextLines.length * fieldLineHeight) + 3 + // body
+                    (ctaLines.length * fieldLineHeight) + 3 +     // cta
+                    (vnLines.length * fieldLineHeight) + 8;       // visual notes + trailing
+
+                // If the whole card won't fit, start a new page
+                if (yPosition + cardHeight > pageHeight - margin) {
+                    doc.addPage();
+                    yPosition = margin;
+                }
+
                 // Variation header
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(79, 70, 229);
-                ensureSpace(14);
                 doc.text(`Variation ${idx + 1} of ${variations.length}`, margin, yPosition);
                 yPosition += 5.5;
 
@@ -841,8 +882,6 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(18, 18, 18);
-                const hlLines = doc.splitTextToSize(sanitizeForPdf(v.headline), maxLineWidth);
-                ensureSpace(hlLines.length * 5.5 + 2);
                 doc.text(hlLines, margin, yPosition);
                 yPosition += (hlLines.length * 5.5) + 3;
 
@@ -850,17 +889,13 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(40, 40, 40);
-                const bodyLines = doc.splitTextToSize(sanitizeForPdf(v.body), maxLineWidth);
-                ensureSpace(bodyLines.length * fieldLineHeight + 2);
-                doc.text(bodyLines, margin, yPosition);
-                yPosition += (bodyLines.length * fieldLineHeight) + 3;
+                doc.text(bodyTextLines, margin, yPosition);
+                yPosition += (bodyTextLines.length * fieldLineHeight) + 3;
 
                 // CTA
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(79, 70, 229);
-                const ctaLines = doc.splitTextToSize(sanitizeForPdf('CTA: ' + v.cta), maxLineWidth);
-                ensureSpace(ctaLines.length * fieldLineHeight + 2);
                 doc.text(ctaLines, margin, yPosition);
                 yPosition += (ctaLines.length * fieldLineHeight) + 3;
 
@@ -868,8 +903,6 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'italic');
                 doc.setTextColor(100, 100, 100);
-                const vnLines = doc.splitTextToSize(sanitizeForPdf('Visual Notes: ' + v.visualNotes), maxLineWidth);
-                ensureSpace(vnLines.length * fieldLineHeight + 2);
                 doc.text(vnLines, margin, yPosition);
                 yPosition += (vnLines.length * fieldLineHeight) + 8;
             });
