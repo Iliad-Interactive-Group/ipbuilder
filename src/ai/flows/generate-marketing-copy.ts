@@ -140,11 +140,11 @@ export type BlogPostStructure = z.infer<typeof BlogPostStructureSchema>;
 
 // --- Billboard Ad structured schema ---
 const BillboardAdStructureSchema = z.object({
-  headline: z.string().describe("A punchy headline of MAXIMUM 7 words that hooks instantly. Count your words — 7 is the hard limit."),
-  subheadline: z.string().describe("Supporting copy of MAXIMUM 10 words for clarity and persuasion."),
-  cta: z.string().describe("A clear call-to-action of MAXIMUM 5 words (e.g., 'Visit us today', 'Call now')."),
-  visualNotes: z.string().describe("Suggestions for imagery, colors, or design elements."),
-  overallConcept: z.string().describe("Brief description of the layout strategy for maximum visibility (e.g., large fonts, high contrast)."),
+  headline: z.string().describe("A punchy headline of 4-7 words MAX. Count every word. 8+ words = FAIL."),
+  subheadline: z.string().describe("One short supporting phrase of 4-8 words MAX. Not a sentence — a phrase."),
+  cta: z.string().describe("A direct call-to-action of 2-5 words MAX (e.g., 'Visit acme.com', 'Call 555-1234')."),
+  visualNotes: z.string().describe("1-2 sentences MAX on imagery/color direction. Keep it brief."),
+  overallConcept: z.string().describe("1 sentence MAX on layout strategy (e.g., 'Large sans-serif on dark background')."),
 });
 export type BillboardAdStructure = z.infer<typeof BillboardAdStructureSchema>;
 
@@ -462,19 +462,31 @@ const billboardPrompt = ai.definePrompt({
     {{/if}}
     {{/if}}
 
-    STRICT WORD COUNT RULES (these are HARD LIMITS, not suggestions):
-    - headline: MAXIMUM 7 words. Aim for 4-6 words. A punchy phrase that hooks with a problem or benefit.
-    - subheadline: MAXIMUM 10 words. One short supporting line for clarity.
-    - cta: MAXIMUM 5 words. A direct call-to-action (e.g., "Visit acme.com today", "Call 555-1234").
-    - visualNotes: Suggestions for imagery or design elements (no word limit).
-    - overallConcept: Layout strategy for maximum visibility (no word limit).
+    STRICT WORD COUNT RULES — HARD LIMITS (violating these means FAILURE):
+    - headline: 4-7 words MAXIMUM. Aim for 4-6. A punchy phrase, NOT a sentence. Count every word before outputting.
+    - subheadline: 4-8 words MAXIMUM. A short phrase, NOT a full sentence. If you write 9+ words, REWRITE.
+    - cta: 2-5 words MAXIMUM. Direct action (e.g., "Visit acme.com", "Call 555-1234").
+    - visualNotes: 1-2 sentences MAXIMUM. Brief direction on colors/imagery.
+    - overallConcept: 1 sentence MAXIMUM. Layout strategy in under 15 words.
 
-    Count your words carefully. If the headline has 8+ words, it is WRONG. Rewrite until it fits.
-    Keep it ultra-concise, visually oriented, and focused on instant impact.
+    SELF-CHECK: Before outputting, count the words in headline, subheadline, and cta. If ANY exceeds its limit, rewrite it shorter. Shorter is ALWAYS better for billboards.
+
     {{#if numberOfImageVariations}}
-    You MUST also generate {{numberOfImageVariations}} creative and descriptive prompts for different image variations for A/B testing and return them in the 'imageSuggestions' array. Each image prompt should offer a unique visual approach.
+    IMAGE DIRECTION: Generate {{numberOfImageVariations}} image prompts for the 'imageSuggestions' array. Each must describe a CLEAN, MINIMAL billboard BACKGROUND image — NOT a busy illustration. The image will have TEXT OVERLAID on top of it. Requirements:
+    - Simple, abstract, or subtly textured backgrounds (gradients, bokeh, solid colors with subtle patterns)
+    - Large areas of negative space where headline text can sit
+    - NO text, words, letters, numbers, or logos baked into the image
+    - NO busy illustrations, charts, graphs, or detailed scenes
+    - High contrast zones suitable for white or dark text overlay
+    - Think: professional stock photo backgrounds, atmospheric textures, or color fields
     {{else}}
-    You MUST also generate a creative and descriptive prompt for a relevant image and return it in the 'imageSuggestion' field.
+    IMAGE DIRECTION: Generate 1 image prompt for the 'imageSuggestion' field. It must describe a CLEAN, MINIMAL billboard BACKGROUND image — NOT a busy illustration. The image will have TEXT OVERLAID on top of it. Requirements:
+    - Simple, abstract, or subtly textured background (gradient, bokeh, solid color with subtle pattern)
+    - Large areas of negative space where headline text can sit
+    - NO text, words, letters, numbers, or logos baked into the image
+    - NO busy illustrations, charts, graphs, or detailed scenes
+    - High contrast zones suitable for white or dark text overlay
+    - Think: professional stock photo background, atmospheric texture, or color field
     {{/if}}
     Output only the structured JSON.
     `,

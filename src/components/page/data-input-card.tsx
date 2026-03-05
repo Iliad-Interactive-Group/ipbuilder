@@ -30,6 +30,7 @@ interface DataInputCardProps {
   isGenerating: boolean;
   onClearForm: () => void;
   onSummarizationComplete: (data: MarketingBriefBlueprint) => void;
+  onWebsiteUrlDetected?: (url: string) => void;
 }
 
 const DataInputCard: React.FC<DataInputCardProps> = ({
@@ -38,6 +39,7 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
   isGenerating,
   onClearForm,
   onSummarizationComplete,
+  onWebsiteUrlDetected,
 }) => {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
@@ -101,6 +103,11 @@ const DataInputCard: React.FC<DataInputCardProps> = ({
       
       setBlueprintProgress('Complete!');
       onSummarizationComplete(blueprintOutput);
+
+      // Auto-fill the form's websiteUrl field when a URL was used for scraping
+      if (websiteUrl.trim() && onWebsiteUrlDetected) {
+        onWebsiteUrlDetected(websiteUrl.trim());
+      }
       
       toast({ title: "Input Summarized", description: "Form fields have been populated with the generated blueprint." });
     } catch (error: any) {

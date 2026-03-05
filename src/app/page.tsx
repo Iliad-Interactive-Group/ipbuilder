@@ -655,6 +655,7 @@ function IPBuilderPageContent() {
             isGenerating={isGenerating}
             onClearForm={handleClearForm}
             onSummarizationComplete={setBriefData}
+            onWebsiteUrlDetected={(url: string) => form.setValue("websiteUrl", url)}
           />
 
           <MarketingBriefForm
