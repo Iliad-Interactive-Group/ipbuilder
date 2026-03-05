@@ -219,6 +219,7 @@ function IPBuilderPageContent() {
         let tvScriptLengthForAI = data.tvScriptLength === "_no_tv_length_" ? "" : data.tvScriptLength;
         let radioScriptLengthForAI = data.radioScriptLength === "_no_radio_length_" ? "" : data.radioScriptLength;
         let emailTypeForAI = data.emailType === "_no_email_type_" ? "" : data.emailType;
+        const blogFormatForAI = data.blogFormat === 'single' ? 'single' : 'series';
 
         const generatePromises = data.contentType.map(async (typeValue: string) => {
         try {
@@ -230,10 +231,14 @@ function IPBuilderPageContent() {
             current: (prev?.current || 0) + 1, 
             currentLabel 
           }));
+
+          const generationDescription = typeValue === 'blog post'
+            ? `Creating ${currentLabel} (${blogFormatForAI === 'single' ? 'Single Post' : '4-Part Series'})...`
+            : `Creating ${currentLabel}...`;
           
           toast({ 
             title: "Generating", 
-            description: `Creating ${currentLabel}...` 
+            description: generationDescription
           });
 
           const marketingInput: GenerateMarketingCopyInput = { 
@@ -270,6 +275,10 @@ function IPBuilderPageContent() {
           }
           if (typeValue === "lead generation email") {
               marketingInput.emailType = emailTypeForAI;
+          }
+          if (typeValue === "blog post") {
+              marketingInput.blogFormat = blogFormatForAI;
+              console.log('[Form Submit] Blog format selected:', blogFormatForAI);
           }
 
           const result: GenerateMarketingCopyOutput = await generateMarketingCopyAction(marketingInput);
