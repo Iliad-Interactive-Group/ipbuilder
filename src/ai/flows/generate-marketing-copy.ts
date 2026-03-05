@@ -473,20 +473,24 @@ const billboardPrompt = ai.definePrompt({
 
     {{#if numberOfImageVariations}}
     IMAGE DIRECTION: Generate {{numberOfImageVariations}} image prompts for the 'imageSuggestions' array. Each must describe a CLEAN, MINIMAL billboard BACKGROUND image — NOT a busy illustration. The image will have TEXT OVERLAID on top of it. Requirements:
+    - MUST be a wide LANDSCAPE orientation with approximately 3:1 width-to-height ratio (billboard proportions)
     - Simple, abstract, or subtly textured backgrounds (gradients, bokeh, solid colors with subtle patterns)
     - Large areas of negative space where headline text can sit
     - NO text, words, letters, numbers, or logos baked into the image
     - NO busy illustrations, charts, graphs, or detailed scenes
     - High contrast zones suitable for white or dark text overlay
-    - Think: professional stock photo backgrounds, atmospheric textures, or color fields
+    - Think: professional stock photo backgrounds, atmospheric textures, or wide panoramic color fields
+    - Start each prompt with "A wide panoramic landscape-format image" to enforce orientation
     {{else}}
     IMAGE DIRECTION: Generate 1 image prompt for the 'imageSuggestion' field. It must describe a CLEAN, MINIMAL billboard BACKGROUND image — NOT a busy illustration. The image will have TEXT OVERLAID on top of it. Requirements:
+    - MUST be a wide LANDSCAPE orientation with approximately 3:1 width-to-height ratio (billboard proportions)
     - Simple, abstract, or subtly textured background (gradient, bokeh, solid color with subtle pattern)
     - Large areas of negative space where headline text can sit
     - NO text, words, letters, numbers, or logos baked into the image
     - NO busy illustrations, charts, graphs, or detailed scenes
     - High contrast zones suitable for white or dark text overlay
-    - Think: professional stock photo background, atmospheric texture, or color field
+    - Think: professional stock photo background, atmospheric texture, or wide panoramic color field
+    - Start the prompt with "A wide panoramic landscape-format image" to enforce orientation
     {{/if}}
     Output only the structured JSON.
     `,
