@@ -39,7 +39,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   // Don't flash the gate during SSR/hydration
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900" />
     );
   }
 
@@ -48,7 +48,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900 p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="flex justify-center mb-8">
