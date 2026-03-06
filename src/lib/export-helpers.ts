@@ -2,6 +2,7 @@
 import jsPDF from 'jspdf';
 import type { GeneratedCopyItem } from '@/components/page/generated-copy-display';
 import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure, EmailStructure } from '@/ai/flows/generate-marketing-copy';
+import { isVariantsArray, type VariantCopy } from '@/lib/variant-utils';
 
 /**
  * Sanitize text for jsPDF rendering.
@@ -276,6 +277,48 @@ const emailToHtml = (email: EmailStructure): string => {
             ${email.emailType ? `<div class="email-type-badge">${escapeHtml(email.emailType.replace(/_/g, ' '))}</div>` : ''}
         </article>
     `;
+};
+
+// --- Script Variant helpers ---
+/**
+ * Convert VariantCopy[] to text, respecting per-variant edits.
+ */
+const variantsToString = (
+    variants: VariantCopy[],
+    itemValue: string,
+    editedVariants?: Record<string, Record<number, string>>
+): string => {
+    return variants.map((v) => {
+        const text = editedVariants?.[itemValue]?.[v.variant] ?? v.copy;
+        let section = `--- Variant ${v.variant} of ${variants.length} ---\n`;
+        section += `${text}\n`;
+        return section;
+    }).join('\n');
+};
+
+/**
+ * Build styled HTML for radio/TV script variants.
+ */
+const variantsToHtml = (
+    variants: VariantCopy[],
+    itemValue: string,
+    editedVariants?: Record<string, Record<number, string>>
+): string => {
+    const isTv = itemValue === 'tv script';
+    const cards = variants.map((v) => {
+        const text = editedVariants?.[itemValue]?.[v.variant] ?? v.copy;
+        const wordCount = text.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
+        const estDuration = Math.round(wordCount / 2.2);
+
+        return `
+            <article class="script-variant-card">
+                <div class="script-variant-label">Variant ${v.variant} of ${variants.length}</div>
+                <div class="script-variant-meta">${wordCount} words &bull; ~${estDuration}s</div>
+                <div class="script-variant-body">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+            </article>
+        `;
+    }).join('');
+    return `<div class="script-variants ${isTv ? 'script-tv' : 'script-radio'}">${cards}</div>`;
 };
 
 // --- Display Ad Copy type guard + helpers ---
@@ -730,6 +773,11 @@ const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>
         return `[Unable to export blog post - unexpected structure]`;
     }
     
+    // Handle radio/TV script variants
+    if (isVariantsArray(item.marketingCopy)) {
+        return variantsToString(item.marketingCopy, item.value, editedVariants);
+    }
+    
     // Fallback for other array types (like social media posts which are strings) or simple strings
     if (Array.isArray(item.marketingCopy)) {
         return item.marketingCopy.map(item => typeof item === 'string' ? item : String(item)).join('\n\n');
@@ -773,6 +821,8 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
         textContent += `${standardWebsiteToString(copy.marketingCopy)}\n\n`;
     } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
         textContent += `${wireframeSiteToString(copy.marketingCopy)}\n\n`;
+    } else if (isVariantsArray(copy.marketingCopy)) {
+        textContent += `${variantsToString(copy.marketingCopy, copy.value, editedVariants)}\n\n`;
     } else {
         const itemText = getItemText(copy, editedCopy, editedVariants);
         textContent += `${itemText}\n\n\n`;
@@ -1866,6 +1916,58 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             const ufLines = doc.splitTextToSize(sanitizeForPdf(wf.userFlowNotes), maxLineWidth);
             ufLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
 
+        } else if (isVariantsArray(copy.marketingCopy)) {
+            // Radio/TV script variants — structured PDF rendering
+            const variants = copy.marketingCopy as VariantCopy[];
+            const fieldLH = 5.2;
+
+            variants.forEach((v: VariantCopy, idx: number) => {
+                const text = editedVariants?.[copy.value]?.[v.variant] ?? v.copy;
+                const wordCount = text.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
+                const estDuration = Math.round(wordCount / 2.2);
+
+                // Pre-calculate height
+                const sanitized = sanitizeForPdf(text);
+                const bodyLines = doc.splitTextToSize(sanitized, maxLineWidth);
+                const cardHeight = 14 + 5.5 + 4 + (bodyLines.length * fieldLH) + 8;
+
+                if (yPosition + cardHeight > pageHeight - margin) {
+                    doc.addPage();
+                    yPosition = margin;
+                }
+
+                // Variant header
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(79, 70, 229);
+                doc.text(`Variant ${v.variant} of ${variants.length}`, margin, yPosition);
+                yPosition += 5.5;
+
+                // Meta line
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 100, 100);
+                doc.text(`${wordCount} words | ~${estDuration}s`, margin, yPosition);
+                yPosition += 4;
+
+                // Separator
+                doc.setDrawColor(210, 215, 225);
+                doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+                yPosition += 4;
+
+                // Script body
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(28, 28, 28);
+                bodyLines.forEach((line: string) => {
+                    ensureSpace(fieldLH);
+                    doc.text(line, margin, yPosition);
+                    yPosition += fieldLH;
+                });
+
+                yPosition += 8;
+            });
+
         } else {
             // Default: render as plain text (all other content types)
             doc.setFontSize(10);
@@ -2501,6 +2603,34 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                         }
                         .podcast-production-title { margin: 0 0 8px; font-size: 1rem; color: #92400e; }
                         .podcast-production p { margin: 0 0 4px; font-size: 0.88rem; color: #374151; }
+                        /* Script Variant styles */
+                        .script-variants { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+                        .script-variant-card {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 20px 24px;
+                            background: #fff;
+                        }
+                        .script-variant-label {
+                            margin: 0 0 4px;
+                            font-size: 0.85rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                            color: #6366f1;
+                        }
+                        .script-variant-meta {
+                            margin: 0 0 12px;
+                            font-size: 0.82rem;
+                            color: #9ca3af;
+                        }
+                        .script-variant-body {
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                            color: #1f2937;
+                            font-size: 0.95rem;
+                            line-height: 1.65;
+                        }
                         @media print {
                             body { background: #fff; padding: 0; }
                             .reports-root { gap: 0; max-width: none; }
@@ -2548,6 +2678,8 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                         marketingText = (copy.marketingCopy as WebsitePageStructure[]).map(page => standardWebsitePageToHtml(page)).join('');
                 } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
                         marketingText = wireframeSiteToHtml(copy.marketingCopy);
+                } else if (isVariantsArray(copy.marketingCopy)) {
+                        marketingText = variantsToHtml(copy.marketingCopy, copy.value, editedVariants);
         } else {
                         const itemText = getItemText(copy, editedCopy, editedVariants);
             const rawText = itemText;

@@ -1206,6 +1206,85 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
               
               const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
+
+              // Generate proper text for clipboard copy — handles all structured types
+              const getCopiableText = (): string => {
+                // Simple string — check editedCopy first
+                if (typeof item.marketingCopy === 'string') {
+                  return editedCopy[item.value] ?? item.marketingCopy;
+                }
+                // Variants (radio/TV scripts)
+                if (hasVariants) {
+                  return (item.marketingCopy as VariantCopy[]).map(v => {
+                    const text = editedVariants[item.value]?.[v.variant] ?? v.copy;
+                    return `--- Variant ${v.variant} ---\n${text}`;
+                  }).join('\n\n');
+                }
+                // Social media posts
+                if (isSocialMedia) {
+                  return (item.marketingCopy as string[]).map((p, idx) => {
+                    const text = editedPosts[item.value]?.[idx] ?? p;
+                    return `--- Post ${idx + 1} ---\n${text}`;
+                  }).join('\n\n');
+                }
+                // Email
+                if (isEmail) {
+                  const e = item.marketingCopy as EmailStructure;
+                  return `Subject: ${e.subjectLine}\nPreheader: ${e.preheaderText}\n\n${e.greeting}\n\n${e.bodyParagraphs.join('\n\n')}\n\n[CTA] ${e.cta}\n\n${e.signature}\n\n---\n${e.complianceNote}`;
+                }
+                // Billboard
+                if (isBillboardAd) {
+                  const b = item.marketingCopy as BillboardAdStructure;
+                  return `Headline: ${b.headline}\nSubheadline: ${b.subheadline}\nCTA: ${b.cta}\nVisual Notes: ${b.visualNotes}\nConcept: ${b.overallConcept}`;
+                }
+                // Display ad variations
+                if (isDisplayAd) {
+                  return (item.marketingCopy as DisplayAdVariation[]).map((v, i) =>
+                    `--- Variation ${i + 1} ---\nHeadline: ${v.headline}\nBody: ${v.body}\nCTA: ${v.cta}\nVisual Notes: ${v.visualNotes}`
+                  ).join('\n\n');
+                }
+                // Podcast outline
+                if (isPodcast) {
+                  const o = item.marketingCopy as PodcastOutlineStructure;
+                  let text = `${o.episodeTitle}\nGoal: ${o.episodeGoal}\nAudience: ${o.targetAudience}\nLength: ${o.totalLength}\n\n`;
+                  text += `Introduction (${o.introduction.duration})\nHook: ${o.introduction.hook}\nOverview: ${o.introduction.episodeOverview}\n\n`;
+                  o.mainContent.forEach((s, i) => {
+                    text += `Segment ${i + 1}: ${s.segmentTitle} (${s.duration})\nKey Points:\n${s.keyPoints.map(p => `  - ${p}`).join('\n')}\nTalking Points:\n${s.talkingPoints.map(p => `  - ${p}`).join('\n')}\n\n`;
+                  });
+                  text += `Conclusion (${o.conclusion.duration})\nRecap: ${o.conclusion.recap}\nCTA: ${o.conclusion.callToAction}\nTeaser: ${o.conclusion.teaser}`;
+                  return text;
+                }
+                // Blog post — single 
+                if (isGenericBlogPost && !isBlogSeries) {
+                  const p = item.marketingCopy as BlogPostStructure;
+                  let text = `${p.title}\n`;
+                  if (p.metaDescription) text += `Meta: ${p.metaDescription}\n`;
+                  if (p.keyTakeaways?.length) text += `Key Takeaways:\n${p.keyTakeaways.map(t => `  - ${t}`).join('\n')}\n\n`;
+                  (p.sections || []).forEach(s => {
+                    text += `${s.heading}\n`;
+                    (s.contentItems || []).forEach(ci => {
+                      if (ci.paragraph) text += `${ci.paragraph}\n\n`;
+                      if (ci.listItems?.length) text += ci.listItems.map(li => `  - ${li}`).join('\n') + '\n\n';
+                    });
+                  });
+                  return text;
+                }
+                // Blog series
+                if (isBlogSeries) {
+                  return (item.marketingCopy as BlogPostStructure[]).map((p, i) => {
+                    let text = `[Part ${i + 1}] ${p.title}\n`;
+                    (p.sections || []).forEach(s => {
+                      text += `${s.heading}\n`;
+                      (s.contentItems || []).forEach(ci => {
+                        if (ci.paragraph) text += `${ci.paragraph}\n\n`;
+                      });
+                    });
+                    return text;
+                  }).join('\n' + '='.repeat(50) + '\n\n');
+                }
+                // Fallback — JSON
+                return typeof item.marketingCopy === 'object' ? JSON.stringify(item.marketingCopy, null, 2) : String(item.marketingCopy);
+              };
               
               return (
                 <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
@@ -1456,8 +1535,8 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                         )}
                         
                         <div className="flex flex-wrap gap-2 items-center">
-                          {!isPodcast && !isBlogSeries && !isGenericBlogPost && !item.isError && (
-                            <Button variant="outline" size="sm" onClick={() => onCopy(editedCopy[item.value] || item.marketingCopy, item.label)} className="w-full sm:w-auto">
+                          {!item.isError && (
+                            <Button variant="outline" size="sm" onClick={() => onCopy(getCopiableText(), item.label)} className="w-full sm:w-auto">
                               <Copy className="w-3 h-3 mr-2" />
                               Copy {item.label}
                             </Button>
