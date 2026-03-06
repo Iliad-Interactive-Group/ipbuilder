@@ -132,7 +132,7 @@ const NO_WEBSITE_FLEX_PAGE_VALUE = "blog";
 
 const NO_TONE_SELECTED_VALUE = "_no_tone_selected_";
 const NO_PLATFORM_SELECTED_VALUE = "_no_platform_selected_";
-const LOCAL_STORAGE_BRIEF_KEY = 'ipbuilder_saved_brief';
+const LOCAL_STORAGE_BRIEF_KEY = 'brandbox_saved_brief';
 
 export const formSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),

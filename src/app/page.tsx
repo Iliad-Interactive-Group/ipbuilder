@@ -57,7 +57,7 @@ const stripProductionCues = (script: string): string => {
 };
 
 
-function IPBuilderPageContent() {
+function BrandBoxCreatorPageContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -860,11 +860,11 @@ function IPBuilderPageContent() {
   );
 }
 
-export default function IPBuilderPage() {
+export default function BrandBoxCreatorPage() {
     return (
         <ProtectedRoute>
             <Suspense>
-                <IPBuilderPageContent />
+                <BrandBoxCreatorPageContent />
             </Suspense>
         </ProtectedRoute>
     )

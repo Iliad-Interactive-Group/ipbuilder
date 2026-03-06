@@ -263,7 +263,7 @@ function LoginPageContent() {
             <CardTitle className="font-headline text-2xl flex items-center">
               <LogIn className="w-6 h-6 mr-3 text-primary" /> Login
             </CardTitle>
-            <CardDescription>Access your Iliad IPbuilder account.</CardDescription>
+            <CardDescription>Access your BrandBOX-Creator account.</CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">

@@ -5,10 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 import ErrorBoundary from '@/components/error-boundary';
 import { ThemeProvider } from '@/components/theme-provider';
+import BetaGate from '@/components/beta-gate';
 
 export const metadata: Metadata = {
-  title: 'Iliad IPbuilder',
-  description: 'Generate marketing copy with AI',
+  title: 'BrandBOX-Creator',
+  description: 'Generate marketing copy with AI — by Iliad Interactive',
 };
 
 export default function RootLayout({
@@ -26,16 +27,18 @@ export default function RootLayout({
       <body className="font-body antialiased" suppressHydrationWarning={true}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem={false}
           disableTransitionOnChange
         >
-          <ErrorBoundary>
-            <AuthProvider>
-              {children}
-              <Toaster />
-            </AuthProvider>
-          </ErrorBoundary>
+          <BetaGate>
+            <ErrorBoundary>
+              <AuthProvider>
+                {children}
+                <Toaster />
+              </AuthProvider>
+            </ErrorBoundary>
+          </BetaGate>
         </ThemeProvider>
       </body>
     </html>

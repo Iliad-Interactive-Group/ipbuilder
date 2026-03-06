@@ -9,7 +9,7 @@ export async function GET() {
     { 
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      service: 'ipbuilder'
+      service: 'brandbox-creator'
     },
     { status: 200 }
   );

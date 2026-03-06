@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%; /* Light Gray (matches #F4F4F4 from site) */
+    --background: 0 0% 100%; /* White */
     --foreground: 210 25% 15%; /* Dark Blue/Black for text */
 
     --card: 0 0% 100%; /* White cards */
@@ -48,51 +48,52 @@
     --sidebar-ring: 203 95% 41%;
   }
   .dark {
-    --background: 210 20% 10%; /* Very dark blue */
-    --foreground: 210 15% 90%; /* Light cool gray/white */
+    --background: 222 47% 11%; /* Slate-900 #0f172a */
+    --foreground: 210 15% 90%; /* Light cool gray/white — used on the dark page chrome */
 
-    --card: 210 20% 12%; /* Slightly lighter dark blue */
-    --card-foreground: 210 15% 90%;
+    /* Cards are WHITE in dark mode to match Vortex "dark chrome, light content" */
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 210 25% 15%; /* Dark text on white cards */
 
-    --popover: 210 20% 10%;
-    --popover-foreground: 210 15% 90%;
+    --popover: 0 0% 100%; /* White popovers */
+    --popover-foreground: 210 25% 15%;
     
-    /* Primary is a brighter Iliad Blue for dark mode */
-    --primary: 203 95% 55%; 
-    --primary-foreground: 210 100% 15%; /* Very dark blue/black for contrast */
+    /* Primary is blue-600 to match Vortex */
+    --primary: 217 91% 60%; /* #2563eb blue-600 */
+    --primary-foreground: 0 0% 100%; /* White text on blue */
 
-    /* Secondary is a brighter Iliad Darker Blue */
+    /* Secondary is a deeper blue */
     --secondary: 208 100% 40%;
-    --secondary-foreground: 210 100% 10%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 20% 20%; /* Darker cool gray */
-    --muted-foreground: 210 15% 65%; /* Lighter cool gray */
+    --muted: 210 20% 92%; /* Light muted inside cards */
+    --muted-foreground: 210 15% 45%; /* Mid gray text */
 
     /* Accent is a brighter Iliad Gold for dark mode */
     --accent: 44 98% 60%; 
     --accent-foreground: 44 90% 10%; /* Dark brown for contrast */
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 15% 25%;
-    --input: 210 20% 15%;
-    --ring: 203 95% 55%; 
+    --border: 210 15% 88%; /* Light border inside cards */
+    --input: 0 0% 100%; /* White input backgrounds */
+    --ring: 217 91% 60%; /* Blue-600 ring */ 
 
-    --chart-1: 203 80% 55%; /* Adjusted chart colors */
+    --chart-1: 217 91% 60%; /* Blue-600 based chart colors */
     --chart-2: 44 85% 60%;
     --chart-3: 208 70% 50%;
     --chart-4: 180 65% 60%;
     --chart-5: 30 75% 55%;
 
-    /* Dark Sidebar colors */
-    --sidebar-background: 210 20% 8%; /* Even darker blue for sidebar */
+    /* Sidebar keeps dark styling (it's part of the chrome, not content) */
+    --sidebar-background: 222 47% 9%; /* Very dark navy */
     --sidebar-foreground: 210 15% 85%; /* Light cool gray for text */
-    --sidebar-primary: 203 95% 55%; /* Brighter Iliad Blue */
-    --sidebar-primary-foreground: 210 100% 15%; /* Dark blue/black */
+    --sidebar-primary: 217 91% 60%; /* Blue-600 */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
     --sidebar-accent: 210 20% 15%; /* Dark blue-gray accent */
     --sidebar-accent-foreground: 210 15% 80%; /* Lighter gray for text on accent */
     --sidebar-border: 210 15% 20%;
-    --sidebar-ring: 203 95% 55%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -100,7 +101,10 @@
   * {
     @apply border-border;
   }
+  html {
+    background: hsl(var(--background));
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 text-foreground min-h-screen;
   }
 }
