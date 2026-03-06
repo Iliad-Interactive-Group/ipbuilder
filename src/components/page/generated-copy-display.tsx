@@ -395,7 +395,7 @@ const BillboardCompositePanel: React.FC<{
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Billboard Size</label>
           <select
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-md border border-input bg-input text-card-foreground px-3 py-2 text-sm ring-offset-card focus:outline-none focus:ring-2 focus:ring-ring"
             value={selectedSize.key}
             onChange={(e) => setSelectedSize(BILLBOARD_SIZES.find(s => s.key === e.target.value) || BILLBOARD_SIZES[0])}
           >
@@ -416,7 +416,7 @@ const BillboardCompositePanel: React.FC<{
               className={`flex-1 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
                 bgSource === 'ai'
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border-input text-muted-foreground hover:bg-accent'
+                  : 'bg-card border-input text-card-foreground hover:bg-accent'
               }`}
               disabled={!aiBgUri}
             >
@@ -426,7 +426,7 @@ const BillboardCompositePanel: React.FC<{
               className={`flex-1 rounded-md border px-3 py-2 text-xs font-medium text-center cursor-pointer transition-colors ${
                 bgSource === 'custom'
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border-input text-muted-foreground hover:bg-accent'
+                  : 'bg-card border-input text-card-foreground hover:bg-accent'
               }`}
             >
               <Upload className="w-3 h-3 inline mr-1" />
@@ -446,7 +446,7 @@ const BillboardCompositePanel: React.FC<{
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Image Variant</label>
             <select
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-input bg-input text-card-foreground px-3 py-2 text-sm ring-offset-card focus:outline-none focus:ring-2 focus:ring-ring"
               value={selectedVariant}
               onChange={(e) => setSelectedVariant(Number(e.target.value))}
             >
@@ -461,7 +461,7 @@ const BillboardCompositePanel: React.FC<{
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Logo (Optional)</label>
           {logoDataUri ? (
-            <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5">
+            <div className="flex items-center gap-2 rounded-md border border-input bg-card px-3 py-1.5">
               <img src={logoDataUri} alt="Logo" className="h-8 w-auto object-contain" />
               <span className="text-xs text-muted-foreground truncate flex-1">{logoFileName}</span>
               <button
@@ -473,7 +473,7 @@ const BillboardCompositePanel: React.FC<{
               </button>
             </div>
           ) : (
-            <label className="flex items-center justify-center gap-2 rounded-md border border-dashed border-input bg-background px-3 py-2 text-xs text-muted-foreground cursor-pointer hover:bg-accent transition-colors">
+            <label className="flex items-center justify-center gap-2 rounded-md border border-dashed border-input bg-card px-3 py-2 text-xs text-muted-foreground cursor-pointer hover:bg-accent transition-colors">
               <ImageIcon className="w-3.5 h-3.5" />
               Upload Logo
               <input
@@ -1287,7 +1287,7 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
               };
               
               return (
-                <AccordionItem value={item.value} key={item.value} className="border bg-background/50 rounded-lg px-4">
+                <AccordionItem value={item.value} key={item.value} className="border bg-card rounded-lg px-4">
                    <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
                      <div className="flex items-center justify-between w-full">
                          <span className="flex items-center">

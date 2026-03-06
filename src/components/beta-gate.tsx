@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useTheme } from 'next-themes';
+import AppLogo from '@/components/app-logo';
 
 const BETA_PASSWORD = 'IliadADS2026';
 const STORAGE_KEY = 'brandbox_beta_auth';
@@ -12,7 +11,6 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -39,7 +37,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   // Don't flash the gate during SSR/hydration
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900" />
     );
   }
 
@@ -48,18 +46,11 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Image
-            src="/logo-light.png"
-            alt="Iliad Interactive"
-            width={180}
-            height={50}
-            priority
-            className="object-contain"
-          />
+        <div className="flex justify-center mb-8 [&>div]:my-0">
+          <AppLogo />
         </div>
 
         {/* App Title */}

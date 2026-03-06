@@ -17,7 +17,19 @@ export default function UserMenu() {
   const { user, signOutUser } = useAuth();
 
   if (!user) {
-    return null;
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          localStorage.removeItem('brandbox_beta_auth');
+          window.location.href = '/';
+        }}
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Log out
+      </Button>
+    );
   }
 
   // Get initials from email or display name

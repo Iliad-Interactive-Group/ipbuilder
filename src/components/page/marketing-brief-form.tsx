@@ -437,7 +437,7 @@ const MarketingBriefForm: React.FC<MarketingBriefFormProps> = ({ form, onSubmit,
                           return (
                             <FormItem
                               key={item.value}
-                              className="flex flex-row items-center space-x-2 space-y-0 bg-background p-3 rounded-md border hover:bg-muted/50 transition-colors"
+                              className="flex flex-row items-center space-x-2 space-y-0 bg-card text-card-foreground p-3 rounded-md border hover:bg-muted/50 transition-colors"
                             >
                               <FormControl>
                                 <Checkbox

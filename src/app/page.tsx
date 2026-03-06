@@ -681,18 +681,18 @@ function BrandBoxCreatorPageContent() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col selection:bg-primary/20 selection:text-primary">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl bg-card rounded-lg my-4 shadow-lg border border-border">
-        <header className="mb-6 text-center flex justify-between items-center">
-          <div className="w-1/3"></div>
-          <div className="w-1/3 flex justify-center">
+        <header className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div></div>
+          <div className="flex justify-center">
             <AppLogo />
           </div>
-          <div className="w-1/3 flex justify-end items-center gap-2">
+          <div className="flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="text-card-foreground">
                   <Terminal className="mr-2 h-4 w-4" />
-                  Dev Tools
+                  <span className="hidden sm:inline">Dev Tools</span>
                 </Button>
               </Link>
               <ThemeToggle />
