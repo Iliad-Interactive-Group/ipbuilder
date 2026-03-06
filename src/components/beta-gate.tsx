@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Lock } from 'lucide-react';
 
 const BETA_PASSWORD = 'IliadADS2026';
 const STORAGE_KEY = 'brandbox_beta_auth';
@@ -40,7 +39,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   // Don't flash the gate during SSR/hydration
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900" />
+      <div className="min-h-screen bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950" />
     );
   }
 
@@ -48,77 +47,79 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const logoSrc = theme === 'dark' ? '/logo-light.png' : '/logo-dark.png';
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900 p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950 p-4">
+      <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <Image
             src="/logo-light.png"
             alt="Iliad Interactive"
-            width={280}
-            height={70}
+            width={180}
+            height={50}
             priority
             className="object-contain"
           />
         </div>
 
-        {/* Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-3">
-              <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white font-headline">
-              BrandBOX-Creator
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Beta Access Required
-            </p>
-          </div>
+        {/* App Title */}
+        <h1 className="text-4xl font-bold text-white font-headline mb-2">
+          BrandBOX-Creator
+        </h1>
+        <p className="text-amber-400 font-semibold text-sm mb-1">
+          AI Marketing Content Engine
+        </p>
+        <p className="text-slate-400 text-sm italic mb-10">
+          &ldquo;From strategy to content in minutes.&rdquo;
+        </p>
+
+        {/* Password Card */}
+        <div className="bg-white rounded-xl shadow-2xl p-8 text-left">
+          <h2 className="text-lg font-bold text-gray-900 font-headline mb-5">
+            Beta Access
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="beta-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Access Code
+              <label htmlFor="beta-password" className="block text-sm font-medium text-gray-600 mb-1.5">
+                Access Password
               </label>
               <input
                 id="beta-password"
                 type="password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(false); }}
-                placeholder="Enter beta access code"
+                placeholder="••••••••••"
                 autoFocus
-                className={`w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-colors
-                  bg-white dark:bg-slate-700 text-gray-900 dark:text-white
-                  placeholder:text-gray-400 dark:placeholder:text-gray-500
+                className={`w-full px-4 py-3 rounded-lg border text-sm outline-none transition-colors
+                  bg-gray-50 text-gray-900
+                  placeholder:text-gray-400
                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-slate-600'}`}
+                  ${error ? 'border-red-400 focus:ring-red-500 focus:border-red-500' : 'border-gray-200'}`}
               />
               {error && (
                 <p className="mt-1.5 text-sm text-red-500">
-                  Invalid access code. Please try again.
+                  Invalid password. Please try again.
                 </p>
               )}
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+              className="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Enter Beta
+              🔓 Access BrandBOX
             </button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
-            Contact your administrator for access.
+          <p className="mt-5 text-center text-xs text-gray-400">
+            Powered by Iliad Interactive
           </p>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-500">
-          &copy; 2026 Iliad Interactive Marketing Group
+        {/* Footer */}
+        <p className="mt-8 text-center text-xs text-slate-500">
+          &copy; 2026 Calton Group LLC. All rights reserved.
         </p>
       </div>
     </div>

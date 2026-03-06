@@ -31,7 +31,6 @@ import { generateMarketingCopyAction, generateImageAction, generateAudioAction }
 import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput, BillboardAdStructure, DisplayAdVariation, EmailStructure } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
-import ProtectedRoute from '@/components/protected-route';
 import UserMenu from '@/components/user-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
 import DataInputCard from '@/components/page/data-input-card';
@@ -862,10 +861,8 @@ function BrandBoxCreatorPageContent() {
 
 export default function BrandBoxCreatorPage() {
     return (
-        <ProtectedRoute>
-            <Suspense>
-                <BrandBoxCreatorPageContent />
-            </Suspense>
-        </ProtectedRoute>
+        <Suspense>
+            <BrandBoxCreatorPageContent />
+        </Suspense>
     )
 }
