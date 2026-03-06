@@ -237,6 +237,20 @@ const DisplayAdVariationSchema = z.object({
 });
 export type DisplayAdVariation = z.infer<typeof DisplayAdVariationSchema>;
 
+// --- Lead Generation Email structured schema ---
+const EmailStructureSchema = z.object({
+  subjectLine: z.string().describe("Attention-grabbing, relevant email subject line."),
+  preheaderText: z.string().describe("Preview text shown after subject in inbox (40-90 chars)."),
+  greeting: z.string().describe("Personalized opening greeting (e.g., 'Hi {{firstName}},' or 'Hello there,')."),
+  bodyParagraphs: z.array(z.string()).describe("2-4 short, punchy paragraphs building value. Keep mobile-friendly (2-3 sentences each)."),
+  cta: z.string().describe("Clear, action-oriented CTA button text (e.g., 'Get Your Free Guide', 'Book a Call')."),
+  ctaUrl: z.string().optional().describe("Destination URL for the CTA button."),
+  signature: z.string().describe("Professional sign-off with name, title, and company."),
+  complianceNote: z.string().describe("Unsubscribe/compliance footer text (e.g., 'You received this because... Unsubscribe here.')."),
+  emailType: z.string().describe("The type of email: cold_outreach, nurture, or promotional."),
+});
+export type EmailStructure = z.infer<typeof EmailStructureSchema>;
+
 
 const GenerateMarketingCopyOutputSchema = z.object({
   marketingCopy: z.union([
@@ -247,6 +261,7 @@ const GenerateMarketingCopyOutputSchema = z.object({
     z.array(BlogPostStructureSchema).describe('An array of blog posts for a content series'),
     BillboardAdStructureSchema,
     z.array(DisplayAdVariationSchema).describe('An array of 3-5 display ad variations'),
+    EmailStructureSchema,
     LandingPageSchema,
     z.array(WebsitePageSchema).describe('An array of website pages for a standard 5-page site'),
     WireframeSiteSchema,
@@ -543,6 +558,57 @@ const displayAdPrompt = ai.definePrompt({
     `,
 });
 
+// --- Lead Generation Email dedicated prompt (structured output) ---
+const emailPrompt = ai.definePrompt({
+    name: 'generateLeadGenEmailPrompt',
+    input: { schema: GenerateMarketingCopyInputSchema },
+    output: { schema: z.object({ marketingCopy: EmailStructureSchema }) },
+    prompt: `You are an expert lead gen email strategist, channeling Ian Brodie (for trust-building sequences that nurture prospects), Alex Berman (for personalized, high-response cold emails in B2B), and Jay Feldman (for scalable strategies that integrate with funnels). Generate a high-impact lead generation email for the client, designed to engage, provide value, and convert leads with compelling, results-driven content.
+
+    Inputs to incorporate:
+    - Client's business summary: {{productDescription}}
+    - Company: {{companyName}}
+    {{#if tone}}
+    - Tone: {{tone}}
+    {{/if}}
+    - Keywords to include: {{keywords}}
+    {{#if emailType}}
+    - Email Type: {{emailType}}
+    {{/if}}
+    {{#if additionalInstructions}}
+    - Additional instructions: {{additionalInstructions}}
+    {{/if}}
+
+    {{#if websiteUrl}}
+    FACTUAL BUSINESS DATA — Use these EXACTLY as provided. NEVER fabricate, guess, or modify URLs, phone numbers, or addresses:
+    - Website URL: {{websiteUrl}} (use this EXACT URL if a URL is needed — do NOT invent a different one)
+    {{#if businessPhone}}
+    - Business Phone: {{businessPhone}} (use this EXACT phone number if a phone number is needed)
+    {{/if}}
+    If no URL or phone is provided above, do NOT make one up. Simply omit it.
+    {{/if}}
+
+    EMAIL REQUIREMENTS:
+    1. **Subject Line**: Attention-grabbing, relevant, under 60 chars. Use curiosity, benefit, or urgency.
+    2. **Preheader Text**: Compelling preview text (40-90 chars) that complements the subject line.
+    3. **Greeting**: Personalized opening (use {{firstName}} as a merge tag placeholder).
+    4. **Body**: 2-4 short paragraphs. Build value with stories, tips, or offers. Position the client as an expert. Keep paragraphs to 2-3 sentences for mobile readability.
+    5. **CTA**: One clear, urgent call to action. Button-style text (e.g., "Get Your Free Guide").
+    6. **Signature**: Professional sign-off with name, title, and company name.
+    7. **Compliance**: Include an unsubscribe note and reference to why they received the email.
+
+    {{#if emailType}}
+    EMAIL TYPE GUIDANCE:
+    - cold_outreach: Lead with a personalized insight about the prospect. Focus on a single pain point. Keep it under 150 words.
+    - nurture: Provide genuine value (tip, resource, case study). Build relationship before selling. 150-250 words.
+    - promotional: Clear offer with urgency. Benefit-focused with social proof. Strong CTA. 150-200 words.
+    {{/if}}
+
+    Set the "emailType" field to "{{emailType}}" (or "general" if not specified).
+    Do NOT generate an image suggestion. Output only the structured JSON.
+    `,
+});
+
 
 // --- Website Landing Page dedicated prompt (structured output) ---
 const websiteLandingPagePrompt = ai.definePrompt({
@@ -816,30 +882,6 @@ const genericPrompt = ai.definePrompt({
   Confrontation (Act 2 - Guide and Plan): Show the client as a guide, demonstrating transformation through quick scenes.
   Resolution (Act 3 - CTA and Success): Depict positive outcomes, warn of failure subtly, end with strong CTA for action.
   Visual/Production Notes: Detail shots, voiceover, music, text overlays for full production.
-  {{else if isLeadGenerationEmail}}
-  You are an expert lead gen email strategist, channeling Ian Brodie (for trust-building sequences that nurture prospects), Alex Berman (for personalized, high-response cold emails in B2B), and Jay Feldman (for scalable strategies that integrate with funnels). Generate a high-impact lead generation email (or sequence) for the client, designed to engage, provide value, and convert leads with compelling, results-driven content.
-  
-  Inputs to incorporate:
-  - Client's business summary: {{productDescription}}
-  - Company: {{companyName}}
-  {{#if tone}}
-  - Tone: {{tone}}
-  {{/if}}
-  - Keywords to include: {{keywords}}
-  - Email Type: {{emailType}}
-  - Additional instructions: {{additionalInstructions}}
-
-  Length: Aim for 150-300 words unless specified.
-
-  Structure the email like this:
-
-  Subject Line: Attention-grabbing and relevant.
-  Opening/Greeting: Personalize and hook with a problem or insight.
-  Body: Build value with stories, tips, or offers, positioning the client as an expert.
-  CTA/Close: Clear call to action, with subtle urgency.
-  Signature: Professional sign-off with contact info.
-
-  Ensure it's personalized, mobile-friendly (short paragraphs), and compliance-ready (e.g., unsubscribe note). Output only the formatted email (e.g., Subject:, Greeting:, Body Paragraphs:, CTA:, Signature:), without any meta-commentary.
   {{else}}
   Generate marketing copy tailored for the following content type: {{contentType}}.
   Incorporate these keywords: {{keywords}}.
@@ -883,7 +925,6 @@ const generateMarketingCopyFlow = ai.defineFlow(
             currentYear: new Date().getFullYear().toString(),
             isRadioScript: input.contentType === "radio script",
             isTvScript: input.contentType === "tv script",
-            isLeadGenerationEmail: input.contentType === "lead generation email",
             is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
           };
           
@@ -1010,6 +1051,16 @@ const generateMarketingCopyFlow = ai.defineFlow(
               return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
           }
       }
+
+      // Lead Generation Email — dedicated structured prompt
+      if (input.contentType === "lead generation email") {
+          const { output } = await emailPrompt(input);
+          if (!output) {
+              throw new Error("The AI failed to generate the lead generation email.");
+          }
+          console.log('[MktgCopy Flow] Generated structured lead generation email');
+          return { marketingCopy: output.marketingCopy, imageSuggestion: undefined };
+      }
       
       // For all other content types, use the generic prompt
       const promptData = {
@@ -1017,7 +1068,6 @@ const generateMarketingCopyFlow = ai.defineFlow(
         currentYear: new Date().getFullYear().toString(),
         isRadioScript: input.contentType === "radio script",
         isTvScript: input.contentType === "tv script",
-        isLeadGenerationEmail: input.contentType === "lead generation email",
         is8sVEO: input.contentType === "tv script" && input.tvScriptLength === "8s",
       };
       

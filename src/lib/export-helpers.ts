@@ -1,7 +1,7 @@
 
 import jsPDF from 'jspdf';
 import type { GeneratedCopyItem } from '@/components/page/generated-copy-display';
-import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure, EmailStructure } from '@/ai/flows/generate-marketing-copy';
 
 /**
  * Sanitize text for jsPDF rendering.
@@ -47,7 +47,72 @@ const podcastOutlineToString = (outline: PodcastOutlineStructure): string => {
   content += `Call to Action: ${outline.conclusion.callToAction}\n`;
   content += `Teaser: ${outline.conclusion.teaser}\n`;
 
+  if (outline.productionNotes) {
+    content += `\n--- Production Notes ---\n`;
+    if (outline.productionNotes.music) content += `Music: ${outline.productionNotes.music}\n`;
+    if (outline.productionNotes.sfx) content += `Sound Effects: ${outline.productionNotes.sfx}\n`;
+    if (outline.productionNotes.adSpots) content += `Ad Spots: ${outline.productionNotes.adSpots}\n`;
+  }
+
   return content;
+};
+
+const podcastOutlineToHtml = (outline: PodcastOutlineStructure): string => {
+    const segmentsHtml = outline.mainContent.map((segment, index) => {
+        const keyPointsHtml = segment.keyPoints.map(p => `<li>${escapeHtml(p)}</li>`).join('');
+        const talkingPointsHtml = segment.talkingPoints.map(p => `<li>${escapeHtml(p)}</li>`).join('');
+        return `
+            <div class="podcast-segment">
+                <h3 class="podcast-segment-title">Segment ${index + 1}: ${escapeHtml(segment.segmentTitle)} <span class="podcast-duration">${escapeHtml(segment.duration)}</span></h3>
+                <div class="podcast-points">
+                    <p class="podcast-points-label">Key Points</p>
+                    <ul>${keyPointsHtml}</ul>
+                </div>
+                <div class="podcast-points">
+                    <p class="podcast-points-label">Talking Points</p>
+                    <ul>${talkingPointsHtml}</ul>
+                </div>
+                ${segment.supportingMaterial ? `<p class="podcast-supporting"><strong>Supporting Material:</strong> ${escapeHtml(segment.supportingMaterial)}</p>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    let productionHtml = '';
+    if (outline.productionNotes) {
+        const notes = outline.productionNotes;
+        productionHtml = `
+            <div class="podcast-production">
+                <h3 class="podcast-production-title">Production Notes</h3>
+                ${notes.music ? `<p><strong>Music:</strong> ${escapeHtml(notes.music)}</p>` : ''}
+                ${notes.sfx ? `<p><strong>Sound Effects:</strong> ${escapeHtml(notes.sfx)}</p>` : ''}
+                ${notes.adSpots ? `<p><strong>Ad Spots:</strong> ${escapeHtml(notes.adSpots)}</p>` : ''}
+            </div>
+        `;
+    }
+
+    return `
+        <article class="podcast-outline">
+            <h2 class="podcast-title">${escapeHtml(outline.episodeTitle)}</h2>
+            <div class="podcast-meta">
+                <p><strong>Goal:</strong> ${escapeHtml(outline.episodeGoal)}</p>
+                <p><strong>Target Audience:</strong> ${escapeHtml(outline.targetAudience)}</p>
+                <p><strong>Total Length:</strong> ${escapeHtml(outline.totalLength)}</p>
+            </div>
+            <div class="podcast-section podcast-intro">
+                <h3>Introduction <span class="podcast-duration">${escapeHtml(outline.introduction.duration)}</span></h3>
+                <p><strong>Hook:</strong> ${escapeHtml(outline.introduction.hook)}</p>
+                <p><strong>Overview:</strong> ${escapeHtml(outline.introduction.episodeOverview)}</p>
+            </div>
+            ${segmentsHtml}
+            <div class="podcast-section podcast-conclusion">
+                <h3>Conclusion <span class="podcast-duration">${escapeHtml(outline.conclusion.duration)}</span></h3>
+                <p><strong>Recap:</strong> ${escapeHtml(outline.conclusion.recap)}</p>
+                <p><strong>Call to Action:</strong> ${escapeHtml(outline.conclusion.callToAction)}</p>
+                <p><strong>Next Episode Teaser:</strong> ${escapeHtml(outline.conclusion.teaser)}</p>
+            </div>
+            ${productionHtml}
+        </article>
+    `;
 };
 
 const blogPostToString = (post: BlogPostStructure): string => {
@@ -160,6 +225,55 @@ const billboardAdToHtml = (ad: BillboardAdStructure): string => {
                     <p>${escapeHtml(ad.overallConcept)}</p>
                 </div>
             </div>
+        </article>
+    `;
+};
+
+// --- Email type guard + helpers ---
+const isEmailStructure = (value: unknown): value is EmailStructure => {
+    return typeof value === 'object' && value !== null && 'subjectLine' in value && 'bodyParagraphs' in value;
+};
+
+const emailToString = (email: EmailStructure): string => {
+    let text = 'EMAIL CAMPAIGN\n';
+    text += '==============\n\n';
+    text += `Subject Line: ${email.subjectLine}\n`;
+    text += `Preheader: ${email.preheaderText}\n\n`;
+    text += `${email.greeting}\n\n`;
+    email.bodyParagraphs.forEach(p => { text += `${p}\n\n`; });
+    text += `[CTA] ${email.cta}`;
+    if (email.ctaUrl) text += ` → ${email.ctaUrl}`;
+    text += `\n\n`;
+    text += `${email.signature}\n\n`;
+    text += `---\n${email.complianceNote}\n`;
+    if (email.emailType) text += `\nEmail Type: ${email.emailType}\n`;
+    return text;
+};
+
+const emailToHtml = (email: EmailStructure): string => {
+    const bodyHtml = email.bodyParagraphs
+        .map(p => `<p class="email-body-paragraph">${escapeHtml(p)}</p>`)
+        .join('');
+
+    return `
+        <article class="email-card">
+            <div class="email-header">
+                <p class="email-subject"><strong>Subject:</strong> ${escapeHtml(email.subjectLine)}</p>
+                <p class="email-preheader"><strong>Preheader:</strong> ${escapeHtml(email.preheaderText)}</p>
+            </div>
+            <div class="email-body">
+                <p class="email-greeting">${escapeHtml(email.greeting)}</p>
+                ${bodyHtml}
+                <div class="email-cta-wrapper">
+                    <span class="email-cta-btn">${escapeHtml(email.cta)}</span>
+                    ${email.ctaUrl ? `<p class="email-cta-url">Links to: ${escapeHtml(email.ctaUrl)}</p>` : ''}
+                </div>
+            </div>
+            <div class="email-footer">
+                <p class="email-signature">${escapeHtml(email.signature).replace(/\n/g, '<br>')}</p>
+                <p class="email-compliance">${escapeHtml(email.complianceNote)}</p>
+            </div>
+            ${email.emailType ? `<div class="email-type-badge">${escapeHtml(email.emailType.replace(/_/g, ' '))}</div>` : ''}
         </article>
     `;
 };
@@ -489,10 +603,15 @@ const blogPostToHtml = (post: BlogPostStructure, partLabel?: string): string => 
  * Prefers the original marketingCopy array (which has the correct post boundaries).
  * Only falls back to splitting editedCopy if the user has actually edited the text.
  */
-const getSocialMediaPosts = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string[] => {
+const getSocialMediaPosts = (item: GeneratedCopyItem, editedCopy: Record<string, string>, editedPosts?: Record<string, Record<number, string>>): string[] => {
     // If the original data is an array, always use it — it has perfect post boundaries
     if (Array.isArray(item.marketingCopy)) {
-        return item.marketingCopy.map(p => typeof p === 'string' ? p : String(p));
+        const postEdits = editedPosts?.[item.value];
+        return item.marketingCopy.map((p, idx) => {
+            // Prefer per-post edits over original
+            if (postEdits && postEdits[idx] !== undefined) return postEdits[idx];
+            return typeof p === 'string' ? p : String(p);
+        });
     }
     // Fallback: user may have edited or data arrived as single string
     const editedText = editedCopy[item.value];
@@ -505,8 +624,8 @@ const getSocialMediaPosts = (item: GeneratedCopyItem, editedCopy: Record<string,
 /**
  * Build structured HTML for social media posts with per-post cards and embedded images.
  */
-const socialMediaPostsToHtml = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string => {
-    const posts = getSocialMediaPosts(item, editedCopy);
+const socialMediaPostsToHtml = (item: GeneratedCopyItem, editedCopy: Record<string, string>, editedPosts?: Record<string, Record<number, string>>): string => {
+    const posts = getSocialMediaPosts(item, editedCopy, editedPosts);
 
     let html = '';
 
@@ -554,10 +673,15 @@ const socialMediaPostsToHtml = (item: GeneratedCopyItem, editedCopy: Record<stri
     return html;
 };
 
-const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>): string => {
+const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>, editedVariants?: Record<string, Record<number, string>>): string => {
     const editedText = editedCopy[item.value];
     if (editedText !== undefined) {
         return editedText;
+    }
+    
+    // Handle emails
+    if (item.value === 'lead generation email' && isEmailStructure(item.marketingCopy)) {
+        return emailToString(item.marketingCopy);
     }
     
     // Handle podcast outlines
@@ -615,7 +739,7 @@ const getItemText = (item: GeneratedCopyItem, editedCopy: Record<string, string>
 };
 
 
-export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
+export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>, editedVariants?: Record<string, Record<number, string>>, editedPosts?: Record<string, Record<number, string>>) => {
   let textContent = "";
   copies.forEach(copy => {
     textContent += `Content Type: ${copy.label}\n`;
@@ -631,12 +755,14 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
 
     // Social media: numbered posts
     if (copy.value === 'social media post') {
-        const smPosts = getSocialMediaPosts(copy, editedCopy);
+        const smPosts = getSocialMediaPosts(copy, editedCopy, editedPosts);
         smPosts.forEach((post: string, idx: number) => {
             textContent += `\n--- Post ${idx + 1} of ${smPosts.length} ---\n`;
             textContent += `${post}\n`;
         });
         textContent += `\n\n`;
+    } else if (copy.value === 'lead generation email' && isEmailStructure(copy.marketingCopy)) {
+        textContent += `${emailToString(copy.marketingCopy)}\n\n`;
     } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
         textContent += `${billboardAdToString(copy.marketingCopy)}\n\n`;
     } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
@@ -648,7 +774,7 @@ export const exportTextFile = (copies: GeneratedCopyItem[], editedCopy: Record<s
     } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
         textContent += `${wireframeSiteToString(copy.marketingCopy)}\n\n`;
     } else {
-        const itemText = getItemText(copy, editedCopy);
+        const itemText = getItemText(copy, editedCopy, editedVariants);
         textContent += `${itemText}\n\n\n`;
     }
   });
@@ -862,7 +988,7 @@ const renderPdfReportHeader = (
         return yPosition;
 };
 
-export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
+export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>, editedVariants?: Record<string, Record<number, string>>, editedPosts?: Record<string, Record<number, string>>) => {
     try {
       const doc = new jsPDF();
             let yPosition = 15;
@@ -998,7 +1124,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
         } else if (isSocialMedia) {
             // Structured social media rendering with numbered posts
             // Each post is kept together on a single page (no mid-post breaks)
-            const smPosts = getSocialMediaPosts(copy, editedCopy);
+            const smPosts = getSocialMediaPosts(copy, editedCopy, editedPosts);
             smPosts.forEach((post: string, idx: number) => {
                 // Pre-calculate total height of this post
                 const sanitized = sanitizeForPdf(post);
@@ -1038,6 +1164,231 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
 
                 yPosition += 6;
             });
+        } else if (copy.value === 'lead generation email' && isEmailStructure(copy.marketingCopy)) {
+            // Structured email rendering
+            const email = copy.marketingCopy;
+            const fieldLH = 5.2;
+
+            // Subject line
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(100, 100, 100);
+            ensureSpace(fieldLH + 2);
+            doc.text('SUBJECT LINE', margin, yPosition);
+            yPosition += fieldLH;
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(18, 18, 18);
+            const subjLines = doc.splitTextToSize(sanitizeForPdf(email.subjectLine), maxLineWidth);
+            ensureSpace(subjLines.length * 6 + 3);
+            doc.text(subjLines, margin, yPosition);
+            yPosition += (subjLines.length * 6) + 3;
+
+            // Preheader
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(100, 100, 100);
+            const preLines = doc.splitTextToSize(sanitizeForPdf('Preheader: ' + email.preheaderText), maxLineWidth);
+            ensureSpace(preLines.length * fieldLH + 4);
+            doc.text(preLines, margin, yPosition);
+            yPosition += (preLines.length * fieldLH) + 4;
+
+            // Separator
+            doc.setDrawColor(210, 215, 225);
+            doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+            yPosition += 5;
+
+            // Greeting
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(30, 30, 30);
+            ensureSpace(fieldLH + 3);
+            doc.text(sanitizeForPdf(email.greeting), margin, yPosition);
+            yPosition += fieldLH + 3;
+
+            // Body paragraphs
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(30, 30, 30);
+            email.bodyParagraphs.forEach((para: string) => {
+                const pLines = doc.splitTextToSize(sanitizeForPdf(para), maxLineWidth);
+                pLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+                yPosition += 3;
+            });
+
+            // CTA
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(79, 70, 229);
+            ensureSpace(fieldLH + 4);
+            doc.text(sanitizeForPdf('[CTA] ' + email.cta), margin, yPosition);
+            yPosition += fieldLH;
+            if (email.ctaUrl) {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 100, 100);
+                doc.text(sanitizeForPdf(email.ctaUrl), margin, yPosition);
+                yPosition += fieldLH;
+            }
+            yPosition += 4;
+
+            // Signature
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+            const sigLines = doc.splitTextToSize(sanitizeForPdf(email.signature), maxLineWidth);
+            sigLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 4;
+
+            // Compliance
+            doc.setDrawColor(230, 230, 230);
+            doc.line(margin, yPosition, margin + maxLineWidth, yPosition);
+            yPosition += 3;
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(130, 130, 130);
+            const compLines = doc.splitTextToSize(sanitizeForPdf(email.complianceNote), maxLineWidth);
+            compLines.forEach((line: string) => { ensureSpace(4.5); doc.text(line, margin, yPosition); yPosition += 4.5; });
+            yPosition += 3;
+
+            // Email type badge
+            if (email.emailType) {
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(79, 70, 229);
+                ensureSpace(fieldLH);
+                doc.text(sanitizeForPdf('Type: ' + email.emailType.replace(/_/g, ' ').toUpperCase()), margin, yPosition);
+                yPosition += fieldLH;
+            }
+
+        } else if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy) {
+            // Structured podcast outline rendering
+            const outline = copy.marketingCopy as PodcastOutlineStructure;
+            const fieldLH = 5.2;
+
+            // Episode title
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(18, 18, 18);
+            const titleLines = doc.splitTextToSize(sanitizeForPdf(outline.episodeTitle), maxLineWidth);
+            ensureSpace(titleLines.length * 7 + 3);
+            doc.text(titleLines, margin, yPosition);
+            yPosition += (titleLines.length * 7) + 3;
+
+            // Meta info
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+            ensureSpace(fieldLH * 3 + 4);
+            doc.text(sanitizeForPdf(`Goal: ${outline.episodeGoal}`), margin, yPosition); yPosition += fieldLH;
+            doc.text(sanitizeForPdf(`Target Audience: ${outline.targetAudience}`), margin, yPosition); yPosition += fieldLH;
+            doc.text(sanitizeForPdf(`Total Length: ${outline.totalLength}`), margin, yPosition); yPosition += fieldLH + 4;
+
+            // Introduction
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 30, 30);
+            ensureSpace(6 + 3);
+            doc.text(sanitizeForPdf(`Introduction (${outline.introduction.duration})`), margin, yPosition);
+            yPosition += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
+            const hookLines = doc.splitTextToSize(sanitizeForPdf(`Hook: ${outline.introduction.hook}`), maxLineWidth);
+            hookLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 2;
+            const overviewLines = doc.splitTextToSize(sanitizeForPdf(`Overview: ${outline.introduction.episodeOverview}`), maxLineWidth);
+            overviewLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 5;
+
+            // Segments
+            outline.mainContent.forEach((segment, idx) => {
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(79, 70, 229);
+                ensureSpace(8);
+                doc.text(sanitizeForPdf(`Segment ${idx + 1}: ${segment.segmentTitle} (${segment.duration})`), margin, yPosition);
+                yPosition += 6;
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 30, 30);
+                ensureSpace(fieldLH + 2);
+                doc.text('Key Points:', margin, yPosition);
+                yPosition += fieldLH;
+                doc.setFont('helvetica', 'normal');
+                segment.keyPoints.forEach((pt: string) => {
+                    const ptLines = doc.splitTextToSize(sanitizeForPdf(`  - ${pt}`), maxLineWidth - 8);
+                    ptLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin + 4, yPosition); yPosition += fieldLH; });
+                });
+                yPosition += 2;
+
+                doc.setFont('helvetica', 'bold');
+                ensureSpace(fieldLH + 2);
+                doc.text('Talking Points:', margin, yPosition);
+                yPosition += fieldLH;
+                doc.setFont('helvetica', 'normal');
+                segment.talkingPoints.forEach((pt: string) => {
+                    const ptLines = doc.splitTextToSize(sanitizeForPdf(`  - ${pt}`), maxLineWidth - 8);
+                    ptLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin + 4, yPosition); yPosition += fieldLH; });
+                });
+
+                if (segment.supportingMaterial) {
+                    yPosition += 2;
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(80, 80, 80);
+                    const smLines = doc.splitTextToSize(sanitizeForPdf(`Supporting: ${segment.supportingMaterial}`), maxLineWidth);
+                    smLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+                }
+                yPosition += 5;
+            });
+
+            // Conclusion
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 30, 30);
+            ensureSpace(6 + 3);
+            doc.text(sanitizeForPdf(`Conclusion (${outline.conclusion.duration})`), margin, yPosition);
+            yPosition += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
+            const recapLines = doc.splitTextToSize(sanitizeForPdf(`Recap: ${outline.conclusion.recap}`), maxLineWidth);
+            recapLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 2;
+            const ctaLines2 = doc.splitTextToSize(sanitizeForPdf(`CTA: ${outline.conclusion.callToAction}`), maxLineWidth);
+            ctaLines2.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 2;
+            const teaserLines = doc.splitTextToSize(sanitizeForPdf(`Teaser: ${outline.conclusion.teaser}`), maxLineWidth);
+            teaserLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+            yPosition += 5;
+
+            // Production Notes
+            if (outline.productionNotes) {
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(60, 60, 80);
+                ensureSpace(fieldLH * 4);
+                doc.text('Production Notes', margin, yPosition);
+                yPosition += 5.5;
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(60, 60, 60);
+                if (outline.productionNotes.music) {
+                    const mLines = doc.splitTextToSize(sanitizeForPdf(`Music: ${outline.productionNotes.music}`), maxLineWidth);
+                    mLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+                }
+                if (outline.productionNotes.sfx) {
+                    const sLines = doc.splitTextToSize(sanitizeForPdf(`SFX: ${outline.productionNotes.sfx}`), maxLineWidth);
+                    sLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+                }
+                if (outline.productionNotes.adSpots) {
+                    const aLines = doc.splitTextToSize(sanitizeForPdf(`Ad Spots: ${outline.productionNotes.adSpots}`), maxLineWidth);
+                    aLines.forEach((line: string) => { ensureSpace(fieldLH); doc.text(line, margin, yPosition); yPosition += fieldLH; });
+                }
+            }
+
         } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
             // Structured billboard ad rendering — entire ad kept on one page
             const ad = copy.marketingCopy;
@@ -1521,7 +1872,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(30, 30, 30);
 
-            const marketingText = sanitizeForPdf(getItemText(copy, editedCopy));
+            const marketingText = sanitizeForPdf(getItemText(copy, editedCopy, editedVariants));
             const textLines = doc.splitTextToSize(marketingText, maxLineWidth);
 
             textLines.forEach((line: string) => {
@@ -1543,7 +1894,7 @@ export const exportPdf = (copies: GeneratedCopyItem[], editedCopy: Record<string
     }
 }
 
-export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>) => {
+export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy: Record<string, string>, editedVariants?: Record<string, Record<number, string>>, editedPosts?: Record<string, Record<number, string>>) => {
     try {
             const generatedOn = new Date().toLocaleDateString();
       let htmlContent = `
@@ -2052,6 +2403,104 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                         }
                         .wf-design-system h4 { margin: 0 0 8px; color: #a16207; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; }
                         .wf-design-system p { margin: 0 0 4px; font-size: 0.88rem; color: #374151; }
+                        /* Email styles */
+                        .email-card {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 14px;
+                            overflow: hidden;
+                            background: #fff;
+                            margin-top: 14px;
+                        }
+                        .email-header {
+                            background: #f8fafc;
+                            padding: 18px 24px;
+                            border-bottom: 1px solid #e5e7eb;
+                        }
+                        .email-subject { margin: 0 0 4px; font-size: 1.1rem; color: #111827; }
+                        .email-preheader { margin: 0; font-size: 0.88rem; color: #6b7280; }
+                        .email-body { padding: 24px; }
+                        .email-greeting { margin: 0 0 16px; font-size: 1rem; color: #1f2937; }
+                        .email-body-paragraph { margin: 0 0 14px; color: #374151; line-height: 1.6; }
+                        .email-cta-wrapper { text-align: center; margin: 20px 0; }
+                        .email-cta-btn {
+                            display: inline-block;
+                            background: #6366f1;
+                            color: #fff;
+                            font-weight: 700;
+                            padding: 10px 28px;
+                            border-radius: 8px;
+                            font-size: 0.95rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.04em;
+                        }
+                        .email-cta-url { margin: 8px 0 0; font-size: 0.82rem; color: #9ca3af; }
+                        .email-footer {
+                            padding: 18px 24px;
+                            border-top: 1px solid #e5e7eb;
+                            background: #fafbfc;
+                        }
+                        .email-signature { margin: 0 0 12px; color: #374151; font-size: 0.93rem; line-height: 1.5; }
+                        .email-compliance { margin: 0; font-size: 0.78rem; color: #9ca3af; }
+                        .email-type-badge {
+                            display: inline-block;
+                            margin: 12px 24px 18px;
+                            padding: 4px 12px;
+                            border-radius: 999px;
+                            background: #eef2ff;
+                            color: #4338ca;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                        }
+                        /* Podcast Outline styles */
+                        .podcast-outline { margin-top: 14px; }
+                        .podcast-title { margin: 0 0 12px; font-size: 1.8rem; color: #111827; }
+                        .podcast-meta {
+                            background: #f8fafc;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 10px;
+                            padding: 14px 18px;
+                            margin-bottom: 18px;
+                        }
+                        .podcast-meta p { margin: 0 0 4px; font-size: 0.93rem; color: #374151; }
+                        .podcast-section {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 18px 22px;
+                            margin-bottom: 14px;
+                            background: #fff;
+                        }
+                        .podcast-section h3 { margin: 0 0 10px; font-size: 1.15rem; color: #111827; }
+                        .podcast-section p { margin: 0 0 8px; color: #374151; line-height: 1.55; }
+                        .podcast-duration {
+                            font-size: 0.82rem;
+                            font-weight: 600;
+                            color: #6366f1;
+                            margin-left: 6px;
+                        }
+                        .podcast-segment {
+                            border-left: 3px solid #6366f1;
+                            padding: 14px 18px;
+                            margin-bottom: 14px;
+                            background: #fafbff;
+                            border-radius: 0 10px 10px 0;
+                        }
+                        .podcast-segment-title { margin: 0 0 10px; font-size: 1.1rem; color: #111827; }
+                        .podcast-points { margin-bottom: 10px; }
+                        .podcast-points-label { margin: 0 0 6px; font-weight: 700; font-size: 0.88rem; color: #374151; }
+                        .podcast-points ul { margin: 0; padding-left: 20px; }
+                        .podcast-points li { margin-bottom: 4px; color: #4b5563; font-size: 0.93rem; }
+                        .podcast-supporting { margin: 8px 0 0; font-size: 0.88rem; color: #6b7280; }
+                        .podcast-production {
+                            background: #fffbeb;
+                            border: 1px solid #fde68a;
+                            border-radius: 10px;
+                            padding: 14px 18px;
+                            margin-top: 14px;
+                        }
+                        .podcast-production-title { margin: 0 0 8px; font-size: 1rem; color: #92400e; }
+                        .podcast-production p { margin: 0 0 4px; font-size: 0.88rem; color: #374151; }
                         @media print {
                             body { background: #fff; padding: 0; }
                             .reports-root { gap: 0; max-width: none; }
@@ -2084,7 +2533,11 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                 } else if (copy.value === 'blog post' && isBlogPostStructure(copy.marketingCopy)) {
                         marketingText = blogPostToHtml(copy.marketingCopy as BlogPostStructure);
                 } else if (isSocialMedia) {
-                        marketingText = socialMediaPostsToHtml(copy, editedCopy);
+                        marketingText = socialMediaPostsToHtml(copy, editedCopy, editedPosts);
+                } else if (copy.value === 'lead generation email' && isEmailStructure(copy.marketingCopy)) {
+                        marketingText = emailToHtml(copy.marketingCopy);
+                } else if (copy.value === 'podcast outline' && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'episodeTitle' in copy.marketingCopy) {
+                        marketingText = podcastOutlineToHtml(copy.marketingCopy as PodcastOutlineStructure);
                 } else if (copy.value === 'billboard' && isBillboardAdStructure(copy.marketingCopy)) {
                         marketingText = billboardAdToHtml(copy.marketingCopy);
                 } else if (copy.value === 'display ad copy' && isDisplayAdVariations(copy.marketingCopy)) {
@@ -2096,7 +2549,7 @@ export const exportHtmlForGoogleDocs = (copies: GeneratedCopyItem[], editedCopy:
                 } else if (copy.value === 'website wireframe' && isWireframeSiteStructure(copy.marketingCopy)) {
                         marketingText = wireframeSiteToHtml(copy.marketingCopy);
         } else {
-                        const itemText = getItemText(copy, editedCopy);
+                        const itemText = getItemText(copy, editedCopy, editedVariants);
             const rawText = itemText;
                         marketingText = `<pre>${escapeHtml(rawText)}</pre>`;
         }

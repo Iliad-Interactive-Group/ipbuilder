@@ -60,6 +60,32 @@ const PodcastOutlineDisplay: React.FC<PodcastOutlineDisplayProps> = ({ outline }
         <KeyPoint title="Call to Action" points={outline.conclusion.callToAction} />
         <KeyPoint title="Teaser for Next Episode" points={outline.conclusion.teaser} />
       </Section>
+
+      {outline.productionNotes && (
+        <div className="mt-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300 mb-3">Production Notes</h3>
+          <div className="space-y-2 text-sm">
+            {outline.productionNotes.music && (
+              <div className="flex gap-2">
+                <span className="font-medium text-amber-700 dark:text-amber-400 min-w-[100px]">Music:</span>
+                <span className="text-muted-foreground">{outline.productionNotes.music}</span>
+              </div>
+            )}
+            {outline.productionNotes.sfx && (
+              <div className="flex gap-2">
+                <span className="font-medium text-amber-700 dark:text-amber-400 min-w-[100px]">Sound FX:</span>
+                <span className="text-muted-foreground">{outline.productionNotes.sfx}</span>
+              </div>
+            )}
+            {outline.productionNotes.adSpots && (
+              <div className="flex gap-2">
+                <span className="font-medium text-amber-700 dark:text-amber-400 min-w-[100px]">Ad Spots:</span>
+                <span className="text-muted-foreground">{outline.productionNotes.adSpots}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

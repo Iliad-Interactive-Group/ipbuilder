@@ -28,7 +28,7 @@ import { Loader2, Download } from 'lucide-react';
 import type { MarketingBriefBlueprint } from '@/ai/schemas/marketing-brief-schemas';
 
 import { generateMarketingCopyAction, generateImageAction, generateAudioAction } from '@/app/actions';
-import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput, BillboardAdStructure } from '@/ai/flows/generate-marketing-copy';
+import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput, BillboardAdStructure, DisplayAdVariation, EmailStructure } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
 import ProtectedRoute from '@/components/protected-route';
@@ -65,6 +65,8 @@ function IPBuilderPageContent() {
 
   const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopyItem[]>([]);
   const [editedCopy, setEditedCopy] = useState<Record<string, string>>({});
+  const [editedVariants, setEditedVariants] = useState<Record<string, Record<number, string>>>({});
+  const [editedPosts, setEditedPosts] = useState<Record<string, Record<number, string>>>({});
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
@@ -157,6 +159,8 @@ function IPBuilderPageContent() {
     });
     setGeneratedCopy([]);
     setEditedCopy({});
+    setEditedVariants({});
+    setEditedPosts({});
     toast({ title: "Form Cleared", description: "All inputs and outputs have been cleared." });
   };
   
@@ -194,6 +198,52 @@ function IPBuilderPageContent() {
     }));
   };
 
+  const handleEditEmail = (itemValue: string, field: keyof EmailStructure, value: string) => {
+    setGeneratedCopy(prev => prev.map(copy => {
+      if (copy.value === itemValue && typeof copy.marketingCopy === 'object' && !Array.isArray(copy.marketingCopy) && 'subjectLine' in (copy.marketingCopy as object)) {
+        return {
+          ...copy,
+          marketingCopy: {
+            ...(copy.marketingCopy as EmailStructure),
+            [field]: value,
+          }
+        };
+      }
+      return copy;
+    }));
+  };
+
+  const handleEditDisplayAd = (itemValue: string, variationIndex: number, field: keyof DisplayAdVariation, value: string) => {
+    setGeneratedCopy(prev => prev.map(copy => {
+      if (copy.value === itemValue && Array.isArray(copy.marketingCopy)) {
+        const variations = [...(copy.marketingCopy as DisplayAdVariation[])];
+        variations[variationIndex] = { ...variations[variationIndex], [field]: value };
+        return { ...copy, marketingCopy: variations };
+      }
+      return copy;
+    }));
+  };
+
+  const handleEditVariant = (itemValue: string, variantNumber: number, text: string) => {
+    setEditedVariants(prev => ({
+      ...prev,
+      [itemValue]: {
+        ...(prev[itemValue] || {}),
+        [variantNumber]: text,
+      }
+    }));
+  };
+
+  const handleEditPost = (itemValue: string, postIndex: number, text: string) => {
+    setEditedPosts(prev => ({
+      ...prev,
+      [itemValue]: {
+        ...(prev[itemValue] || {}),
+        [postIndex]: text,
+      }
+    }));
+  };
+
   // Compute business facts from form data for validation
   const businessFacts: BusinessFacts = {
     companyName: form.getValues('companyName') || undefined,
@@ -226,6 +276,8 @@ function IPBuilderPageContent() {
       setIsGenerating(true);
       setGeneratedCopy([]); // Clear previous results immediately
       setEditedCopy({}); // Clear previous edits
+      setEditedVariants({}); // Clear variant edits
+      setEditedPosts({}); // Clear post edits
       setGenerationProgress({ total: data.contentType.length, current: 0, currentLabel: "Starting..."});
     });
 
@@ -365,7 +417,8 @@ function IPBuilderPageContent() {
           // which corrupts the export output.
           if (item.value === 'blog post' || item.value === 'podcast outline' ||
               item.value === 'billboard' || item.value === 'display ad copy' ||
-              item.value === 'website copy' || item.value === 'website wireframe') {
+              item.value === 'website copy' || item.value === 'website wireframe' ||
+              item.value === 'lead generation email') {
               return; // Do not add to editedCopy - export functions handle these natively
           }
           if (typeof item.marketingCopy === 'string') {
@@ -605,14 +658,14 @@ function IPBuilderPageContent() {
 
   const handleExportTxt = () => {
     if (generatedCopy && generatedCopy.length > 0) {
-      exportTextFile(generatedCopy, editedCopy);
+      exportTextFile(generatedCopy, editedCopy, editedVariants, editedPosts);
       toast({ title: "Copies Exported", description: `All generated copies exported as a .txt file.`});
     }
   };
   
   const handleExportPdf = () => {
     if (generatedCopy && generatedCopy.length > 0) {
-      exportPdf(generatedCopy, editedCopy);
+      exportPdf(generatedCopy, editedCopy, editedVariants, editedPosts);
       toast({ title: "Copies Exported", description: `All generated copies exported as a .pdf file.`});
     } else {
       toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
@@ -621,7 +674,7 @@ function IPBuilderPageContent() {
 
   const handleExportHtml = () => {
     if (generatedCopy && generatedCopy.length > 0) {
-      exportHtmlForGoogleDocs(generatedCopy, editedCopy);
+      exportHtmlForGoogleDocs(generatedCopy, editedCopy, editedVariants, editedPosts);
       toast({ title: "Copies Exported", description: `All generated copies exported as a .html file for Google Docs.`});
     } else {
       toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
@@ -712,6 +765,12 @@ function IPBuilderPageContent() {
               onCopy={handleCopy}
               onEdit={handleCopyEdit}
               onEditBillboard={handleEditBillboard}
+              onEditEmail={handleEditEmail}
+              onEditDisplayAd={handleEditDisplayAd}
+              onEditVariant={handleEditVariant}
+              onEditPost={handleEditPost}
+              editedVariants={editedVariants}
+              editedPosts={editedPosts}
               onExportTxt={handleExportTxt}
               onExportPdf={handleExportPdf}
               onExportHtml={handleExportHtml}

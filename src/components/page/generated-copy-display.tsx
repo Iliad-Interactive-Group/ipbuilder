@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Copy, FileText, Lightbulb, Volume2, Loader2, Info, Pencil, AlertTriangle, Upload, ImageIcon, X, Monitor } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure } from '@/ai/flows/generate-marketing-copy';
+import type { PodcastOutlineStructure, BlogPostStructure, BillboardAdStructure, DisplayAdVariation, LandingPageStructure, WebsitePageStructure, WireframeSiteStructure, EmailStructure } from '@/ai/flows/generate-marketing-copy';
 import { validateGeneratedText, type BusinessFacts, type ValidationWarning } from '@/lib/validation-utils';
 import PodcastOutlineDisplay from './podcast-outline-display';
 import BlogPostDisplay from './blog-post-display';
@@ -23,7 +23,7 @@ import { BILLBOARD_SIZES, compositeBillboard, downloadBlob, type BillboardSize }
 export interface GeneratedCopyItem {
   value: string;
   label: string;
-  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | BillboardAdStructure | DisplayAdVariation[] | LandingPageStructure | WebsitePageStructure[] | WireframeSiteStructure | VariantCopy[];
+  marketingCopy: string | string[] | PodcastOutlineStructure | BlogPostStructure | BlogPostStructure[] | BillboardAdStructure | DisplayAdVariation[] | LandingPageStructure | WebsitePageStructure[] | WireframeSiteStructure | VariantCopy[] | EmailStructure;
   imageSuggestion?: string;
   imageSuggestions?: string[];
   isError?: boolean;
@@ -41,6 +41,12 @@ interface GeneratedCopyDisplayProps {
   onCopy: (textToCopy: any, label: string) => void;
   onEdit: (itemValue: string, newText: string) => void;
   onEditBillboard: (itemValue: string, field: keyof BillboardAdStructure, value: string) => void;
+  onEditEmail: (itemValue: string, field: keyof EmailStructure, value: string) => void;
+  onEditDisplayAd: (itemValue: string, variationIndex: number, field: keyof DisplayAdVariation, value: string) => void;
+  onEditVariant: (itemValue: string, variantNumber: number, text: string) => void;
+  onEditPost: (itemValue: string, postIndex: number, text: string) => void;
+  editedVariants: Record<string, Record<number, string>>;
+  editedPosts: Record<string, Record<number, string>>;
   onExportTxt: () => void;
   onExportPdf: () => void;
   onExportHtml: () => void;
@@ -522,26 +528,299 @@ const BillboardCompositePanel: React.FC<{
   );
 };
 
-// Display Ad variation card
-const DisplayAdVariationCard: React.FC<{ variation: DisplayAdVariation; index: number; total: number }> = ({ variation, index, total }) => (
-  <div className="border rounded-xl p-5 bg-card shadow-sm space-y-3 animate-in fade-in duration-500">
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-        Variation {index + 1} of {total}
-      </span>
+// Display Ad variation card — editable
+const DisplayAdVariationCard: React.FC<{
+  variation: DisplayAdVariation;
+  index: number;
+  total: number;
+  onFieldChange: (field: keyof DisplayAdVariation, value: string) => void;
+}> = ({ variation, index, total, onFieldChange }) => {
+  const [editingField, setEditingField] = useState<string | null>(null);
+
+  const EditableAdField: React.FC<{
+    fieldKey: keyof DisplayAdVariation;
+    value: string;
+    label: string;
+    wordLimit?: number;
+    className?: string;
+    inputType?: 'input' | 'textarea';
+  }> = ({ fieldKey, value, label, wordLimit, className = '', inputType = 'input' }) => {
+    const isEditing = editingField === `${index}-${fieldKey}`;
+    return (
+      <div className="group relative">
+        <div className="flex items-center gap-2 mb-0.5">
+          {wordLimit && <WordCountBadge text={value} limit={wordLimit} />}
+          {!isEditing && (
+            <button
+              onClick={() => setEditingField(`${index}-${fieldKey}`)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              title={`Edit ${label}`}
+            >
+              <Pencil className="w-3 h-3 text-muted-foreground hover:text-primary" />
+            </button>
+          )}
+        </div>
+        {isEditing ? (
+          inputType === 'textarea' ? (
+            <Textarea
+              value={value}
+              onChange={(e) => onFieldChange(fieldKey, e.target.value)}
+              onBlur={() => setEditingField(null)}
+              rows={2}
+              autoFocus
+              className={`text-sm border-primary/50 focus:ring-primary ${className}`}
+            />
+          ) : (
+            <Input
+              value={value}
+              onChange={(e) => onFieldChange(fieldKey, e.target.value)}
+              onBlur={() => setEditingField(null)}
+              autoFocus
+              className={`text-sm border-primary/50 focus:ring-primary ${className}`}
+            />
+          )
+        ) : (
+          <div
+            onClick={() => setEditingField(`${index}-${fieldKey}`)}
+            className={`cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors ${className}`}
+          >
+            {value || <span className="italic text-muted-foreground">Click to edit...</span>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="border rounded-xl p-5 bg-card shadow-sm space-y-3 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+          Variation {index + 1} of {total}
+        </span>
+        <span className="text-xs text-muted-foreground flex items-center gap-1"><Pencil className="w-3 h-3" /> Click to edit</span>
+      </div>
+      <EditableAdField fieldKey="headline" value={variation.headline} label="Headline" wordLimit={10} className="text-xl font-bold text-foreground leading-snug" />
+      <EditableAdField fieldKey="body" value={variation.body} label="Body" inputType="textarea" className="text-sm text-muted-foreground leading-relaxed" />
+      <div className="flex items-center gap-3 pt-2">
+        <EditableAdField fieldKey="cta" value={variation.cta} label="CTA" wordLimit={5} className="inline-block bg-primary text-primary-foreground font-semibold px-4 py-1.5 rounded-md text-xs uppercase tracking-wide" />
+      </div>
+      <div className="text-xs text-muted-foreground pt-2 border-t mt-3">
+        <EditableAdField fieldKey="visualNotes" value={variation.visualNotes} label="Visual Notes" inputType="textarea" className="text-xs text-muted-foreground" />
+      </div>
     </div>
-    <h3 className="text-xl font-bold text-foreground leading-snug">{variation.headline}</h3>
-    <p className="text-sm text-muted-foreground leading-relaxed">{variation.body}</p>
-    <div className="flex items-center gap-3 pt-2">
-      <span className="inline-block bg-primary text-primary-foreground font-semibold px-4 py-1.5 rounded-md text-xs uppercase tracking-wide">
-        {variation.cta}
-      </span>
+  );
+};
+
+// --- Email Display component (structured, editable) ---
+const EditableEmailDisplay: React.FC<{
+  email: EmailStructure;
+  onFieldChange: (field: keyof EmailStructure, value: string) => void;
+  businessFacts?: BusinessFacts;
+}> = ({ email, onFieldChange, businessFacts }) => {
+  const [editingField, setEditingField] = useState<string | null>(null);
+
+  const allText = `${email.subjectLine} ${email.bodyParagraphs.join(' ')} ${email.cta}`;
+  const warnings = businessFacts ? validateGeneratedText(allText, businessFacts) : [];
+
+  const EditableField: React.FC<{
+    fieldKey: keyof EmailStructure;
+    value: string;
+    label: string;
+    className?: string;
+    inputType?: 'input' | 'textarea';
+  }> = ({ fieldKey, value, label, className = '', inputType = 'input' }) => {
+    const isEditing = editingField === fieldKey;
+    return (
+      <div className="group relative">
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+          {!isEditing && (
+            <button onClick={() => setEditingField(fieldKey)} className="opacity-0 group-hover:opacity-100 transition-opacity" title={`Edit ${label}`}>
+              <Pencil className="w-3 h-3 text-muted-foreground hover:text-primary" />
+            </button>
+          )}
+        </div>
+        {isEditing ? (
+          inputType === 'textarea' ? (
+            <Textarea value={value} onChange={(e) => onFieldChange(fieldKey, e.target.value)} onBlur={() => setEditingField(null)} rows={3} autoFocus className={`text-sm border-primary/50 focus:ring-primary ${className}`} />
+          ) : (
+            <Input value={value} onChange={(e) => onFieldChange(fieldKey, e.target.value)} onBlur={() => setEditingField(null)} autoFocus className={`text-sm border-primary/50 focus:ring-primary ${className}`} />
+          )
+        ) : (
+          <div onClick={() => setEditingField(fieldKey)} className={`cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors ${className}`}>
+            {value || <span className="italic text-muted-foreground">Click to edit...</span>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-4 text-left animate-in fade-in duration-500">
+      {/* Email preview card */}
+      <div className="border rounded-xl overflow-hidden shadow-sm">
+        {/* Subject line bar */}
+        <div className="bg-muted/50 px-6 py-3 border-b">
+          <EditableField fieldKey="subjectLine" value={email.subjectLine} label="Subject" className="text-base font-bold text-foreground" />
+          <p className="text-xs text-muted-foreground mt-1">{email.preheaderText}</p>
+        </div>
+
+        {/* Email body */}
+        <div className="bg-card px-6 py-5 space-y-4">
+          <EditableField fieldKey="greeting" value={email.greeting} label="Greeting" className="text-sm text-foreground" />
+
+          <div className="space-y-3">
+            <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Body</p>
+            {email.bodyParagraphs.map((para, idx) => (
+              <div key={idx} className="group relative">
+                {editingField === `body-${idx}` ? (
+                  <Textarea
+                    value={para}
+                    onChange={(e) => {
+                      const updated = [...email.bodyParagraphs];
+                      updated[idx] = e.target.value;
+                      onFieldChange('bodyParagraphs' as keyof EmailStructure, updated as unknown as string);
+                    }}
+                    onBlur={() => setEditingField(null)}
+                    rows={3}
+                    autoFocus
+                    className="text-sm border-primary/50 focus:ring-primary"
+                  />
+                ) : (
+                  <p
+                    onClick={() => setEditingField(`body-${idx}`)}
+                    className="text-sm text-foreground/90 leading-relaxed cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
+                  >
+                    {para}
+                    <button className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 inline">
+                      <Pencil className="w-3 h-3 text-muted-foreground inline" />
+                    </button>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* CTA button */}
+          <div className="text-center py-3">
+            <EditableField fieldKey="cta" value={email.cta} label="Call to Action" className="inline-block bg-primary text-primary-foreground font-bold px-8 py-2.5 rounded-lg text-sm uppercase tracking-wider" />
+            {email.ctaUrl && <p className="text-xs text-muted-foreground mt-1">Links to: {email.ctaUrl}</p>}
+          </div>
+
+          {/* Signature */}
+          <div className="border-t pt-3">
+            <EditableField fieldKey="signature" value={email.signature} label="Signature" className="text-sm text-muted-foreground italic whitespace-pre-line" />
+          </div>
+        </div>
+
+        {/* Compliance footer */}
+        <div className="bg-muted/30 px-6 py-3 border-t">
+          <EditableField fieldKey="complianceNote" value={email.complianceNote} label="Compliance" className="text-xs text-muted-foreground" />
+        </div>
+      </div>
+
+      {/* Email type badge */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+          {email.emailType || 'general'} email
+        </span>
+      </div>
+
+      <ValidationWarnings warnings={warnings} />
     </div>
-    <div className="text-xs text-muted-foreground pt-2 border-t mt-3">
-      <span className="font-semibold">Visual Notes:</span> {variation.visualNotes}
+  );
+};
+
+// --- Social Media Per-Post Card Display ---
+const PLATFORM_CHAR_LIMITS: Record<string, number> = {
+  'twitter': 280, 'x': 280,
+  'instagram': 2200,
+  'facebook': 63206,
+  'linkedin': 3000,
+  'tiktok': 2200,
+};
+
+const SocialMediaPostDisplay: React.FC<{
+  item: GeneratedCopyItem;
+  editedPosts: Record<string, Record<number, string>>;
+  onEditPost: (itemValue: string, postIndex: number, text: string) => void;
+}> = ({ item, editedPosts, onEditPost }) => {
+  const posts = Array.isArray(item.marketingCopy) ? item.marketingCopy.map(p => typeof p === 'string' ? p : String(p)) : [String(item.marketingCopy)];
+  const platform = (item as any).platform || '';
+  const charLimit = PLATFORM_CHAR_LIMITS[platform.toLowerCase()] || 0;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground font-medium">
+        {posts.length} post{posts.length !== 1 ? 's' : ''} generated{platform ? ` for ${platform}` : ''}
+      </p>
+      <div className="grid grid-cols-1 gap-4">
+        {posts.map((post, idx) => {
+          const editedText = editedPosts[item.value]?.[idx];
+          const currentText = editedText !== undefined ? editedText : post;
+          const charCount = currentText.length;
+          const isOverLimit = charLimit > 0 && charCount > charLimit;
+
+          return (
+            <div key={idx} className="border rounded-xl p-4 bg-card shadow-sm space-y-2 animate-in fade-in duration-500">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                  Post {idx + 1} of {posts.length}
+                </span>
+                {charLimit > 0 && (
+                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
+                    isOverLimit ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                  }`}>
+                    {charCount}/{charLimit} chars
+                  </span>
+                )}
+              </div>
+              <Textarea
+                value={currentText}
+                onChange={(e) => onEditPost(item.value, idx, e.target.value)}
+                rows={4}
+                className="bg-muted/20 p-3 rounded-md text-sm leading-relaxed border-border/50 hover:border-primary/50 transition-colors"
+                placeholder="Edit this post..."
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+// --- TV Script Scene Breakdown Preview ---
+const TV_SCRIPT_TAGS = /\[(FADE IN|FADE OUT|CUT TO|DISSOLVE TO|VO|NARRATOR|CHARACTER|SFX|MUSIC|SUPER|SCENE|INT\.|EXT\.)[^\]]*\]/gi;
+
+const TvScriptPreview: React.FC<{ text: string }> = ({ text }) => {
+  // Split on script tags, keeping delimiters
+  const parts = text.split(/(\[[^\]]+\])/g).filter(Boolean);
+  if (parts.length <= 1) return null; // No tags found, skip preview
+
+  return (
+    <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 space-y-1">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Scene Breakdown Preview</p>
+      {parts.map((part, idx) => {
+        const isTag = /^\[.*\]$/.test(part.trim());
+        if (isTag) {
+          return (
+            <span key={idx} className="inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-mono font-bold px-2 py-0.5 rounded mr-1 mt-1">
+              {part}
+            </span>
+          );
+        }
+        const trimmed = part.trim();
+        if (!trimmed) return null;
+        return (
+          <p key={idx} className="text-sm text-foreground/90 leading-relaxed pl-4 border-l-2 border-blue-200 dark:border-blue-800 my-1">
+            {trimmed}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
 
 const EditableTextDisplay: React.FC<{
   item: GeneratedCopyItem;
@@ -834,6 +1113,12 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
   onCopy,
   onEdit,
   onEditBillboard,
+  onEditEmail,
+  onEditDisplayAd,
+  onEditVariant,
+  onEditPost,
+  editedVariants,
+  editedPosts,
   onExportTxt,
   onExportPdf,
   onExportHtml,
@@ -906,6 +1191,18 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                   !Array.isArray(item.marketingCopy) &&
                                   'siteNavigation' in (item.marketingCopy as object) &&
                                   'pages' in (item.marketingCopy as object);
+
+              // Lead Generation Email (structured with subjectLine)
+              const isEmail = item.value === 'lead generation email' &&
+                              typeof item.marketingCopy === 'object' &&
+                              !Array.isArray(item.marketingCopy) &&
+                              'subjectLine' in (item.marketingCopy as object);
+
+              // Social Media Post (array of strings)
+              const isSocialMedia = item.value === 'social media post' &&
+                                    Array.isArray(item.marketingCopy) &&
+                                    item.marketingCopy.length > 0 &&
+                                    typeof item.marketingCopy[0] === 'string';
               
               const hasVariants = isVariantsArray(item.marketingCopy);
               const Icon = CONTENT_TYPES.find(ct => ct.value === item.value)?.icon || FileText;
@@ -983,16 +1280,29 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                    variation={variation}
                                    index={idx}
                                    total={(item.marketingCopy as DisplayAdVariation[]).length}
+                                   onFieldChange={(field, value) => onEditDisplayAd(item.value, idx, field, value)}
                                  />
                                ))}
                              </div>
                            </div>
+                        ) : isEmail ? (
+                           <EditableEmailDisplay
+                             email={item.marketingCopy as EmailStructure}
+                             onFieldChange={(field, value) => onEditEmail(item.value, field, value)}
+                             businessFacts={businessFacts}
+                           />
                         ) : isLandingPage ? (
                            <LandingPageDisplay page={item.marketingCopy as LandingPageStructure} />
                         ) : isStandardWebsite ? (
                            <StandardWebsiteDisplay pages={item.marketingCopy as WebsitePageStructure[]} />
                         ) : isWireframe ? (
                            <WebsiteWireframeDisplay wireframe={item.marketingCopy as WireframeSiteStructure} />
+                        ) : isSocialMedia ? (
+                           <SocialMediaPostDisplay
+                             item={item}
+                             editedPosts={editedPosts}
+                             onEditPost={onEditPost}
+                           />
                         ) : hasVariants ? (
                            <Tabs defaultValue="1" className="w-full">
                              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${(item.marketingCopy as VariantCopy[]).length}, 1fr)` }}>
@@ -1002,16 +1312,30 @@ const GeneratedCopyDisplay: React.FC<GeneratedCopyDisplayProps> = ({
                                  </TabsTrigger>
                                ))}
                              </TabsList>
-                             {(item.marketingCopy as VariantCopy[]).map((v) => (
-                               <TabsContent key={v.variant} value={v.variant.toString()}>
-                                 <Textarea 
-                                   value={v.copy} 
-                                   readOnly
-                                   rows={8} 
-                                   className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50"
-                                 />
-                               </TabsContent>
-                             ))}
+                             {(item.marketingCopy as VariantCopy[]).map((v) => {
+                               const variantText = editedVariants[item.value]?.[v.variant] ?? v.copy;
+                               const wordCount = variantText.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
+                               const estimatedDuration = Math.round(wordCount / 2.2);
+                               return (
+                                 <TabsContent key={v.variant} value={v.variant.toString()} className="space-y-2">
+                                   <div className="flex justify-between items-center">
+                                     <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                       <Info className="w-3 h-3" /> Click to edit. Changes save automatically.
+                                     </p>
+                                     <div className={`text-xs font-medium px-2 py-1 rounded-md ${estimatedDuration > 30 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400' : 'bg-muted text-muted-foreground'}`}>
+                                       {wordCount} words ≈ {estimatedDuration}s
+                                     </div>
+                                   </div>
+                                   <Textarea
+                                     value={variantText}
+                                     onChange={(e) => onEditVariant(item.value, v.variant, e.target.value)}
+                                     rows={8}
+                                     className="bg-muted/20 p-4 rounded-md font-mono text-sm leading-relaxed border-border/50 hover:border-primary/50 transition-colors"
+                                   />
+                                   {item.value === 'tv script' && <TvScriptPreview text={variantText} />}
+                                 </TabsContent>
+                               );
+                             })}
                            </Tabs>
                         ) : isEditableContent(item) ? (
                            <>
