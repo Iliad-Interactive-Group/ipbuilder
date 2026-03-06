@@ -1,0 +1,10 @@
+type,id,name,shortName,location,market,mapUrl,networks,maintenanceHistory,status
+SITE,site-boi-nampa,Nampa Studio,NMP,"1419 N. Franklin Blvd, Nampa, ID 83687",Treasure Valley,,,,active
+SITE,site-boi-middleton,Middleton Site,MID,"Middleton, ID",Treasure Valley,,,,active
+SITE,site-boi-deerpoint,Deer Point Site,DP,"Deer Point, ID",Treasure Valley,,,,active
+SITE,site-boi-claypeak,Clay Peak Site,CLAY,"Clay Peak, ID",Treasure Valley,,,,active
+SITE,site-tf-jerome,Jerome Butte Site,JERB,"Jerome Butte, ID",Magic Valley,,,,active
+SITE,site-tf-picabo,Picabo Site,PIC,"Picabo, ID",Magic Valley,,,,active
+SITE,site-tf-studio,Twin Falls Studio,TWN,"158 mainstream, Twin Falls, ID 83301",Magic Valley,,,,active
+SITE,site-boi-nonamebutte,No Name Butte,Nona,"Emmett, ID",Treasure Valley,,,,active
+SITE,site-boi-bennettmountain,Bennett Mountain,BENT,Mountain Home,Treasure Valley,,,,active

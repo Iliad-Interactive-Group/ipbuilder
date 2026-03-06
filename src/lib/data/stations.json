@@ -1,0 +1,59 @@
+
+[
+    {
+        "id": "station-klif",
+        "market": "Dallas/Fort Worth",
+        "siteId": "site-dal",
+        "name": "KLIF-FM",
+        "pronunciation": "K-L-I-F F-M",
+        "callSign": "KLIF-FM",
+        "signal": "FM",
+        "fin": "96.7",
+        "col": "Dallas, TX",
+        "rawStreamUrl": "https://example.com/stream1",
+        "historyJsonUrl": "https://example.com/history1.json",
+        "status": "active"
+    },
+    {
+        "id": "station-kplx",
+        "market": "Dallas/Fort Worth",
+        "siteId": "site-fw",
+        "name": "KPLX-FM",
+        "pronunciation": "K-P-L-X F-M",
+        "callSign": "KPLX-FM",
+        "signal": "FM",
+        "fin": "99.5",
+        "col": "Fort Worth, TX",
+        "rawStreamUrl": "https://example.com/stream2",
+        "historyJsonUrl": "https://example.com/history2.json",
+        "status": "active"
+    },
+    {
+        "id": "station-khks",
+        "market": "Dallas/Fort Worth",
+        "siteId": "site-dal",
+        "name": "KHKS-FM",
+        "pronunciation": "K-H-K-S F-M",
+        "callSign": "KHKS-FM",
+        "signal": "FM",
+        "fin": "106.1",
+        "col": "Denton, TX",
+        "rawStreamUrl": "https://example.com/stream3",
+        "historyJsonUrl": "https://example.com/history3.json",
+        "status": "active"
+    },
+    {
+        "id": "station-ktrh",
+        "market": "Houston",
+        "siteId": "site-hou",
+        "name": "KTRH-AM",
+        "pronunciation": "K-T-R-H A-M",
+        "callSign": "KTRH-AM",
+        "signal": "AM",
+        "fin": "740",
+        "col": "Houston, TX",
+        "rawStreamUrl": "https://example.com/stream4",
+        "historyJsonUrl": "https://example.com/history4.json",
+        "status": "active"
+    }
+]

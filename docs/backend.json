@@ -1,0 +1,295 @@
+
+{
+  "entities": {
+    "Company": {
+      "title": "Company",
+      "description": "A parent company that owns markets.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the company." },
+        "name": { "type": "string", "description": "The name of the company." },
+        "type": { "type": "string", "enum": ["COMPANY"], "description": "The asset type." },
+        "status": { "type": "string", "enum": ["Active", "Archived"], "description": "The status of the asset." }
+      },
+      "required": ["id", "name", "type", "status"]
+    },
+    "Market": {
+      "title": "Market",
+      "description": "A geographical market area that belongs to a company.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the market." },
+        "name": { "type": "string", "description": "The name of the market." },
+        "companyId": { "type": "string", "description": "The ID of the parent company." },
+        "type": { "type": "string", "enum": ["MARKET"], "description": "The asset type." },
+        "status": { "type": "string", "enum": ["Active", "Archived"], "description": "The status of the asset." }
+      },
+      "required": ["id", "name", "companyId", "type", "status"]
+    },
+    "Site": {
+      "title": "Site",
+      "description": "A physical broadcast site that belongs to a market.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the site." },
+        "name": { "type": "string", "description": "The name of the site." },
+        "shortName": { "type": "string", "description": "A short, abbreviated name for the site." },
+        "marketId": { "type": "string", "description": "The ID of the parent market." },
+        "companyId": { "type": "string", "description": "The ID of the parent company." },
+        "type": { "type": "string", "enum": ["SITE"], "description": "The asset type." },
+        "status": { "type": "string", "enum": ["Active", "Archived"], "description": "The status of the asset." },
+        "location": { "type": "string", "description": "Physical address of the site." },
+        "mapUrl": { "type": "string", "format": "uri", "description": "URL to a map for directions." },
+        "networks": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "network_name": { "type": "string" },
+              "subnet": { "type": "string" },
+              "external_ip": { "type": "string" },
+              "gateway": { "type": "string" },
+              "dns_servers": { "type": "array", "items": { "type": "string" } }
+            }
+          } 
+        },
+        "maintenanceHistory": { "type": "array", "items": { "$ref": "#/entities/SiteMaintenanceLog" } }
+      },
+      "required": ["id", "name", "marketId", "companyId", "type", "status"]
+    },
+    "Station": {
+      "title": "Station",
+      "description": "A radio station associated with a site.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the station." },
+        "name": { "type": "string", "description": "The name of the station (e.g., '102.1 The Bull')." },
+        "callSign": { "type": "string", "description": "The station's call sign (e.g., 'KYUN')." },
+        "siteId": { "type": "string", "description": "The ID of the primary parent site." },
+        "marketId": { "type": "string", "description": "The ID of the parent market." },
+        "companyId": { "type": "string", "description": "The ID of the parent company." },
+        "type": { "type": "string", "enum": ["STATION"], "description": "The asset type." },
+        "status": { "type": "string", "enum": ["Active", "Archived"], "description": "The status of the asset." }
+      },
+      "required": ["id", "name", "siteId", "marketId", "companyId", "type", "status"]
+    },
+    "Equipment": {
+      "title": "Equipment",
+      "description": "A base piece of broadcast equipment. Can be extended for specific types.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["EQUIPMENT"] },
+        "status": { "type": "string" },
+        "companyId": { "type": "string" },
+        "marketId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "stationIds": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string", "description": "High-level category like 'Power', 'Mechanical', 'Studio'." },
+        "equipmentType": { "type": "string", "description": "Specific type like 'Generator', 'Transmitter', 'Audio Console'." },
+        "make": { "type": "string" },
+        "modelNumber": { "type": "string" },
+        "serialNumber": { "type": "string" },
+        "ipAddress": { "type": "array", "items": { "type": "string" } },
+        "url": { "type": "string", "format": "uri" },
+        "username": { "type": "string" },
+        "notes": { "type": "string" },
+        "locationInSite": { "type": "string" },
+        "storageLocation": { "type": "string" },
+        "quantity": { "type": "number", "default": 1 },
+        "acquisitionDate": { "type": "string", "format": "date-time" },
+        "warrantyEndDate": { "type": "string", "format": "date-time" },
+        "lastServiceDate": { "type": "string", "format": "date-time" },
+        "nextServiceDate": { "type": "string", "format": "date-time" },
+        "firmwareVersion": { "type": "string" },
+        "maintenanceHistory": { "type": "array", "items": { "$ref": "#/entities/MaintenanceLog" } },
+        "attachments": { "type": "array", "items": { "$ref": "#/entities/Attachment" } },
+        "tpo": { "type": "number", "description": "Transmitter Power Output" },
+        "erp": { "type": "number", "description": "Effective Radiated Power" },
+        "paModuleType": { "type": "string" },
+        "powerSupplyType": { "type": "string" },
+        "filamentType": { "type": "string" },
+        "fuseType": { "type": "string" },
+        "airFilterSize": { "type": "string" },
+        "lastPaChangeDate": { "type": "string", "format": "date-time" },
+        "lastPsuChangeDate": { "type": "string", "format": "date-time" },
+        "lastFilamentChangeDate": { "type": "string", "format": "date-time" },
+        "lastFilterChangeDate": { "type": "string", "format": "date-time" },
+        "fuseStock": { "type": "number" },
+        "filterCount": { "type": "number" },
+        "exciterOutput": { "type": "number" },
+        "blowerBeltType": { "type": "string" },
+        "beltCount": { "type": "number" },
+        "batteryModel": { "type": "string" },
+        "lastBatteryChangeDate": { "type": "string", "format": "date-time" },
+        "batteryCount": { "type": "number" },
+        "lastRefuelDate": { "type": "string", "format": "date-time" },
+        "fuelLevelPercent": { "type": "number" },
+        "lastBeltCheckDate": { "type": "string", "format": "date-time" },
+        "greaseType": { "type": "string" },
+        "greaseNeeded": { "type": "boolean" },
+        "vin": { "type": "string" },
+        "licensePlate": { "type": "string" }
+      },
+      "required": ["id", "name", "type", "status"]
+    },
+    "MaintenanceLog": {
+      "title": "Maintenance Log",
+      "description": "A log entry for maintenance performed on a piece of equipment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "technician": { "type": "string" },
+        "type": { "type": "string", "enum": ["Routine", "Emergency Repair", "Installation", "Part Replacement", "Note"] }
+      },
+      "required": ["id", "date", "notes", "technician", "type"]
+    },
+    "SiteMaintenanceLog": {
+      "title": "Site Maintenance Log",
+      "description": "A checklist-based log entry for site-wide maintenance.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "templateName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "technician": { "type": "string" },
+        "data": { "type": "object" }
+      },
+       "required": ["id", "templateName", "date", "technician"]
+    },
+    "Attachment": {
+      "title": "Attachment",
+      "description": "A file attached to a piece of equipment, such as a manual or receipt.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string" },
+        "size": { "type": "number" },
+        "type": { "type": "string", "enum": ["Manual", "Receipt", "Warranty", "Other"] },
+        "url": { "type": "string", "format": "uri" }
+      },
+      "required": ["id", "fileName", "fileType", "size", "type", "url"]
+    },
+    "Secret": {
+      "title": "Secret",
+      "description": "A generic secret entry for passwords, notes, or codes.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["websitePassword", "gateCode", "multiLogin", "customFields", "secureNote"] },
+        "organizationId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "notes": { "type": "string" },
+        "location": { "type": "string" },
+        "code": { "type": "string" },
+        "unlockInstructions": { "type": "string" },
+        "accounts": { 
+          "type": "array", 
+          "items": {
+            "type": "object",
+            "properties": {
+              "username": { "type": "string" },
+              "password": { "type": "string" },
+              "label": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "fields": { 
+          "type": "array", 
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" },
+              "isSecret": { "type": "boolean" }
+            }
+          }
+        },
+        "content": { "type": "string" }
+      },
+      "required": ["id", "type", "name", "createdAt", "updatedAt"]
+    },
+    "ArchivedItem": {
+      "title": "Archived Item",
+      "description": "A document that has been archived from another collection.",
+      "type": "object",
+      "properties": {
+        "archivedAt": { "type": "string", "format": "date-time" },
+        "originalCollection": { "type": "string" },
+        "originalId": { "type": "string" },
+        "data": { "type": "object" }
+      }
+    },
+    "ChangeEvent": {
+      "title": "Change Event",
+      "description": "A log of a single change made to a document in the database.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string", "enum": ["create", "update", "archive"] },
+        "collection": { "type": "string" },
+        "docId": { "type": "string" },
+        "docName": { "type": "string" },
+        "summary": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "userId", "action", "collection", "docId"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/companies/{companyId}": {
+      "schema": { "$ref": "#/entities/Company" },
+      "description": "Stores documents for each company."
+    },
+    "/markets/{marketId}": {
+      "schema": { "$ref": "#/entities/Market" },
+      "description": "Stores documents for each market."
+    },
+    "/sites/{siteId}": {
+      "schema": { "$ref": "#/entities/Site" },
+      "description": "Stores documents for each broadcast site."
+    },
+    "/stations/{stationId}": {
+      "schema": { "$ref": "#/entities/Station" },
+      "description": "Stores documents for each radio station."
+    },
+    "/equipment/{equipmentId}": {
+      "schema": { "$ref": "#/entities/Equipment" },
+      "description": "Stores documents for each piece of equipment across all sites and categories."
+    },
+    "/secrets/{secretId}": {
+      "schema": { "$ref": "#/entities/Secret" },
+      "description": "Stores documents for all secrets like passwords, codes, and notes."
+    },
+    "/archive/{archiveId}": {
+      "schema": { "$ref": "#/entities/ArchivedItem" },
+      "description": "Stores documents that have been archived. A TTL policy should be set on this collection."
+    },
+    "/changelog/{changeId}": {
+      "schema": { "$ref": "#/entities/ChangeEvent" },
+      "description": "Stores a log of all data modifications for auditing."
+    }
+  }
+}
+
+    

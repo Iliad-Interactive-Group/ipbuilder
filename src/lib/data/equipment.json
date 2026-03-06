@@ -1,0 +1,42 @@
+
+[
+    {
+        "id": "equip-1",
+        "siteId": "site-dal",
+        "name": "DAL - Transmitter - Nautel GV30",
+        "description": "Nautel GV30",
+        "category": "Transmitter",
+        "ipAddress": "10.10.20.10",
+        "url": "http://10.10.20.10",
+        "username": "admin",
+        "notes": "Main transmitter for KLIF-FM.",
+        "stationIds": ["station-klif"],
+        "status": "active"
+    },
+    {
+        "id": "equip-2",
+        "siteId": "site-dal",
+        "name": "DAL - AC - Carrier 10-Ton",
+        "description": "Carrier 10-Ton HVAC",
+        "category": "Air Conditioner",
+        "notes": "Main building HVAC.",
+        "status": "active"
+    },
+    {
+        "id": "equip-3",
+        "siteId": "site-hou",
+        "name": "HOU - Generator - CAT 250kW",
+        "description": "CAT 250kW Diesel",
+        "category": "Generator",
+        "status": "active"
+    },
+    {
+        "id": "equip-4",
+        "name": "CORP - Spare - PA Module",
+        "description": "GV30 PA Module",
+        "category": "Spare Parts",
+        "quantity": 5,
+        "servicesModel": "Nautel GV30",
+        "status": "active"
+    }
+]

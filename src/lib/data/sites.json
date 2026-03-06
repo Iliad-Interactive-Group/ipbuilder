@@ -1,0 +1,47 @@
+
+[
+  {
+    "id": "site-dal",
+    "name": "Dallas-Cedar Hill",
+    "shortName": "DAL",
+    "location": "123 Main St, Cedar Hill, TX",
+    "market": "Dallas/Fort Worth",
+    "mapUrl": "https://maps.google.com",
+    "networks": [
+      {
+        "network_name": "Studio/STL",
+        "subnet": "10.10.10.0/24",
+        "gateway": "10.10.10.1"
+      },
+      {
+        "network_name": "Transmitter",
+        "subnet": "10.10.20.0/24",
+        "gateway": "10.10.20.1"
+      }
+    ],
+    "maintenanceHistory": [],
+    "status": "active"
+  },
+  {
+    "id": "site-fw",
+    "name": "Fort Worth-North",
+    "shortName": "FWN",
+    "location": "456 Oak Ave, Fort Worth, TX",
+    "market": "Dallas/Fort Worth",
+    "mapUrl": "https://maps.google.com",
+    "networks": [],
+    "maintenanceHistory": [],
+    "status": "active"
+  },
+    {
+    "id": "site-hou",
+    "name": "Houston-Missouri City",
+    "shortName": "HOU",
+    "location": "789 Pine Ln, Missouri City, TX",
+    "market": "Houston",
+    "mapUrl": "https://maps.google.com",
+    "networks": [],
+    "maintenanceHistory": [],
+    "status": "active"
+  }
+]

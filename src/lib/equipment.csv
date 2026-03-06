@@ -1,0 +1,311 @@
+type,id,siteId,name,description,ipAddress,url,username,notes,status
+EQUIPMENT,eq-nmp-biz-1,site-boi-nampa,NMP - Network - IMG NAS Drive,IMG NAS Drive,10.18.50.1,,,,active
+EQUIPMENT,eq-nmp-biz-2,site-boi-nampa,NMP - Computer - Hoff Sever,Hoff Sever,10.18.50.2,,,,active
+EQUIPMENT,eq-nmp-biz-3,site-boi-nampa,NMP - Other - Sales Printer,Sales Printer,10.18.50.3,,,,active
+EQUIPMENT,eq-nmp-biz-4,site-boi-nampa,NMP - Computer - IMG Camera sever,IMG Camera sever,10.18.50.4,,,,active
+EQUIPMENT,eq-nmp-biz-5,site-boi-nampa,NMP - Computer - Middleton NVR,Middleton NVR,10.18.50.5,,,,active
+EQUIPMENT,eq-nmp-biz-6,site-boi-nampa,NMP - Computer - Eng Command,Eng Command,10.18.50.6,,,,active
+EQUIPMENT,eq-nmp-biz-7,site-boi-nampa,NMP - Network - WireGuard,WireGuard,10.18.50.7,,,,active
+EQUIPMENT,eq-nmp-biz-25,site-boi-nampa,NMP - Other - IRG-DC1,IRG-DC1,10.18.50.25,,,,active
+EQUIPMENT,eq-nmp-biz-26,site-boi-nampa,NMP - Other - IRG-DC2,IRG-DC2,10.18.50.26,,,,active
+EQUIPMENT,eq-nmp-biz-30,site-boi-nampa,NMP - Network - PF SENSE,PF SENSE,10.18.50.30,,,,active
+EQUIPMENT,eq-nmp-biz-35,site-boi-nampa,NMP - Other - J-LSlingHDD,J-LSlingHDD,10.18.50.35,,,,active
+EQUIPMENT,eq-nmp-biz-40,site-boi-nampa,NMP - Other - IRG-IPROFILER,IRG-IPROFILER,10.18.50.40,,,,active
+EQUIPMENT,eq-nmp-biz-41,site-boi-nampa,NMP - Computer - KZMG-Micropc-1,KZMG-Micropc-1,10.18.50.41,,,,active
+EQUIPMENT,eq-nmp-biz-42,site-boi-nampa,NMP - Computer - KZMG-Micropc-2,KZMG-Micropc-2,10.18.50.42,,,,active
+EQUIPMENT,eq-nmp-biz-43,site-boi-nampa,NMP - Computer - KZMG-INTPC,KZMG-INTPC,10.18.50.43,,,,active
+EQUIPMENT,eq-nmp-biz-44,site-boi-nampa,NMP - Computer - KSRV-VOX-PC,KSRV-VOX-PC,10.18.50.44,,,,active
+EQUIPMENT,eq-nmp-biz-45,site-boi-nampa,NMP - Network - DISPATCH (NAS),DISPATCH (NAS),10.18.50.45,,,,active
+EQUIPMENT,eq-nmp-biz-50,site-boi-nampa,NMP - Other - HP Printer Traffic,HP Printer Traffic,10.18.50.50,,,,active
+EQUIPMENT,eq-nmp-biz-51,site-boi-nampa,NMP - Other - BM HP printer,BM HP printer,10.18.50.51,,,,active
+EQUIPMENT,eq-nmp-biz-55,site-boi-nampa,NMP - Other - Studio/Programming Printer,Studio/Programming Printer,10.18.50.55,,,,active
+EQUIPMENT,eq-nmp-biz-58,site-boi-nampa,NMP - Computer - KQBL-INTPC,KQBL-INTPC,10.18.50.58,,,,active
+EQUIPMENT,eq-nmp-biz-70,site-boi-nampa,NMP - Cameras - Nampa Back Hallway,Nampa Back Hallway,10.18.50.70,,,,active
+EQUIPMENT,eq-nmp-biz-71,site-boi-nampa,NMP - Cameras - Nampa Common Area 1,Nampa Common Area 1,10.18.50.71,,,,active
+EQUIPMENT,eq-nmp-biz-72,site-boi-nampa,NMP - Cameras - Nampa Common Area 2,Nampa Common Area 2,10.18.50.72,,,,active
+EQUIPMENT,eq-nmp-biz-73,site-boi-nampa,NMP - Cameras - Nampa Common Area 3,Nampa Common Area 3,10.18.50.73,,,,active
+EQUIPMENT,eq-nmp-biz-74,site-boi-nampa,NMP - Cameras - NAMPA LOBBY,NAMPA LOBBY,10.18.50.74,,,,active
+EQUIPMENT,eq-nmp-biz-75,site-boi-nampa,NMP - Cameras - NAMPA PROMO OFFICE,NAMPA PROMO OFFICE,10.18.50.75,,,,active
+EQUIPMENT,eq-nmp-biz-76,site-boi-nampa,NMP - Cameras - NAMPA RECEPTION,NAMPA RECEPTION,10.18.50.76,,,,active
+EQUIPMENT,eq-nmp-biz-77,site-boi-nampa,NMP - Cameras - HOFF LOBBY,HOFF LOBBY,10.18.50.77,,,,active
+EQUIPMENT,eq-nmp-biz-78,site-boi-nampa,NMP - Cameras - HOFF EAST HALL,HOFF EAST HALL,10.18.50.78,,,,active
+EQUIPMENT,eq-nmp-biz-79,site-boi-nampa,NMP - Cameras - HOFF SOUTH HALL,HOFF SOUTH HALL,10.18.50.79,,,,active
+EQUIPMENT,eq-nmp-biz-80,site-boi-nampa,NMP - Cameras - HOFF NORTH HALL,HOFF NORTH HALL,10.18.50.80,,,,active
+EQUIPMENT,eq-nmp-biz-81,site-boi-nampa,NMP - Cameras - DEER PT CAM 1,DEER PT CAM 1,10.18.50.81,,,,active
+EQUIPMENT,eq-nmp-biz-82,site-boi-nampa,NMP - Cameras - DEER PT CAM 2,DEER PT CAM 2,10.18.50.82,,,,active
+EQUIPMENT,eq-nmp-biz-83,site-boi-nampa,NMP - Cameras - DEER PT CAM 3,DEER PT CAM 3,10.18.50.83,,,,active
+EQUIPMENT,eq-nmp-biz-85,site-boi-nampa,NMP - Network - Ubiquti DP Radio,Ubiquti DP Radio,10.18.50.85,,,,active
+EQUIPMENT,eq-nmp-biz-86,site-boi-nampa,NMP - Network - Ubiquti Hoff Radio,Ubiquti Hoff Radio,10.18.50.86,,,,active
+EQUIPMENT,eq-nmp-biz-98,site-boi-nampa,NMP - Network - Production Drive (IRG-ProdDrive),Production Drive (IRG-ProdDrive),10.18.50.98,,,,active
+EQUIPMENT,eq-nmp-biz-99,site-boi-nampa,NMP - Computer - IRG-SECURSERVER,IRG-SECURSERVER,10.18.50.99,,,,active
+EQUIPMENT,eq-nmp-biz-105,site-boi-nampa,NMP - Computer - KWYD-INTPC,KWYD-INTPC,10.18.50.105,,,,active
+EQUIPMENT,eq-nmp-biz-109,site-boi-nampa,NMP - Computer - IMG-SALES-MAINROOM,IMG-SALES-MAINROOM,10.18.50.109,,,,active
+EQUIPMENT,eq-nmp-biz-110,site-boi-nampa,NMP - Computer - IMG-TRAFFIC,IMG-TRAFFIC,10.18.50.110,,,,active
+EQUIPMENT,eq-nmp-biz-111,site-boi-nampa,NMP - Computer - TRAFFIC-5,TRAFFIC-5,10.18.50.111,,,,active
+EQUIPMENT,eq-nmp-biz-117,site-boi-nampa,NMP - Computer - Zabbix Docker (Linux Server),Zabbix Docker (Linux Server),10.18.50.117,,,,active
+EQUIPMENT,eq-nmp-biz-120,site-boi-nampa,NMP - Other - BRN30055C447207,BRN30055C447207,10.18.50.120,,,,active
+EQUIPMENT,eq-nmp-biz-124,site-boi-nampa,NMP - Computer - IRG_OPS_MAN_PC,IRG_OPS_MAN_PC,10.18.50.124,,,,active
+EQUIPMENT,eq-nmp-biz-125,site-boi-nampa,NMP - Computer - IMG-DMS-LAPTOP1,IMG-DMS-LAPTOP1,10.18.50.125,,,,active
+EQUIPMENT,eq-nmp-biz-127,site-boi-nampa,NMP - Computer - IRG-NAMPA-GM,IRG-NAMPA-GM,10.18.50.127,,,,active
+EQUIPMENT,eq-nmp-biz-143,site-boi-nampa,NMP - Computer - NAMPA-CONF-RM,NAMPA-CONF-RM,10.18.50.143,,,,active
+EQUIPMENT,eq-nmp-biz-148,site-boi-nampa,NMP - Computer - IMG-PROD-LT,IMG-PROD-LT,10.18.50.148,,,,active
+EQUIPMENT,eq-nmp-biz-155,site-boi-nampa,NMP - Computer - IRG-CEO-PC,IRG-CEO-PC,10.18.50.155,,,,active
+EQUIPMENT,eq-nmp-biz-159,site-boi-nampa,NMP - Computer - IRG-PROMO-PC2,IRG-PROMO-PC2,10.18.50.159,,,,active
+EQUIPMENT,eq-nmp-biz-161,site-boi-nampa,NMP - Computer - IRG-KWYD-APD,IRG-KWYD-APD,10.18.50.161,,,,active
+EQUIPMENT,eq-nmp-biz-163,site-boi-nampa,NMP - Computer - IRG-FRONTDESK,IRG-FRONTDESK,10.18.50.163,,,,active
+EQUIPMENT,eq-nmp-biz-172,site-boi-nampa,NMP - Computer - IMG-FRONTDESK,IMG-FRONTDESK,10.18.50.172,,,,active
+EQUIPMENT,eq-nmp-biz-175,site-boi-nampa,NMP - Computer - IMG-KQBL-AD,IMG-KQBL-AD,10.18.50.175,,,,active
+EQUIPMENT,eq-nmp-biz-177,site-boi-nampa,NMP - Computer - IMG-SALES-15,IMG-SALES-15,10.18.50.177,,,,active
+EQUIPMENT,eq-nmp-biz-190,site-boi-nampa,NMP - Computer - IMG-SALES-2,IMG-SALES-2,10.18.50.190,,,,active
+EQUIPMENT,eq-nmp-biz-191,site-boi-nampa,NMP - Network - Unifi Temp Network,Unifi Temp Network,10.18.50.191,,,,active
+EQUIPMENT,eq-nmp-biz-199,site-boi-nampa,NMP - Computer - IMG-BOI-SALES-2,IMG-BOI-SALES-2,10.18.50.199,,,,active
+EQUIPMENT,eq-nmp-biz-201,site-boi-nampa,NMP - Computer - Deer Point PC,Deer Point PC,10.18.50.201,,,,active
+EQUIPMENT,eq-nmp-biz-210,site-boi-nampa,NMP - Computer - IRG-OPS-MAN (JAMES),IRG-OPS-MAN (JAMES),10.18.50.210,,,,active
+EQUIPMENT,eq-nmp-biz-213,site-boi-nampa,NMP - Computer - IRG-ITDIR,IRG-ITDIR,10.18.50.213,,,,active
+EQUIPMENT,eq-nmp-biz-214,site-boi-nampa,NMP - Computer - TRAFFIC-M,TRAFFIC-M,10.18.50.214,,,,active
+EQUIPMENT,eq-nmp-biz-215,site-boi-nampa,NMP - Computer - IRG-TRAFFIC3,IRG-TRAFFIC3,10.18.50.215,,,,active
+EQUIPMENT,eq-nmp-biz-216,site-boi-nampa,NMP - Computer - Hoff Prod PC,Hoff Prod PC,10.18.50.216,,,,active
+EQUIPMENT,eq-nmp-biz-220,site-boi-nampa,NMP - Computer - IRG-ENG-PC2,IRG-ENG-PC2,10.18.50.220,,,,active
+EQUIPMENT,eq-nmp-stu-7,site-boi-nampa,NMP - Network - WireGuard,WireGuard,10.18.60.7,,,,active
+EQUIPMENT,eq-nmp-stu-11,site-boi-nampa,NMP - Computer - KWYD G-4,KWYD G-4,10.18.60.11,,,,active
+EQUIPMENT,eq-nmp-stu-12,site-boi-nampa,NMP - Computer - KNFL G-4,KNFL G-4,10.18.60.12,,,,active
+EQUIPMENT,eq-nmp-stu-13,site-boi-nampa,NMP - Computer - KQBL G-4,KQBL G-4,10.18.60.13,,,,active
+EQUIPMENT,eq-nmp-stu-14,site-boi-nampa,NMP - Computer - KZMG G-4,KZMG G-4,10.18.60.14,,,,active
+EQUIPMENT,eq-nmp-stu-15,site-boi-nampa,NMP - Computer - PROD2 G-4,PROD2 G-4,10.18.60.15,,,,active
+EQUIPMENT,eq-nmp-stu-17,site-boi-nampa,NMP - Other - KSRV-FM-RBDS UDP (RDI 20),KSRV-FM-RBDS UDP (RDI 20),10.18.60.17,,,,active
+EQUIPMENT,eq-nmp-stu-30,site-boi-nampa,NMP - Network - Studio Gateway,Studio Gateway,10.18.60.30,,,,active
+EQUIPMENT,eq-nmp-stu-31,site-boi-nampa,NMP - Network - Xoomlink GATEWAY Deer Pt.,Xoomlink GATEWAY Deer Pt.,10.18.60.31,,,,active
+EQUIPMENT,eq-nmp-stu-40,site-boi-nampa,NMP - Audio Processor - vocco 8 kqbl studio,vocco 8 kqbl studio,10.18.60.40,,,,active
+EQUIPMENT,eq-nmp-stu-41,site-boi-nampa,NMP - Other - KZMG RBDS (INOVON 730),KZMG RBDS (INOVON 730),10.18.60.41,,,,active
+EQUIPMENT,eq-nmp-stu-42,site-boi-nampa,NMP - Other - KQBL RBDS (INOVON 730),KQBL RBDS (INOVON 730),10.18.60.42,,,PORT:1005,active
+EQUIPMENT,eq-nmp-stu-43,site-boi-nampa,NMP - Computer - WO-KSRV-HD2,WO-KSRV-HD2,10.18.60.43,,,,active
+EQUIPMENT,eq-nmp-stu-44,site-boi-nampa,NMP - Other - KSRV HD2 730 RDS,KSRV HD2 730 RDS,10.18.60.44,,,,active
+EQUIPMENT,eq-nmp-stu-50,site-boi-nampa,NMP - Network - DISPATCH NAS,DISPATCH NAS,10.18.60.50,,,,active
+EQUIPMENT,eq-nmp-stu-51,site-boi-nampa,NMP - Computer - Josh pc,Josh pc,10.18.60.51,,,,active
+EQUIPMENT,eq-nmp-stu-52,site-boi-nampa,NMP - Computer - Cody pc,Cody pc,10.18.60.52,,,,active
+EQUIPMENT,eq-nmp-stu-58,site-boi-nampa,NMP - Computer - KQBLFM-PLAYLIST,KQBLFM-PLAYLIST,10.18.60.58,,,,active
+EQUIPMENT,eq-nmp-stu-60,site-boi-nampa,NMP - Other - engxpoint,engxpoint,10.18.60.60,,,,active
+EQUIPMENT,eq-nmp-stu-61,site-boi-nampa,NMP - Computer - IMG-KZMG-MORN-LT,IMG-KZMG-MORN-LT,10.18.60.61,,,,active
+EQUIPMENT,eq-nmp-stu-62,site-boi-nampa,NMP - Computer - engineer-remote,engineer-remote,10.18.60.62,,,,active
+EQUIPMENT,eq-nmp-stu-67,site-boi-nampa,NMP - Computer - IAN-PC-2024,IAN-PC-2024,10.18.60.67,,,,active
+EQUIPMENT,eq-nmp-stu-68,site-boi-nampa,NMP - Computer - KSRV-ADOBE,KSRV-ADOBE,10.18.60.68,,,,active
+EQUIPMENT,eq-nmp-stu-72,site-boi-nampa,NMP - Computer - KZMG-PLAYLISTPC,KZMG-PLAYLISTPC,10.18.60.72,,,,active
+EQUIPMENT,eq-nmp-stu-74,site-boi-nampa,NMP - Computer - IMG-TRAFFIC-PROD,IMG-TRAFFIC-PROD,10.18.60.74,,,,active
+EQUIPMENT,eq-nmp-stu-75,site-boi-nampa,NMP - Other - SAGE - EAS,SAGE - EAS,10.18.60.75,,,,active
+EQUIPMENT,eq-nmp-stu-76,site-boi-nampa,NMP - Other - Barrix (670 link to Twin),Barrix (670 link to Twin),10.18.60.76,,,,active
+EQUIPMENT,eq-nmp-stu-81,site-boi-nampa,NMP - Computer - KQBL-HD3 Streaming PC,KQBL-HD3 Streaming PC,10.18.60.81,,,,active
+EQUIPMENT,eq-nmp-stu-83,site-boi-nampa,NMP - Other - Multi stream,Multi stream,10.18.60.83,,,,active
+EQUIPMENT,eq-nmp-stu-85,site-boi-nampa,NMP - STL - middleton link,middleton link,10.18.60.85,,,,active
+EQUIPMENT,eq-nmp-stu-86,site-boi-nampa,NMP - Computer - IMG-PROD-PC1,IMG-PROD-PC1,10.18.60.86,,,,active
+EQUIPMENT,eq-nmp-stu-91,site-boi-nampa,NMP - Other - Burk Plus-X,Burk Plus-X,10.18.60.91,,,,active
+EQUIPMENT,eq-nmp-stu-92,site-boi-nampa,NMP - Audio Processor - Sound4 processor,Sound4 processor,10.18.60.92,,,,active
+EQUIPMENT,eq-nmp-stu-93,site-boi-nampa,NMP - Other - KWYD RBDS,KWYD RBDS,10.18.60.93,,,,active
+EQUIPMENT,eq-nmp-stu-94,site-boi-nampa,NMP - Other - Connect One,Connect One,10.18.60.94,,,,active
+EQUIPMENT,eq-nmp-stu-95,site-boi-nampa,NMP - Other - antenna switch,antenna switch,10.18.60.95,,,,active
+EQUIPMENT,eq-nmp-stu-96,site-boi-nampa,NMP - Exciter - BW exciter,BW exciter,10.18.60.96,,,,active
+EQUIPMENT,eq-nmp-stu-97,site-boi-nampa,NMP - Audio Processor - BU processor,BU processor,10.18.60.97,,,,active
+EQUIPMENT,eq-nmp-stu-98,site-boi-nampa,NMP - Other - KWYD Power Meter - Transmitter,KWYD Power Meter - Transmitter,10.18.60.98,,,,active
+EQUIPMENT,eq-nmp-stu-99,site-boi-nampa,NMP - Other - KWYD Power Meter - Combiner,KWYD Power Meter - Combiner,10.18.60.99,,,,active
+EQUIPMENT,eq-nmp-stu-100,site-boi-nampa,NMP - Other - Light controler,Light controler,10.18.60.100,,,,active
+EQUIPMENT,eq-nmp-stu-104,site-boi-nampa,NMP - Cameras - cam inside,cam inside,10.18.60.104,,,,active
+EQUIPMENT,eq-nmp-stu-105,site-boi-nampa,NMP - Cameras - cam outside,cam outside,10.18.60.105,,,,active
+EQUIPMENT,eq-nmp-stu-107,site-boi-nampa,NMP - Other - NRV,NRV,10.18.60.107,,,,active
+EQUIPMENT,eq-nmp-stu-108,site-boi-nampa,NMP - Other - ATS 32,ATS 32,10.18.60.108,,,,active
+EQUIPMENT,eq-nmp-stu-109,site-boi-nampa,NMP - Computer - IRG-SECURSERVER,IRG-SECURSERVER,10.18.60.109,,,,active
+EQUIPMENT,eq-nmp-stu-113,site-boi-nampa,NMP - Other - Flexiva,Flexiva,10.18.60.113,,,,active
+EQUIPMENT,eq-nmp-stu-117,site-boi-nampa,NMP - Other - RDI 20,RDI 20,10.18.60.117,,,,active
+EQUIPMENT,eq-nmp-stu-119,site-boi-nampa,NMP - Computer - TRAFFIC-5,TRAFFIC-5,10.18.60.119,,,,active
+EQUIPMENT,eq-nmp-stu-120,site-boi-nampa,NMP - Network - Switch 0 Nampa,Switch 0 Nampa,10.18.60.120,,,,active
+EQUIPMENT,eq-nmp-stu-121,site-boi-nampa,NMP - Network - Switch 1 Nampa,Switch 1 Nampa,10.18.60.121,,,,active
+EQUIPMENT,eq-nmp-stu-122,site-boi-nampa,NMP - Network - Switch 2 Nampa,Switch 2 Nampa,10.18.60.122,,,,active
+EQUIPMENT,eq-nmp-stu-123,site-boi-nampa,NMP - Network - Switch 3 Deer Pt,Switch 3 Deer Pt,10.18.60.123,,,,active
+EQUIPMENT,eq-nmp-stu-124,site-boi-nampa,NMP - Network - Switch 4 Deer Pt,Switch 4 Deer Pt,10.18.60.124,,,,active
+EQUIPMENT,eq-nmp-stu-125,site-boi-nampa,NMP - Network - Switch 5 (POE) Hoff,Switch 5 (POE) Hoff,10.18.60.125,,,,active
+EQUIPMENT,eq-nmp-stu-126,site-boi-nampa,NMP - Network - Switch 6 (POE) Hoff,Switch 6 (POE) Hoff,10.18.60.126,,,,active
+EQUIPMENT,eq-nmp-stu-127,site-boi-nampa,NMP - Network - Switch 7 Hoff Prod,Switch 7 Hoff Prod,10.18.60.127,,,,active
+EQUIPMENT,eq-nmp-stu-128,site-boi-nampa,NMP - Network - Switch 8 Middleton,Switch 8 Middleton,10.18.60.128,,,,active
+EQUIPMENT,eq-nmp-stu-129,site-boi-nampa,NMP - Network - Deer Netgear,Deer Netgear,10.18.60.129,,,,active
+EQUIPMENT,eq-nmp-stu-135,site-boi-nampa,NMP - Other - BROTHER Printer,BROTHER Printer,10.18.60.135,,,,active
+EQUIPMENT,eq-nmp-stu-141,site-boi-nampa,NMP - Other - HD MOD mon,HD MOD mon,10.18.60.141,,,,active
+EQUIPMENT,eq-nmp-stu-142,site-boi-nampa,NMP - Other - Burk ARC-16,Burk ARC-16,10.18.60.142,,,,active
+EQUIPMENT,eq-nmp-stu-143,site-boi-nampa,NMP - Other - ARCPlus,ARCPlus,10.18.60.143,,,,active
+EQUIPMENT,eq-nmp-stu-144,site-boi-nampa,NMP - Computer - IRG-CALLSCR,IRG-CALLSCR,10.18.60.144,,,,active
+EQUIPMENT,eq-nmp-stu-145,site-boi-nampa,NMP - STL - BRIC LINK,BRIC LINK,10.18.60.145,,,port 8080,active
+EQUIPMENT,eq-nmp-stu-146,site-boi-nampa,NMP - STL - BRIC LINK,BRIC LINK,10.18.60.146,,,port 8087,active
+EQUIPMENT,eq-nmp-stu-147,site-boi-nampa,NMP - Other - ESPN XDS1,ESPN XDS1,10.18.60.147,,,,active
+EQUIPMENT,eq-nmp-stu-148,site-boi-nampa,NMP - Other - Flexiva,Flexiva,10.18.60.148,,,,active
+EQUIPMENT,eq-nmp-stu-149,site-boi-nampa,NMP - Other - ESPN XDS2,ESPN XDS2,10.18.60.149,,,,active
+EQUIPMENT,eq-nmp-stu-150,site-boi-nampa,NMP - Other - Premiere XDS1,Premiere XDS1,10.18.60.150,,,,active
+EQUIPMENT,eq-nmp-stu-151,site-boi-nampa,NMP - Other - Premiere XDS2,Premiere XDS2,10.18.60.151,,,,active
+EQUIPMENT,eq-nmp-stu-160,site-boi-nampa,NMP - Network - BRIDGE ROUTER,BRIDGE ROUTER,10.18.60.160,,,,active
+EQUIPMENT,eq-nmp-stu-161,site-boi-nampa,NMP - Other - KKOO RDS,KKOO RDS,10.18.60.161,,,,active
+EQUIPMENT,eq-nmp-stu-163,site-boi-nampa,NMP - Computer - BOI-INGEST-SVR,BOI-INGEST-SVR,10.18.60.163,,,,active
+EQUIPMENT,eq-nmp-stu-164,site-boi-nampa,NMP - Other - Inovonics aaron 650,Inovonics aaron 650,10.18.60.164,,,,active
+EQUIPMENT,eq-nmp-stu-165,site-boi-nampa,NMP - Computer - Silence sense PC,Silence sense PC,10.18.60.165,,,,active
+EQUIPMENT,eq-nmp-stu-166,site-boi-nampa,NMP - Network - Barrix (Nampa),Barrix (Nampa),10.18.60.166,,,,active
+EQUIPMENT,eq-nmp-stu-167,site-boi-nampa,NMP - Network - Barrix (Hoff),Barrix (Hoff),10.18.60.167,,,,active
+EQUIPMENT,eq-nmp-stu-168,site-boi-nampa,NMP - STL - DragonWave IP Link,DragonWave IP Link,10.18.60.168,,,,active
+EQUIPMENT,eq-nmp-stu-169,site-boi-nampa,NMP - STL - DragonWave IP Link,DragonWave IP Link,10.18.60.169,,,,active
+EQUIPMENT,eq-nmp-stu-170,site-boi-nampa,NMP - Computer - WO-BOI-CS,WO-BOI-CS,10.18.60.170,,,,active
+EQUIPMENT,eq-nmp-stu-171,site-boi-nampa,NMP - Computer - WO-BOI-PR2,WO-BOI-PR2,10.18.60.171,,,,active
+EQUIPMENT,eq-nmp-stu-172,site-boi-nampa,NMP - Computer - WO-KQBL-FM,WO-KQBL-FM,10.18.60.172,,,,active
+EQUIPMENT,eq-nmp-stu-173,site-boi-nampa,NMP - Computer - WO-KQBL-HD3,WO-KQBL-HD3,10.18.60.173,,,,active
+EQUIPMENT,eq-nmp-stu-174,site-boi-nampa,NMP - Computer - WO-KZMG-FM,WO-KZMG-FM,10.18.60.174,,,,active
+EQUIPMENT,eq-nmp-stu-175,site-boi-nampa,NMP - Computer - WO-KSRV-FM,WO-KSRV-FM,10.18.60.175,,,,active
+EQUIPMENT,eq-nmp-stu-176,site-boi-nampa,NMP - Computer - WO-KKOO-AM,WO-KKOO-AM,10.18.60.176,,,,active
+EQUIPMENT,eq-nmp-stu-177,site-boi-nampa,NMP - Computer - WO-KWYD-FM,WO-KWYD-FM,10.18.60.177,,,,active
+EQUIPMENT,eq-nmp-stu-178,site-boi-nampa,NMP - Computer - WO-KQBL-HD2,WO-KQBL-HD2,10.18.60.178,,,,active
+EQUIPMENT,eq-nmp-stu-179,site-boi-nampa,NMP - Computer - WO-KSRV-HD2,WO-KSRV-HD2,10.18.60.179,,,,active
+EQUIPMENT,eq-nmp-stu-180,site-boi-nampa,NMP - Computer - NEW WO-BOI-CS,NEW WO-BOI-CS,10.18.60.180,,,,active
+EQUIPMENT,eq-nmp-stu-181,site-boi-nampa,NMP - Computer - WO-BOI-RS1A,WO-BOI-RS1A,10.18.60.181,,,,active
+EQUIPMENT,eq-nmp-stu-182,site-boi-nampa,NMP - Computer - WO-BOI-RS1B,WO-BOI-RS1B,10.18.60.182,,,,active
+EQUIPMENT,eq-nmp-stu-183,site-boi-nampa,NMP - Computer - WO-BOI-RS2A,WO-BOI-RS2A,10.18.60.183,,,,active
+EQUIPMENT,eq-nmp-stu-184,site-boi-nampa,NMP - Computer - FUTURE WO-BOI-RS2B,FUTURE WO-BOI-RS2B,10.18.60.184,,,,active
+EQUIPMENT,eq-nmp-stu-185,site-boi-nampa,NMP - Computer - WO-BOI-RC1,WO-BOI-RC1,10.18.60.185,,,,active
+EQUIPMENT,eq-nmp-stu-186,site-boi-nampa,NMP - Computer - WO-BOI-RC2,WO-BOI-RC2,10.18.60.186,,,,active
+EQUIPMENT,eq-nmp-stu-187,site-boi-nampa,NMP - Computer - WO-BOI-RC3,WO-BOI-RC3,10.18.60.187,,,,active
+EQUIPMENT,eq-nmp-stu-188,site-boi-nampa,NMP - Computer - WO-BOI-RC4,WO-BOI-RC4,10.18.60.188,,,,active
+EQUIPMENT,eq-nmp-stu-189,site-boi-nampa,NMP - Computer - WO-BOI-RC5,WO-BOI-RC5,10.18.60.189,,,,active
+EQUIPMENT,eq-nmp-stu-190,site-boi-nampa,NMP - Computer - WO-PAD,WO-PAD,10.18.60.190,,,,active
+EQUIPMENT,eq-nmp-stu-191,site-boi-nampa,NMP - Computer - BOI-Autopilot,BOI-Autopilot,10.18.60.191,,,,active
+EQUIPMENT,eq-nmp-stu-192,site-boi-nampa,NMP - Computer - BOI-PROFILER,BOI-PROFILER,10.18.60.192,,,,active
+EQUIPMENT,eq-nmp-stu-193,site-boi-nampa,NMP - Other - IRG-iProfiler card2,IRG-iProfiler card2,10.18.60.193,,,,active
+EQUIPMENT,eq-nmp-stu-194,site-boi-nampa,NMP - Audio Processor - Wheatstone M-2,Wheatstone M-2,10.18.60.194,,,,active
+EQUIPMENT,eq-nmp-stu-195,site-boi-nampa,NMP - Audio Processor - Voco8 mic processor,Voco8 mic processor,10.18.60.195,,,,active
+EQUIPMENT,eq-nmp-stu-196,site-boi-nampa,NMP - STL - Telos Zip-1 studio 96.5,Telos Zip-1 studio 96.5,10.18.60.196,,,,active
+EQUIPMENT,eq-nmp-stu-197,site-boi-nampa,NMP - STL - Telos Zip-2 studio 99.1/101.5,Telos Zip-2 studio 99.1/101.5,10.18.60.197,,,,active
+EQUIPMENT,eq-nmp-stu-198,site-boi-nampa,NMP - STL - Telos Zip-5 studio 106.3/99.9,Telos Zip-5 studio 106.3/99.9,10.18.60.198,,,,active
+EQUIPMENT,eq-nmp-stu-201,site-boi-nampa,NMP - Computer - IRG-DEERPOINT-PC,IRG-DEERPOINT-PC,10.18.60.201,,,,active
+EQUIPMENT,eq-nmp-stu-202,site-boi-nampa,NMP - Computer - KSRV importer/exporter,KSRV importer/exporter,10.18.60.202,,,,active
+EQUIPMENT,eq-nmp-stu-203,site-boi-nampa,NMP - Audio Processor - 99.9 OMNIA 6,99.9 OMNIA 6,10.18.60.203,,,,active
+EQUIPMENT,eq-nmp-stu-204,site-boi-nampa,NMP - Transmitter - 99.9 FAX 1K,99.9 FAX 1K,10.18.60.204,,,,active
+EQUIPMENT,eq-nmp-stu-205,site-boi-nampa,NMP - Other - Deer Point IP Reboot 1 (KSRV rack),Deer Point IP Reboot 1 (KSRV rack),10.18.60.205,,,,active
+EQUIPMENT,eq-nmp-stu-206,site-boi-nampa,NMP - Power - AC Power Sentinal 2 Plus IP,AC Power Sentinal 2 Plus IP,10.18.60.206,,,,active
+EQUIPMENT,eq-nmp-stu-207,site-boi-nampa,NMP - Transmitter - BW 99.1 Transmitter,BW 99.1 Transmitter,10.18.60.207,,,,active
+EQUIPMENT,eq-nmp-stu-208,site-boi-nampa,NMP - Exciter - KSRV Exciter (Deerpoint),KSRV Exciter (Deerpoint),10.18.60.208,,,,active
+EQUIPMENT,eq-nmp-stu-209,site-boi-nampa,NMP - Computer - KZMG HD-Importer,KZMG HD-Importer,10.18.60.209,,,,active
+EQUIPMENT,eq-nmp-stu-210,site-boi-nampa,NMP - Transmitter - KQBL FAX 30,KQBL FAX 30,10.18.60.210,,,,active
+EQUIPMENT,eq-nmp-stu-211,site-boi-nampa,NMP - Transmitter - KSRV-FM FAX 3K,KSRV-FM FAX 3K,10.18.60.211,,,,active
+EQUIPMENT,eq-nmp-stu-212,site-boi-nampa,NMP - Transmitter - KZMG FAX 3K,KZMG FAX 3K,10.18.60.212,,,,active
+EQUIPMENT,eq-nmp-stu-213,site-boi-nampa,NMP - Transmitter - KQBL FAX 3K,KQBL FAX 3K,10.18.60.213,,,,active
+EQUIPMENT,eq-nmp-stu-214,site-boi-nampa,NMP - Transmitter - K224EP FAX 500,K224EP FAX 500,10.18.60.214,,,,active
+EQUIPMENT,eq-nmp-stu-215,site-boi-nampa,NMP - Transmitter - K243BM FAX 300,K243BM FAX 300,10.18.60.215,,,,active
+EQUIPMENT,eq-nmp-stu-216,site-boi-nampa,NMP - Transmitter - KKOO FAX 1K,KKOO FAX 1K,10.18.60.216,,,,active
+EQUIPMENT,eq-nmp-stu-217,site-boi-nampa,NMP - Transmitter - BW TX-50,BW TX-50,10.18.60.217,,,,active
+EQUIPMENT,eq-nmp-stu-218,site-boi-nampa,NMP - Exciter - KQBL FAX-50 EXCITER,KQBL FAX-50 EXCITER,10.18.60.218,,,,active
+EQUIPMENT,eq-nmp-stu-219,site-boi-nampa,NMP - Other - ESPN RBDS,ESPN RBDS,10.18.60.219,,,,active
+EQUIPMENT,eq-nmp-stu-220,site-boi-nampa,NMP - Other - K224EP RBDS,K224EP RBDS,10.18.60.220,,,,active
+EQUIPMENT,eq-nmp-stu-221,site-boi-nampa,NMP - Audio Processor - KSRV-FM OMNIA 9,KSRV-FM OMNIA 9,10.18.60.221,,,,active
+EQUIPMENT,eq-nmp-stu-222,site-boi-nampa,NMP - Audio Processor - KZMG OMNIA 6,KZMG OMNIA 6,10.18.60.222,,,,active
+EQUIPMENT,eq-nmp-stu-223,site-boi-nampa,NMP - Audio Processor - KQBLHD-3 OMNIA 6,KQBLHD-3 OMNIA 6,10.18.60.223,,,,active
+EQUIPMENT,eq-nmp-stu-224,site-boi-nampa,NMP - Audio Processor - KQBLHD-2 OMNIA 6,KQBLHD-2 OMNIA 6,10.18.60.224,,,,active
+EQUIPMENT,eq-nmp-stu-225,site-boi-nampa,NMP - Audio Processor - KKOO FM OMNIA 6,KKOO FM OMNIA 6,10.18.60.225,,,,active
+EQUIPMENT,eq-nmp-stu-226,site-boi-nampa,NMP - Audio Processor - KZMG OMNIA 9,KZMG OMNIA 9,10.18.60.226,,,,active
+EQUIPMENT,eq-nmp-stu-228,site-boi-nampa,NMP - Audio Processor - 99.1 5700i,99.1 5700i,10.18.60.228,,,,active
+EQUIPMENT,eq-nmp-stu-230,site-boi-nampa,NMP - STL - IP LINK 1 studio 96.1/101.5,IP LINK 1 studio 96.1/101.5,10.18.60.230,,,,active
+EQUIPMENT,eq-nmp-stu-231,site-boi-nampa,NMP - STL - IP LINK 2 studio 101.9/99.1,IP LINK 2 studio 101.9/99.1,10.18.60.231,,,,active
+EQUIPMENT,eq-nmp-stu-232,site-boi-nampa,NMP - STL - IP LINK 3 studio 96.5/102.7,IP LINK 3 studio 96.5/102.7,10.18.60.232,,,,active
+EQUIPMENT,eq-nmp-stu-233,site-boi-nampa,NMP - STL - IP LINK 4 deer 96.1/101.5,IP LINK 4 deer 96.1/101.5,10.18.60.233,,,,active
+EQUIPMENT,eq-nmp-stu-234,site-boi-nampa,NMP - STL - IP LINK 5 deer 101.9/99.1,IP LINK 5 deer 101.9/99.1,10.18.60.234,,,,active
+EQUIPMENT,eq-nmp-stu-235,site-boi-nampa,NMP - STL - IP LINK 6 deer 96.5/102.7,IP LINK 6 deer 96.5/102.7,10.18.60.235,,,,active
+EQUIPMENT,eq-nmp-stu-236,site-boi-nampa,NMP - STL - IP LINK 7 studio 99.9,IP LINK 7 studio 99.9,10.18.60.236,,,,active
+EQUIPMENT,eq-nmp-stu-237,site-boi-nampa,NMP - STL - IP LINK 8 deer 99.9,IP LINK 8 deer 99.9,10.18.60.237,,,,active
+EQUIPMENT,eq-nmp-stu-238,site-boi-nampa,NMP - UPS - UPS Monitor,UPS Monitor,10.18.60.238,,,,active
+EQUIPMENT,eq-nmp-stu-239,site-boi-nampa,NMP - Other - KQBL RBDS,KQBL RBDS,10.18.60.239,,,,active
+EQUIPMENT,eq-nmp-stu-240,site-boi-nampa,NMP - Computer - KQBL IMPORTER,KQBL IMPORTER,10.18.60.240,,,,active
+EQUIPMENT,eq-nmp-stu-241,site-boi-nampa,NMP - Computer - KQBL EXPORTER,KQBL EXPORTER,10.18.60.241,,,,active
+EQUIPMENT,eq-nmp-stu-242,site-boi-nampa,NMP - Other - K243BM RBDS,K243BM RBDS,10.18.60.242,,,,active
+EQUIPMENT,eq-nmp-stu-243,site-boi-nampa,NMP - Other - DAY SEQUERRA M4.2Si (DEER PT),DAY SEQUERRA M4.2Si (DEER PT),10.18.60.243,,,,active
+EQUIPMENT,eq-nmp-stu-244,site-boi-nampa,NMP - Audio Processor - KQBL JUSTIN 808,KQBL JUSTIN 808,10.18.60.244,,,,active
+EQUIPMENT,eq-nmp-stu-245,site-boi-nampa,NMP - Other - KQBL BURK PLUS CONNECT,KQBL BURK PLUS CONNECT,10.18.60.245,,,,active
+EQUIPMENT,eq-nmp-stu-246,site-boi-nampa,NMP - Other - DEER PT DUAL IP-8 ADAPTER 1,DEER PT DUAL IP-8 ADAPTER 1,10.18.60.246,,,,active
+EQUIPMENT,eq-nmp-stu-247,site-boi-nampa,NMP - Other - DEER PT DUAL IP-8 ADAPTER 2,DEER PT DUAL IP-8 ADAPTER 2,10.18.60.247,,,,active
+EQUIPMENT,eq-nmp-stu-248,site-boi-nampa,NMP - Other - ARC PLUS SL (AT STUDIO),ARC PLUS SL (AT STUDIO),10.18.60.248,,,,active
+EQUIPMENT,eq-nmp-stu-249,site-boi-nampa,NMP - Network - Deer Point WiFi,Deer Point WiFi,10.18.60.249,,,,active
+EQUIPMENT,eq-mid-148,site-boi-middleton,MID - Audio Processor - OMNIA,OMNIA,10.82.60.148,http://69.9.63.150:45002,,"Internal Port: 7300, External Port: 45002",active
+EQUIPMENT,eq-mid-170,site-boi-middleton,MID - Other - RDS,RDS,10.82.60.170,http://69.9.63.150:45003,,"Internal Port: 10002, External Port: 45003",active
+EQUIPMENT,eq-mid-246,site-boi-middleton,MID - Other - BURK,BURK,10.82.60.246,http://69.9.63.150:45000,,"Internal Port: 45000, External Port: 45000",active
+EQUIPMENT,eq-mid-180,site-boi-middleton,MID - Cameras - CAM,CAM,10.82.60.180,http://69.9.63.150:45004,ubnt,"Password: 7777, Internal Port: 80, External Port: 45004",active
+EQUIPMENT,eq-mid-160,site-boi-middleton,MID - Transmitter - 106.3 TRANS,106.3 TRANS,10.82.60.160,,,"Internal Port: 1063, External Port: 1063",active
+EQUIPMENT,eq-mid-30,site-boi-middleton,MID - Network - ROUTER,ROUTER,10.82.60.30,,engineering,Password: Frenchjohn101,active
+EQUIPMENT,eq-mid-250,site-boi-middleton,MID - Computer - COMPUTER,COMPUTER,10.82.60.250,,,,active
+EQUIPMENT,eq-dp-196,site-boi-deerpoint,DP - STL - zip one-3,zip one-3,10.81.60.196,http://204.98.102.137:45000,admin,"Password: (none), External Port: 45000",active
+EQUIPMENT,eq-dp-197,site-boi-deerpoint,DP - STL - zip one-4,zip one-4,10.81.60.197,http://204.98.102.137:45001,admin,"Password: (none), External Port: 45001",active
+EQUIPMENT,eq-dp-198,site-boi-deerpoint,DP - STL - zip one-6,zip one-6,10.81.60.198,http://204.98.102.137:45002,admin,"Password: (none), External Port: 45002",active
+EQUIPMENT,eq-dp-30,site-boi-deerpoint,DP - Network - ROUTER,ROUTER,10.81.60.30,,engineering,"Password: (mustard), Internal/External Ports: 80,443",active
+EQUIPMENT,eq-dp-200,site-boi-deerpoint,DP - Computer - PC,PC,10.81.60.200,,,,active
+EQUIPMENT,eq-clay-30,site-boi-claypeak,CLAY - Network - Edge Router,Edge Router,10.82.60.30,,engineering,Password: (mustard),active
+EQUIPMENT,eq-clay-220,site-boi-claypeak,CLAY - Transmitter - Nautel,Nautel,10.82.60.220,http://204.98.102.155:45003,Nautel,"Password: (mustard), External Port: 45003",active
+EQUIPMENT,eq-clay-221,site-boi-claypeak,CLAY - Audio Processor - Aaron 650,Aaron 650,10.82.60.221,http://204.98.102.155:45004,admin,"Password: 7777, External Port: 45004",active
+EQUIPMENT,eq-clay-250,site-boi-claypeak,CLAY - Other - Burk X-300,Burk X-300,10.82.60.250,http://204.98.102.155:45000,admin,"Password: (mustard), Internal Port: 80, 45002, External Port: 45000, 45002",active
+EQUIPMENT,eq-jerb-30,site-tf-jerome,JERB - Network - Edge Router,Edge Router,10.91.60.30,,engineering,Password: (tower),active
+EQUIPMENT,eq-jerb-160,site-tf-jerome,JERB - Other - 1021 RDS,1021 RDS,10.91.60.160,http://76.8.3.26:45001,,"Internal Port: 10001, External Port: 45001",active
+EQUIPMENT,eq-jerb-161,site-tf-jerome,JERB - Other - 927 RDS,927 RDS,10.91.60.161,http://76.8.3.26:45002,admin,"Password: 7777, Internal Port: 10002, External Port: 45002",active
+EQUIPMENT,eq-jerb-200,site-tf-jerome,JERB - Computer - PC,PC,10.91.60.200,http://76.8.3.26:45004,,"Password: (tower), Internal Port: 5900, External Port: 45004",active
+EQUIPMENT,eq-jerb-220,site-tf-jerome,JERB - Audio Processor - 1021 Omnia,1021 Omnia,10.91.60.220,telnet://76.8.3.26:45005,,"Internal Port: 23, External Port: 45005",active
+EQUIPMENT,eq-jerb-221,site-tf-jerome,JERB - Audio Processor - 927 Omnia,927 Omnia,10.91.60.221,telnet://76.8.3.26:45006,,"Internal Port: 23, External Port: 45006",active
+EQUIPMENT,eq-jerb-231,site-tf-jerome,JERB - STL - HD Link,HD Link,10.91.60.231,http://76.8.3.26:45007,,External Port: 45007,active
+EQUIPMENT,eq-jerb-240,site-tf-jerome,JERB - Transmitter - Nautel HD TX,Nautel HD TX,10.91.60.240,http://76.8.3.26:45008,Nautel,"Password: clay, External Port: 45008",active
+EQUIPMENT,eq-jerb-241,site-tf-jerome,JERB - Other - Exporter,Exporter,10.91.60.241,http://76.8.3.26:2323,,"Internal Port: 2323, External Port: 2323",active
+EQUIPMENT,eq-jerb-250,site-tf-jerome,JERB - Other - remote,remote,10.91.60.250,http://76.8.3.26:45003,admin,"Password: (tower), External Port: 45003",active
+EQUIPMENT,eq-pic-30,site-tf-picabo,PIC - Network - Edge Router,Edge Router,10.92.60.30,,engineering,Password: clay,active
+EQUIPMENT,eq-pic-200,site-tf-picabo,PIC - Computer - PC,PC,10.92.60.200,http://76.8.7.78:45005,,"Password: (tower), Internal Port: 5900, External Port: 45005",active
+EQUIPMENT,eq-pic-221,site-tf-picabo,PIC - Audio Processor - 1047 BW Proc,1047 BW Proc,10.92.60.221,http://76.8.7.78:45004,,"Internal Port: 1270, External Port: 45004",active
+EQUIPMENT,eq-pic-251,site-tf-picabo,PIC - Other - Remote,Remote,10.92.60.251,http://76.8.7.78:45007,engineering,"Password: clay, External Port: 45007",active
+EQUIPMENT,eq-pic-100,site-tf-picabo,PIC - Cameras - camera,camera,10.92.60.100,,engineering,Password: clay,active
+EQUIPMENT,eq-pic-160,site-tf-picabo,PIC - Other - kikx rds,kikx rds,10.92.60.160,http://76.8.7.78:45003,,External Port: 45003,active
+EQUIPMENT,eq-pic-2,site-tf-picabo,PIC - Network - wifi,wifi,10.92.60.2,,,,active
+EQUIPMENT,eq-pic-210,site-tf-picabo,PIC - Exciter - kxcd exciter,kxcd exciter,10.92.60.210,http://76.8.7.78:45009,gates,"Password: administrator, External Port: 45009",active
+EQUIPMENT,eq-pic-211,site-tf-picabo,PIC - Transmitter - kxcd tx,kxcd tx,10.92.60.211,http://76.8.7.78:45010,gates,"Password: administrator, External Port: 45010",active
+EQUIPMENT,eq-twn-biz-1,site-tf-studio,TWN - Network - TWF AP,TWF AP,10.19.50.1,,,,active
+EQUIPMENT,eq-twn-biz-2,site-tf-studio,TWN - Network - TWF AP,TWF AP,10.19.50.2,,,,active
+EQUIPMENT,eq-twn-biz-5,site-tf-studio,TWN - Network - TWF SALES Shared DRIVE,TWF SALES Shared DRIVE,10.19.50.5,,,,active
+EQUIPMENT,eq-twn-biz-20,site-tf-studio,TWN - Computer - Traffic- Marketron,Traffic- Marketron,10.19.50.20,,,,active
+EQUIPMENT,eq-twn-biz-30,site-tf-studio,TWN - Network - PF SENSE,PF SENSE,10.19.50.30,,,,active
+EQUIPMENT,eq-twn-biz-32,site-tf-studio,TWN - Network - Lynksys ?,Lynksys ?,10.19.50.32,,,,active
+EQUIPMENT,eq-twn-biz-55,site-tf-studio,TWN - Other - Konika Printer,Konika Printer,10.19.50.55,,,,active
+EQUIPMENT,eq-twn-biz-56,site-tf-studio,TWN - Other - Market Manager Printer,Market Manager Printer,10.19.50.56,,,,active
+EQUIPMENT,eq-twn-biz-70,site-tf-studio,TWN - Computer - TWF Ubiquti NVR,TWF Ubiquti NVR,10.19.50.70,,,Port: 7443,active
+EQUIPMENT,eq-twn-biz-107,site-tf-studio,TWN - Computer - Front Desk,Front Desk,10.19.50.107,,,,active
+EQUIPMENT,eq-twn-biz-114,site-tf-studio,TWN - Other - HD Monitor,HD Monitor,10.19.50.114,,,,active
+EQUIPMENT,eq-twn-biz-115,site-tf-studio,TWN - Network - Be Sure Router,Be Sure Router,10.19.50.115,,,,active
+EQUIPMENT,eq-twn-biz-124,site-tf-studio,TWN - Computer - Matt Workstation,Matt Workstation,10.19.50.124,,,,active
+EQUIPMENT,eq-twn-biz-156,site-tf-studio,TWN - Computer - KTPZ Studio,KTPZ Studio,10.19.50.156,,,,active
+EQUIPMENT,eq-twn-stu-1,site-tf-studio,TWN - Computer - TWF PROD,TWF PROD,10.19.60.1,,,,active
+EQUIPMENT,eq-twn-stu-5,site-tf-studio,TWN - Network - TWF Prod Drive,TWF Prod Drive,10.19.60.5,,,,active
+EQUIPMENT,eq-twn-stu-12,site-tf-studio,TWN - Computer - IRG-KWYD-APD (BOOKER PC),IRG-KWYD-APD (BOOKER PC),10.19.60.12,,,,active
+EQUIPMENT,eq-twn-stu-20,site-tf-studio,TWN - Computer - IMG-TWF-TRAFFIC,IMG-TWF-TRAFFIC,10.19.60.20,,,,active
+EQUIPMENT,eq-twn-stu-30,site-tf-studio,TWN - Network - PF Sense,PF Sense,10.19.60.30,,,,active
+EQUIPMENT,eq-twn-stu-35,site-tf-studio,TWN - Other - KEY FOB SYSTEM,KEY FOB SYSTEM,10.19.60.35,,,,active
+EQUIPMENT,eq-twn-stu-60,site-tf-studio,TWN - Other - IMG-TWF-XPOINT,IMG-TWF-XPOINT,10.19.60.60,,,,active
+EQUIPMENT,eq-twn-stu-61,site-tf-studio,TWN - Computer - KTPZ PlayLIST,KTPZ PlayLIST,10.19.60.61,,,,active
+EQUIPMENT,eq-twn-stu-62,site-tf-studio,TWN - Computer - Playlist Editor-Engineering,Playlist Editor-Engineering,10.19.60.62,,,,active
+EQUIPMENT,eq-twn-stu-63,site-tf-studio,TWN - Computer - IMG-TWF-KTPZ-PD (Joey),IMG-TWF-KTPZ-PD (Joey),10.19.60.63,,,,active
+EQUIPMENT,eq-twn-stu-120,site-tf-studio,TWN - Network - Switch 0,Switch 0,10.19.60.120,,,,active
+EQUIPMENT,eq-twn-stu-121,site-tf-studio,TWN - Network - Switch 1,Switch 1,10.19.60.121,,,,active
+EQUIPMENT,eq-twn-stu-122,site-tf-studio,TWN - Network - Switch 2,Switch 2,10.19.60.122,,,,active
+EQUIPMENT,eq-twn-stu-125,site-tf-studio,TWN - Computer - Importer,Importer,10.19.60.125,,,,active
+EQUIPMENT,eq-twn-stu-128,site-tf-studio,TWN - Other - XDS Pro4Q,XDS Pro4Q,10.19.60.128,,,,active
+EQUIPMENT,eq-twn-stu-129,site-tf-studio,TWN - Other - XDS Pro,XDS Pro,10.19.60.129,,,,active
+EQUIPMENT,eq-twn-stu-130,site-tf-studio,TWN - Other - Sage Endec,Sage Endec,10.19.60.130,,,,active
+EQUIPMENT,eq-twn-stu-131,site-tf-studio,TWN - Other - DaySequerra 1,DaySequerra 1,10.19.60.131,,,,active
+EQUIPMENT,eq-twn-stu-132,site-tf-studio,TWN - Other - DaySequerra Tuner 2,DaySequerra Tuner 2,10.19.60.132,,,,active
+EQUIPMENT,eq-twn-stu-133,site-tf-studio,TWN - Other - Silence Sense,Silence Sense,10.19.60.133,,,,active
+EQUIPMENT,eq-twn-stu-134,site-tf-studio,TWN - STL - Harris HD STL,Harris HD STL,10.19.60.134,,,,active
+EQUIPMENT,eq-twn-stu-135,site-tf-studio,TWN - Transmitter - 95.1 TX,95.1 TX,10.19.60.135,,,,active
+EQUIPMENT,eq-twn-stu-136,site-tf-studio,TWN - Transmitter - 105.1 TX,105.1 TX,10.19.60.136,,,,active
+EQUIPMENT,eq-twn-stu-140,site-tf-studio,TWN - Other - Aaron 650,Aaron 650,10.19.60.140,,,,active
+EQUIPMENT,eq-twn-stu-155,site-tf-studio,TWN - Computer - Studio1- INT-PC (TWF-KIRQ-INT-PC),Studio1- INT-PC (TWF-KIRQ-INT-PC),10.19.60.155,,,,active
+EQUIPMENT,eq-twn-stu-156,site-tf-studio,TWN - Computer - Studio2- INT-PC (TWF-PROD-INT-PC),Studio2- INT-PC (TWF-PROD-INT-PC),10.19.60.156,,,,active
+EQUIPMENT,eq-twn-stu-157,site-tf-studio,TWN - Computer - Studio3- INT-PC (KYUN-INT-PC),Studio3- INT-PC (KYUN-INT-PC),10.19.60.157,,,,active
+EQUIPMENT,eq-twn-stu-163,site-tf-studio,TWN - Computer - TWF-Ingest-SVR,TWF-Ingest-SVR,10.19.60.163,,,,active
+EQUIPMENT,eq-twn-stu-165,site-tf-studio,TWN - Computer - IRG-TWF-Stream Box,IRG-TWF-Stream Box,10.19.60.165,,,,active
+EQUIPMENT,eq-twn-stu-166,site-tf-studio,TWN - Other - iRock RDS,iRock RDS,10.19.60.166,,,,active
+EQUIPMENT,eq-twn-stu-167,site-tf-studio,TWN - Other - KIRQ RDS,KIRQ RDS,10.19.60.167,,,,active
+EQUIPMENT,eq-twn-stu-168,site-tf-studio,TWN - Other - Breeze RDS,Breeze RDS,10.19.60.168,,,,active
+EQUIPMENT,eq-twn-stu-170,site-tf-studio,TWN - Computer - WO-TWF-CS,WO-TWF-CS,10.19.60.170,,,,active
+EQUIPMENT,eq-twn-stu-171,site-tf-studio,TWN - Computer - WO-KIRQ-FM,WO-KIRQ-FM,10.19.60.171,,,,active
+EQUIPMENT,eq-twn-stu-172,site-tf-studio,TWN - Computer - WO-KYUN-FM,WO-KYUN-FM,10.19.60.172,,,,active
+EQUIPMENT,eq-twn-stu-173,site-tf-studio,TWN - Computer - WO-KYUN-HD2,WO-KYUN-HD2,10.19.60.173,,,,active
+EQUIPMENT,eq-twn-stu-174,site-tf-studio,TWN - Computer - WO-KTPZ-FM,WO-KTPZ-FM,10.19.60.174,,,,active
+EQUIPMENT,eq-twn-stu-175,site-tf-studio,TWN,,,,,,active
