@@ -1,0 +1,31 @@
+name: Report to Kbase
+
+# Calls the Kbase ingest-summary workflow on every push to main.
+# This keeps the Kbase changelog and repository profile automatically up to date.
+#
+# SETUP REQUIRED:
+#   1. Add KBASE_WRITE_PAT as an org-level secret in GitHub org settings, OR
+#      add it to this repository's secrets individually.
+#      The PAT needs: Contents (read/write) on Iliad-Interactive-Group/Kbase
+#   2. Ensure the Kbase has a repositories/<this-repo-name>.md profile.
+#      If not, create one: bash <(curl -fsSL https://raw.githubusercontent.com/Iliad-Interactive-Group/Kbase/main/scripts/kbase-connect.sh) --profile-only
+#
+# For full setup docs: https://github.com/Iliad-Interactive-Group/Kbase/blob/main/integration/README.md
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  report-to-kbase:
+    name: Update Kbase
+    uses: Iliad-Interactive-Group/Kbase/.github/workflows/ingest-summary.yml@main
+    with:
+      repo: ${{ github.repository }}
+      sha: ${{ github.sha }}
+      commit_message: ${{ github.event.head_commit.message }}
+      changed_files: ${{ join(github.event.commits[0].modified, ' ') }}
+    secrets: inherit
