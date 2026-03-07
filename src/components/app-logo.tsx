@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useTheme } from 'next-themes';
 
 const AppLogo = () => {
@@ -27,23 +26,22 @@ const AppLogo = () => {
   }
 
   const logoCandidates = theme === 'dark'
-    ? ['/logo-light.png', '/V2.png', '/V1.png', '/logo-light-alt.png']
-    : ['/logo-dark.png', '/V4.png', '/V3.png', '/logo-dark-color.png'];
+    ? ['/logo-light.png', '/logo-light-alt.png', '/V2.png', '/V1.png']
+    : ['/logo-dark.png', '/logo-dark-color.png', '/V4.png', '/V3.png'];
 
   const logoSrc = logoCandidates[Math.min(logoIndex, logoCandidates.length - 1)];
 
   return (
     <div className="flex justify-center items-center my-4" style={{ height: 'auto' }}>
       {showTextFallback ? (
-        <span className="text-sm font-semibold text-card-foreground">Iliad Interactive — BrandBOX-Creator</span>
+        <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-card-foreground'}`}>Iliad Interactive — BrandBOX-Creator</span>
       ) : (
-        <Image
+        <img
           src={logoSrc}
           alt="Iliad Interactive — BrandBOX-Creator"
-          width={280}
-          height={70}
-          priority
-          className="object-contain"
+          width={300}
+          height={76}
+          className="object-contain h-auto"
           onError={() => {
             if (logoIndex < logoCandidates.length - 1) {
               setLogoIndex((prev) => prev + 1);

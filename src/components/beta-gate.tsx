@@ -57,10 +57,10 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
         <h1 className="text-4xl font-bold text-white font-headline mb-2">
           BrandBOX-Creator
         </h1>
-        <p className="text-amber-400 font-semibold text-sm mb-1">
+        <p className="text-amber-400 font-semibold text-lg mb-1">
           AI Marketing Content Engine
         </p>
-        <p className="text-slate-400 text-sm italic mb-10">
+        <p className="text-slate-300 text-base italic mb-10">
           &ldquo;From strategy to content in minutes.&rdquo;
         </p>
 

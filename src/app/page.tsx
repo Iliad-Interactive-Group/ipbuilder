@@ -685,8 +685,10 @@ function BrandBoxCreatorPageContent() {
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl bg-card rounded-lg my-4 shadow-lg border border-border">
         <header className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <div></div>
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center justify-center">
             <AppLogo />
+            <p className="text-amber-500 font-semibold text-sm sm:text-base -mt-1">AI Marketing Content Engine</p>
+            <p className="text-muted-foreground text-xs sm:text-sm italic">&ldquo;From strategy to content in minutes.&rdquo;</p>
           </div>
           <div className="flex justify-end items-center gap-2">
              <Link href="/dev-tools" passHref>
