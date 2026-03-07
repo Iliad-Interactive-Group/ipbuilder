@@ -8,7 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import BetaGate from '@/components/beta-gate';
 
 export const metadata: Metadata = {
-  title: 'BrandBOX-Creator',
+  title: 'GrowthOS - Creator',
   description: 'Generate marketing copy with AI — by Iliad Interactive',
 };
 

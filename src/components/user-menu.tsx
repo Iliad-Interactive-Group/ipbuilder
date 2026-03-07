@@ -22,7 +22,7 @@ export default function UserMenu() {
         variant="outline"
         size="sm"
         onClick={() => {
-          localStorage.removeItem('brandbox_beta_auth');
+          localStorage.removeItem('growthos_creator_beta_auth');
           window.location.href = '/';
         }}
       >

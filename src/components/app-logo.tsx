@@ -3,7 +3,15 @@
 import React from 'react';
 import { useTheme } from 'next-themes';
 
-const AppLogo = () => {
+type AppLogoProps = {
+  surface?: 'auto' | 'light' | 'dark';
+  width?: number;
+  height?: number;
+  className?: string;
+  preferredSrc?: string;
+};
+
+const AppLogo = ({ surface = 'auto', width = 300, height = 76, className = '', preferredSrc }: AppLogoProps) => {
   const { theme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   const [logoIndex, setLogoIndex] = React.useState(0);
@@ -25,23 +33,30 @@ const AppLogo = () => {
     );
   }
 
-  const logoCandidates = theme === 'dark'
-    ? ['/logo-light.png', '/logo-light-alt.png', '/V2.png', '/V1.png']
-    : ['/logo-dark.png', '/logo-dark-color.png', '/V4.png', '/V3.png'];
+  const useLightLogoSet =
+    surface === 'dark' || (surface === 'auto' && theme === 'dark');
+
+  const baseCandidates = useLightLogoSet
+    ? ['/logo-dark.png', '/logo-dark-color.png']
+    : ['/logo-light.png', '/logo-light-alt.png'];
+
+  const logoCandidates = preferredSrc
+    ? [preferredSrc, ...baseCandidates.filter((candidate) => candidate !== preferredSrc)]
+    : baseCandidates;
 
   const logoSrc = logoCandidates[Math.min(logoIndex, logoCandidates.length - 1)];
 
   return (
     <div className="flex justify-center items-center my-4" style={{ height: 'auto' }}>
       {showTextFallback ? (
-        <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-card-foreground'}`}>Iliad Interactive — BrandBOX-Creator</span>
+        <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-card-foreground'}`}>Iliad Interactive — GrowthOS - Creator</span>
       ) : (
         <img
           src={logoSrc}
-          alt="Iliad Interactive — BrandBOX-Creator"
-          width={300}
-          height={76}
-          className="object-contain h-auto"
+          alt="Iliad Interactive — GrowthOS - Creator"
+          width={width}
+          height={height}
+          className={`object-contain h-auto ${className}`}
           onError={() => {
             if (logoIndex < logoCandidates.length - 1) {
               setLogoIndex((prev) => prev + 1);

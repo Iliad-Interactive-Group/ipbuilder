@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import AppLogo from '@/components/app-logo';
 
 const BETA_PASSWORD = 'IliadADS2026';
-const STORAGE_KEY = 'brandbox_beta_auth';
+const STORAGE_KEY = 'growthos_creator_beta_auth';
 
 export default function BetaGate({ children }: { children: React.ReactNode }) {
   const [authorized, setAuthorized] = useState(false);
@@ -55,7 +55,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
 
         {/* App Title */}
         <h1 className="text-4xl font-bold text-white font-headline mb-2">
-          BrandBOX-Creator
+          GrowthOS - Creator
         </h1>
         <p className="text-amber-400 font-semibold text-lg mb-1">
           AI Marketing Content Engine
@@ -99,7 +99,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
               type="submit"
               className="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              🔓 Access BrandBOX
+              🔓 Access GrowthOS
             </button>
           </form>
 

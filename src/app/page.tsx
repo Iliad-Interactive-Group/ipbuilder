@@ -7,10 +7,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -22,6 +31,7 @@ import {
 
 
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 
 import { Loader2, Download } from 'lucide-react';
 
@@ -31,8 +41,6 @@ import { generateMarketingCopyAction, generateImageAction, generateAudioAction }
 import type { GenerateMarketingCopyOutput, GenerateMarketingCopyInput, BillboardAdStructure, DisplayAdVariation, EmailStructure } from '@/ai/flows/generate-marketing-copy';
 
 import AppLogo from '@/components/app-logo';
-import UserMenu from '@/components/user-menu';
-import { ThemeToggle } from '@/components/theme-toggle';
 import DataInputCard from '@/components/page/data-input-card';
 import MarketingBriefForm, { MarketingBriefFormData, formSchema } from '@/components/page/marketing-brief-form';
 import GeneratedCopyDisplay, { GeneratedCopyItem } from '@/components/page/generated-copy-display';
@@ -40,7 +48,9 @@ import { CONTENT_TYPES } from '@/lib/content-types';
 import { exportTextFile, exportPdf, exportHtmlForGoogleDocs } from '@/lib/export-helpers';
 import { isVariantsArray } from '@/lib/variant-utils';
 import type { BusinessFacts } from '@/lib/validation-utils';
-import { Terminal } from 'lucide-react';
+import { Terminal, Settings, Sun, Moon, LogOut } from 'lucide-react';
+
+const BETA_STORAGE_KEY = 'growthos_creator_beta_auth';
 
 interface GenerationProgress {
   total: number;
@@ -56,8 +66,10 @@ const stripProductionCues = (script: string): string => {
 };
 
 
-function BrandBoxCreatorPageContent() {
+function GrowthOSCreatorPageContent() {
   const { toast } = useToast();
+  const { setTheme } = useTheme();
+  const { user, signOutUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -679,26 +691,63 @@ function BrandBoxCreatorPageContent() {
       toast({ title: "No Content", description: "Nothing to export.", variant: "destructive" });
     }
   };
+
+  const handleHeaderLogout = useCallback(() => {
+    if (user) {
+      void signOutUser();
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(BETA_STORAGE_KEY);
+      window.location.href = '/';
+    }
+  }, [signOutUser, user]);
   
   return (
-    <div className="min-h-screen flex flex-col selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-blue-900 dark:via-blue-800 dark:to-slate-900 selection:bg-primary/20 selection:text-primary">
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl bg-card rounded-lg my-4 shadow-lg border border-border">
-        <header className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <div></div>
-          <div className="flex flex-col items-center justify-center">
-            <AppLogo />
-            <p className="text-amber-500 font-semibold text-sm sm:text-base -mt-1">AI Marketing Content Engine</p>
-            <p className="text-muted-foreground text-xs sm:text-sm italic">&ldquo;From strategy to content in minutes.&rdquo;</p>
-          </div>
-          <div className="flex justify-end items-center gap-2">
-             <Link href="/dev-tools" passHref>
-                <Button variant="outline" size="sm" className="text-card-foreground">
-                  <Terminal className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Dev Tools</span>
+        <header className="mb-6 relative">
+          <div className="absolute right-0 top-0 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="text-card-foreground">
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">Open quick actions</span>
                 </Button>
-              </Link>
-              <ThemeToggle />
-              <UserMenu />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dev-tools">
+                    <Terminal className="mr-2 h-4 w-4" />
+                    Dev Tools
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setTheme('light')}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  Light Mode
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  Dark Mode
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleHeaderLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="[&>div]:my-0">
+              <AppLogo surface="light" preferredSrc="/logo-light.png" width={420} height={106} />
+            </div>
+            <p className="text-amber-500 font-semibold text-sm sm:text-base">AI Marketing Content Engine</p>
+            <p className="text-muted-foreground text-xs sm:text-sm italic">&ldquo;From strategy to content in minutes.&rdquo;</p>
           </div>
         </header>
 
@@ -861,10 +910,10 @@ function BrandBoxCreatorPageContent() {
   );
 }
 
-export default function BrandBoxCreatorPage() {
+export default function GrowthOSCreatorPage() {
     return (
         <Suspense>
-            <BrandBoxCreatorPageContent />
+      <GrowthOSCreatorPageContent />
         </Suspense>
     )
 }

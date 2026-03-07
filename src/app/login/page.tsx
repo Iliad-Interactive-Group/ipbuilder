@@ -18,6 +18,7 @@ import { Loader2, LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ALLOWED_DOMAIN = '@iliadmg.com';
+const BETA_STORAGE_KEY = 'growthos_creator_beta_auth';
 
 // Helper function to validate email domain
 const isAllowedDomain = (email: string): boolean => {
@@ -30,9 +31,23 @@ function LoginPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [redirectCheckDone, setRedirectCheckDone] = useState(false);
+  const [betaBypassChecked, setBetaBypassChecked] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading, signOutUser } = useAuth();
+
+  // During beta, if the password gate has already authorized this browser,
+  // bypass login and go straight to the app.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasBetaAccess = localStorage.getItem(BETA_STORAGE_KEY) === 'true';
+      if (hasBetaAccess) {
+        router.replace('/');
+        return;
+      }
+    }
+    setBetaBypassChecked(true);
+  }, [router]);
 
   // Check for redirect sign-in result (from Google auth redirect)
   // This should only run once when component mounts
@@ -244,16 +259,16 @@ function LoginPageContent() {
     }
   };
   
-  if (authLoading || (!authLoading && user)) {
+  if (!betaBypassChecked || authLoading || (!authLoading && user)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-blue-900 dark:via-blue-800 dark:to-slate-900">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-blue-900 dark:via-blue-800 dark:to-slate-900 p-4 selection:bg-primary/20 selection:text-primary">
       <div className="w-full max-w-md">
         <header className="mb-6 text-center">
           <AppLogo />
@@ -263,7 +278,7 @@ function LoginPageContent() {
             <CardTitle className="font-headline text-2xl flex items-center">
               <LogIn className="w-6 h-6 mr-3 text-primary" /> Login
             </CardTitle>
-            <CardDescription>Access your BrandBOX-Creator account.</CardDescription>
+            <CardDescription>Access your GrowthOS - Creator account.</CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
@@ -364,7 +379,7 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-blue-900 dark:via-blue-800 dark:to-slate-900">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
       </div>
     }>
